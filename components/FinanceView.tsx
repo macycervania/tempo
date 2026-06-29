@@ -13,7 +13,7 @@ export default function FinanceView({ vm }: { vm: VM }) {
       <section style={css('background:linear-gradient(150deg,var(--panel),var(--panel));border:1px solid var(--line2);border-radius:16px;padding:22px 24px;display:flex;flex-direction:column')}>
         <div style={css('display:flex;align-items:center;gap:10px;margin-bottom:18px')}>
           <span style={css(mono + 'font-size:11px;font-weight:600;letter-spacing:1px;color:var(--bg);background:var(--accent);border-radius:5px;padding:2px 7px')}>01</span>
-          <span style={css(mono + 'font-size:11px;letter-spacing:2.5px;color:var(--text-faint)')}>// NET LIQUID</span>
+          <span style={css(mono + 'font-size:11px;letter-spacing:2.5px;color:var(--text-faint)')}>{'// NET LIQUID'}</span>
           <div style={{ flex: 1 }} />
           <span style={css(mono + 'font-size:10.5px;color:#74ad84')}>{fin.netDelta}</span>
         </div>
@@ -43,7 +43,7 @@ export default function FinanceView({ vm }: { vm: VM }) {
       <section style={css('background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:22px 24px;display:flex;flex-direction:column')}>
         <div style={css('display:flex;align-items:center;gap:10px;margin-bottom:18px')}>
           <span style={css(mono + 'font-size:11px;font-weight:600;letter-spacing:1px;color:var(--text-dim);border:1px solid var(--line2);border-radius:5px;padding:2px 7px')}>02</span>
-          <span style={css(mono + 'font-size:11px;letter-spacing:2.5px;color:var(--text-faint)')}>// ASSETS</span>
+          <span style={css(mono + 'font-size:11px;letter-spacing:2.5px;color:var(--text-faint)')}>{'// ASSETS'}</span>
           <div style={{ flex: 1 }} />
           <span style={css(mono + 'font-size:10.5px;color:var(--text-faint2)')}>PORTFOLIO</span>
         </div>
@@ -68,7 +68,7 @@ export default function FinanceView({ vm }: { vm: VM }) {
       <section style={css('grid-column:1 / -1;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:22px 24px;display:flex;flex-direction:column')}>
         <div style={css('display:flex;align-items:center;gap:10px;margin-bottom:18px')}>
           <span style={css(mono + 'font-size:11px;font-weight:600;letter-spacing:1px;color:var(--text-dim);border:1px solid var(--line2);border-radius:5px;padding:2px 7px')}>03</span>
-          <span style={css(mono + 'font-size:11px;letter-spacing:2.5px;color:var(--text-faint)')}>// PROFIT &amp; LOSS</span>
+          <span style={css(mono + 'font-size:11px;letter-spacing:2.5px;color:var(--text-faint)')}>{'// PROFIT & LOSS'}</span>
           <div style={{ flex: 1 }} />
           <span style={css(mono + 'font-size:10.5px;color:var(--text-faint2)')}>REALIZED</span>
         </div>
@@ -111,7 +111,7 @@ export default function FinanceView({ vm }: { vm: VM }) {
       <section style={css('grid-column:1 / -1;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:20px 22px')}>
         <div style={css('display:flex;align-items:center;gap:10px;margin-bottom:16px')}>
           <span style={css(mono + 'font-size:11px;font-weight:600;letter-spacing:1px;color:var(--text-dim);border:1px solid var(--line2);border-radius:5px;padding:2px 7px')}>04</span>
-          <span style={css(mono + 'font-size:11px;letter-spacing:2.5px;color:var(--text-faint)')}>// TRADE JOURNAL</span>
+          <span style={css(mono + 'font-size:11px;letter-spacing:2.5px;color:var(--text-faint)')}>{'// TRADE JOURNAL'}</span>
           <div style={{ flex: 1 }} />
           <span style={css(mono + 'font-size:10.5px;color:var(--text-faint2)')}>{fin.tradeCount} TRADES</span>
         </div>

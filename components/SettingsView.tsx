@@ -11,7 +11,7 @@ export default function SettingsView({ vm }: { vm: VM }) {
     <div style={css('max-width:840px;margin:0 auto;display:flex;flex-direction:column;gap:16px')}>
       <div style={css('display:flex;align-items:center;gap:10px;margin-bottom:2px')}>
         <span style={css(mono + 'font-size:11px;font-weight:600;letter-spacing:1px;color:var(--bg);background:var(--accent);border-radius:5px;padding:2px 7px')}>⚙</span>
-        <span style={css(mono + 'font-size:11px;letter-spacing:2.5px;color:var(--text-faint)')}>// SETTINGS</span>
+        <span style={css(mono + 'font-size:11px;letter-spacing:2.5px;color:var(--text-faint)')}>{'// SETTINGS'}</span>
       </div>
 
       {/* PROFILE */}

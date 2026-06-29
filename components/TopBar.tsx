@@ -29,7 +29,7 @@ export default function TopBar({ vm }: { vm: VM }) {
             "font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1px;color:var(--text-faint2)",
           )}
         >
-          // OS
+          {'// OS'}
         </span>
       </div>
       <nav style={css('display:flex;align-items:center;gap:4px')}>

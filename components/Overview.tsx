@@ -123,7 +123,7 @@ export default function Overview({ vm }: { vm: VM }) {
               01
             </span>
             <span style={css(mono + 'font-size:11px;letter-spacing:2.5px;color:var(--text-faint)')}>
-              // SESSION
+              {'// SESSION'}
             </span>
           </div>
           <div style={css('display:flex;gap:28px;flex-wrap:wrap;align-items:flex-end')}>
@@ -253,7 +253,7 @@ export default function Overview({ vm }: { vm: VM }) {
               ◎
             </span>
             <span style={css(mono + 'font-size:11px;letter-spacing:2.5px;color:var(--text-faint)')}>
-              // GOALS
+              {'// GOALS'}
             </span>
           </div>
           <div style={css('display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:14px')}>
@@ -327,7 +327,7 @@ export default function Overview({ vm }: { vm: VM }) {
         >
           <div style={css('display:flex;align-items:center;gap:10px;margin-bottom:6px')}>
             <span style={css(mono + 'font-size:11px;font-weight:600;letter-spacing:1px;color:var(--text-dim);border:1px solid var(--line2);border-radius:5px;padding:2px 7px')}>02</span>
-            <span style={css(mono + 'font-size:11px;letter-spacing:2.5px;color:var(--text-faint)')}>// PRIORITIES</span>
+            <span style={css(mono + 'font-size:11px;letter-spacing:2.5px;color:var(--text-faint)')}>{'// PRIORITIES'}</span>
             <div style={{ flex: 1 }} />
             <span style={css(mono + 'font-size:10.5px;letter-spacing:1px;color:var(--text-faint2)')}>AUTO-ORDERED BY TEMPO</span>
           </div>
@@ -375,7 +375,7 @@ export default function Overview({ vm }: { vm: VM }) {
         >
           <div style={css('display:flex;align-items:center;gap:10px;margin-bottom:16px')}>
             <span style={css(mono + 'font-size:11px;font-weight:600;letter-spacing:1px;color:var(--text-dim);border:1px solid var(--line2);border-radius:5px;padding:2px 7px')}>03</span>
-            <span style={css(mono + 'font-size:11px;letter-spacing:2.5px;color:var(--text-faint)')}>// FUEL</span>
+            <span style={css(mono + 'font-size:11px;letter-spacing:2.5px;color:var(--text-faint)')}>{'// FUEL'}</span>
             <div style={{ flex: 1 }} />
             <span style={css(mono + 'font-size:10.5px;letter-spacing:1px;color:var(--text-faint2)')}>TODAY</span>
           </div>
@@ -438,7 +438,7 @@ export default function Overview({ vm }: { vm: VM }) {
         >
           <div style={css('display:flex;align-items:center;gap:10px;margin-bottom:16px')}>
             <span style={css(mono + 'font-size:11px;font-weight:600;letter-spacing:1px;color:var(--text-dim);border:1px solid var(--line2);border-radius:5px;padding:2px 7px')}>04</span>
-            <span style={css(mono + 'font-size:11px;letter-spacing:2.5px;color:var(--text-faint)')}>// TRAINING</span>
+            <span style={css(mono + 'font-size:11px;letter-spacing:2.5px;color:var(--text-faint)')}>{'// TRAINING'}</span>
             <div style={{ flex: 1 }} />
             <span style={css(mono + 'font-size:10.5px;letter-spacing:1px;color:var(--text-faint2)')}>TODAY</span>
           </div>
@@ -500,7 +500,7 @@ export default function Overview({ vm }: { vm: VM }) {
         >
           <div style={css('display:flex;align-items:center;gap:10px;margin-bottom:14px')}>
             <span style={css(mono + 'font-size:11px;font-weight:600;letter-spacing:1px;color:var(--text-dim);border:1px solid var(--line2);border-radius:5px;padding:2px 7px')}>05</span>
-            <span style={css(mono + 'font-size:11px;letter-spacing:2.5px;color:var(--text-faint)')}>// HABITS</span>
+            <span style={css(mono + 'font-size:11px;letter-spacing:2.5px;color:var(--text-faint)')}>{'// HABITS'}</span>
             <div style={{ flex: 1 }} />
             <Hov as="button" onClick={vm.hb.onAdd} styleStr={mono + 'font-size:10px;letter-spacing:1px;background:transparent;border:1px solid var(--line2);border-radius:7px;padding:5px 10px;cursor:pointer;color:var(--text-faint)'} hover="color:var(--text);border-color:var(--accent)">
               + HABIT

@@ -50,7 +50,7 @@ export default function BudgetView({ vm }: { vm: VM }) {
         <section style={css('background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:20px 22px')}>
           <div style={css('display:flex;align-items:center;gap:10px;margin-bottom:16px')}>
             <span style={css(mono + 'font-size:11px;font-weight:600;letter-spacing:1px;color:#74ad84;border:1px solid var(--line2);border-radius:5px;padding:2px 7px')}>+</span>
-            <span style={css(mono + 'font-size:11px;letter-spacing:2.5px;color:var(--text-faint)')}>// INCOME</span>
+            <span style={css(mono + 'font-size:11px;letter-spacing:2.5px;color:var(--text-faint)')}>{'// INCOME'}</span>
           </div>
           <div style={css('display:flex;flex-direction:column;gap:3px')}>
             {budget.incomeLines.map((inc, i) => (
@@ -88,7 +88,7 @@ export default function BudgetView({ vm }: { vm: VM }) {
         <section style={css('background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:20px 22px;max-height:62vh;overflow-y:auto')}>
           <div style={css('display:flex;align-items:center;gap:10px;margin-bottom:14px')}>
             <span style={css(mono + 'font-size:11px;font-weight:600;letter-spacing:1px;color:var(--text-dim);border:1px solid var(--line2);border-radius:5px;padding:2px 7px')}>−</span>
-            <span style={css(mono + 'font-size:11px;letter-spacing:2.5px;color:var(--text-faint)')}>// EXPENSES</span>
+            <span style={css(mono + 'font-size:11px;letter-spacing:2.5px;color:var(--text-faint)')}>{'// EXPENSES'}</span>
             <div style={{ flex: 1 }} />
             <div style={css(mono + 'display:grid;grid-template-columns:92px 92px 88px;gap:0;font-size:9.5px;letter-spacing:1px;color:var(--text-faint2);text-align:right')}>
               <span>BUDGET</span>

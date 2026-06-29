@@ -13,7 +13,7 @@ export default function HealthView({ vm }: { vm: VM }) {
       <section style={css('grid-column:1 / -1;background:linear-gradient(150deg,var(--panel),var(--panel));border:1px solid var(--line2);border-radius:16px;padding:22px 24px')}>
         <div style={css('display:flex;align-items:center;gap:10px;margin-bottom:20px')}>
           <span style={css(mono + 'font-size:11px;font-weight:600;letter-spacing:1px;color:var(--bg);background:var(--accent);border-radius:5px;padding:2px 7px')}>01</span>
-          <span style={css(mono + 'font-size:11px;letter-spacing:2.5px;color:var(--text-faint)')}>// TODAY</span>
+          <span style={css(mono + 'font-size:11px;letter-spacing:2.5px;color:var(--text-faint)')}>{'// TODAY'}</span>
           <div style={{ flex: 1 }} />
           <span style={css(mono + `font-size:11px;color:${health.netColor}`)}>{health.netStr}</span>
         </div>
@@ -59,7 +59,7 @@ export default function HealthView({ vm }: { vm: VM }) {
       <section style={css('grid-column:1 / -1;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:20px 22px')}>
         <div style={css('display:flex;align-items:center;gap:10px;margin-bottom:18px')}>
           <span style={css(mono + 'font-size:11px;font-weight:600;letter-spacing:1px;color:var(--text-dim);border:1px solid var(--line2);border-radius:5px;padding:2px 7px')}>02</span>
-          <span style={css(mono + 'font-size:11px;letter-spacing:2.5px;color:var(--text-faint)')}>// 7-DAY INTAKE</span>
+          <span style={css(mono + 'font-size:11px;letter-spacing:2.5px;color:var(--text-faint)')}>{'// 7-DAY INTAKE'}</span>
           <div style={{ flex: 1 }} />
           <span style={css(mono + 'font-size:10.5px;color:var(--text-faint2)')}>AVG {health.trendAvg} KCAL · TARGET {health.target}</span>
         </div>
@@ -80,7 +80,7 @@ export default function HealthView({ vm }: { vm: VM }) {
       <section style={css('background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:20px 22px;display:flex;flex-direction:column')}>
         <div style={css('display:flex;align-items:center;gap:10px;margin-bottom:16px')}>
           <span style={css(mono + 'font-size:11px;font-weight:600;letter-spacing:1px;color:var(--text-dim);border:1px solid var(--line2);border-radius:5px;padding:2px 7px')}>03</span>
-          <span style={css(mono + 'font-size:11px;letter-spacing:2.5px;color:var(--text-faint)')}>// MEALS</span>
+          <span style={css(mono + 'font-size:11px;letter-spacing:2.5px;color:var(--text-faint)')}>{'// MEALS'}</span>
         </div>
         <div style={css('display:flex;flex-direction:column;gap:6px;margin-bottom:14px;flex:1')}>
           {health.meals.map((meal) => (
@@ -110,7 +110,7 @@ export default function HealthView({ vm }: { vm: VM }) {
       <section style={css('background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:20px 22px;display:flex;flex-direction:column')}>
         <div style={css('display:flex;align-items:center;gap:10px;margin-bottom:16px')}>
           <span style={css(mono + 'font-size:11px;font-weight:600;letter-spacing:1px;color:var(--text-dim);border:1px solid var(--line2);border-radius:5px;padding:2px 7px')}>04</span>
-          <span style={css(mono + 'font-size:11px;letter-spacing:2.5px;color:var(--text-faint)')}>// TRAINING</span>
+          <span style={css(mono + 'font-size:11px;letter-spacing:2.5px;color:var(--text-faint)')}>{'// TRAINING'}</span>
         </div>
         <div style={css('display:flex;flex-direction:column;gap:6px;margin-bottom:14px;flex:1')}>
           {health.trainings.map((w) => (
