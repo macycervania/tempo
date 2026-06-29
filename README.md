@@ -6,14 +6,20 @@ It's a single-page, **phone-friendly** dashboard with seven views, a warm-black 
 
 ## Features
 
-- **Overview** — a focused two-column board: a Session card with a compact **morning briefing** (first task, habits, weekly-goal progress, P&L), natural-language capture (type or simulated voice) that auto-files tasks and sets priority, weekly/monthly goals with key results, an auto-ordered Priorities list, and a Habits board with a daily-score ring, fire streaks, and sub-tasks.
+- **Overview** — a calm home screen: greeting, a **daily word** (a motivational line or Bible verse), a tasks-done-today bar, the **voice button** + **Nateman**, compact **Habits & Priorities progress** (tap to open their pages), and your weekly/monthly **Goals**.
+- **Priorities** — your tasks as an **Eisenhower matrix** (urgent × important, four quadrants), with the editable category bar and quick capture; new tasks auto-file into the right quadrant by priority and due date.
+- **Habits** — the full habits board: daily-score ring, fire streaks, sub-tasks, add/edit/remove.
 - **Health** — today's intake / burned / net with macros, a 7-day intake trend, and full meal & training logs. Meal logging runs through the **AI macro seam** (see below).
 - **Budget** — a zero-based monthly budget in pesos: income + eight expense groups with subcategories, inline editing, and a smart expense logger. Drives the Finance page's cash.
 - **Finance** — net liquid (linked live to the budget), assets/portfolio, realized P&L with a last-10-sessions chart, and a trade journal you can log into.
 - **Calendar** — a month grid wired to your tasks; click a day to view, complete, or add tasks to it.
 - **Journal** — dated reflections with a mood tag; write your own, or hit **"Summarise my day"** to generate an entry from today's tasks, habits, training and P&L. Entries feed Nateman's recall.
 - **Settings** — profile (name + photo), six themes, currency, daily targets, notifications, reduce-motion, and the Nateman assistant controls.
-- **Nateman** — summon by clicking the orb, typing `nateman …`, or (where supported) the "hey nateman" voice wake word. Beyond planning your day and switching themes, he now does **"ask my OS" recall** — search across your tasks, meals, workouts, habits and journal and cite the source (e.g. *"what did I journal about trades"*). Talking mouth, confetti on a perfect habit day, and optional text-to-speech.
+- **Nateman** — a **real assistant**: summon by clicking the orb, typing `nateman …`, or the "hey nateman" voice wake word. When an API key is set he answers via Claude over your live data (see below); with no key he falls back to a capable local brain. He plans your day, switches themes, opens pages, adds tasks, and does **"ask my OS" recall** across your tasks, meals, workouts, habits and journal — citing the source. Talking mouth, confetti on a perfect habit day, and optional text-to-speech.
+
+### Voice
+
+The "Talk through your day" button and Nateman's mic use the browser **Web Speech API** (`SpeechRecognition`) for real speech-to-text — spoken tasks are transcribed and auto-filed, spoken questions go straight to Nateman. The "hey nateman" wake word listens continuously where supported. All of it degrades gracefully: where the API is unavailable (or on `file://`), it falls back to a scripted capture so nothing breaks. Voice needs HTTPS or `localhost` and microphone permission.
 
 Preferences and your profile persist to `localStorage`.
 
@@ -33,9 +39,12 @@ All smart behavior — natural-language task classification, food → macros, wo
 
 **Macros are wired for a real LLM.** Logging a meal calls `estimateFoodSmart`, which POSTs to [`app/api/nutrition/estimate`](app/api/nutrition/estimate/route.ts). That route calls Claude (via the official `@anthropic-ai/sdk`) when `ANTHROPIC_API_KEY` is set, and otherwise returns `501` so the client falls back to the built-in food table — the app stays fully functional offline. The route is also the obvious place to swap in a nutrition provider (Nutritionix, USDA FoodData Central, etc.); the `{ kcal, p, c, f }` contract is all the UI knows.
 
+**Nateman is wired the same way.** The assistant POSTs to [`app/api/nateman`](app/api/nateman/route.ts), which calls Claude with a compact snapshot of your data and returns a natural answer plus an optional structured action (add task, switch theme, open a page) that the provider executes. No key → it falls back to the deterministic `respondAssistant()` brain, so Nateman always answers.
+
 ```bash
-ANTHROPIC_API_KEY=sk-ant-...   # enables AI macro estimation (optional)
-NUTRITION_MODEL=claude-haiku-4-5   # optional model override (default: claude-opus-4-8)
+ANTHROPIC_API_KEY=sk-ant-...       # enables AI macros + the real Nateman (optional)
+NUTRITION_MODEL=claude-haiku-4-5   # optional macro model override (default: claude-opus-4-8)
+NATEMAN_MODEL=claude-haiku-4-5     # optional Nateman model override (default: claude-opus-4-8)
 ```
 
 ## Getting started
@@ -53,9 +62,10 @@ npm run build && npm start   # production
 
 ```
 app/            Next.js App Router (layout, page, global CSS, icon, manifest,
-                api/nutrition/estimate — the server-side macro LLM seam)
-components/     React views (TopBar, Overview, Health, Budget, Finance,
-                Calendar, Journal, Settings, Nateman, Toast) + the css() helper
+                api/nutrition/estimate + api/nateman — the server LLM seams)
+components/     React views (TopBar, Overview, Priorities, Habits, Health,
+                Budget, Finance, Calendar, Journal, Settings, Nateman, Toast)
+                + the css() helper
 lib/            types, constants/seed data, format helpers, storage, ai.ts
 state/          TempoProvider (state + actions) and useViewModel (derived data)
 project/        the original Claude Design prototype + reference assets

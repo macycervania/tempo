@@ -167,6 +167,24 @@ export const MOTIVATE = [
   'Future you says thanks.',
 ];
 
+/** A daily word — motivational lines and Bible verses, shown on the Overview. */
+export const VERSES: { text: string; ref: string }[] = [
+  { text: 'I can do all things through Christ who strengthens me.', ref: 'Philippians 4:13' },
+  { text: 'Commit your work to the Lord, and your plans will be established.', ref: 'Proverbs 16:3' },
+  { text: 'Whatever you do, work heartily, as for the Lord and not for men.', ref: 'Colossians 3:23' },
+  { text: 'She is clothed with strength and dignity, and laughs without fear of the future.', ref: 'Proverbs 31:25' },
+  { text: 'Be strong and courageous. Do not be afraid; the Lord your God is with you.', ref: 'Joshua 1:9' },
+  { text: 'Trust in the Lord with all your heart, and lean not on your own understanding.', ref: 'Proverbs 3:5' },
+  { text: 'The plans of the diligent lead surely to abundance.', ref: 'Proverbs 21:5' },
+  { text: 'Discipline is choosing between what you want now and what you want most.', ref: '' },
+  { text: 'Small steps every day add up to big distances.', ref: '' },
+  { text: 'You don’t have to be extreme, just consistent.', ref: '' },
+  { text: 'Do the hard thing first — the rest of the day bends to it.', ref: '' },
+  { text: 'Let us not grow weary of doing good, for in due season we will reap.', ref: 'Galatians 6:9' },
+  { text: 'Motivation gets you started; habit keeps you going.', ref: '' },
+  { text: 'Today’s effort is tomorrow’s edge.', ref: '' },
+];
+
 /** Today as an en-CA ISO date string (YYYY-MM-DD) in local time. */
 export function todayISO(): string {
   return new Date().toLocaleDateString('en-CA');

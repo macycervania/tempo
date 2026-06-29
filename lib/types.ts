@@ -173,6 +173,8 @@ export interface Theme {
 
 export type Page =
   | 'overview'
+  | 'priorities'
+  | 'habits'
   | 'health'
   | 'budget'
   | 'finance'

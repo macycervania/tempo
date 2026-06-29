@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { useTempo } from './TempoProvider';
-import { THEMES, CURRENCIES } from '@/lib/constants';
+import { THEMES, CURRENCIES, VERSES } from '@/lib/constants';
 import {
   estimateExercise,
   estimateFood,
@@ -154,6 +154,8 @@ export function useViewModel() {
   const pageTabs = (
     [
       { key: 'overview', label: 'Overview' },
+      { key: 'priorities', label: 'Priorities' },
+      { key: 'habits', label: 'Habits' },
       { key: 'health', label: 'Health' },
       { key: 'budget', label: 'Budget' },
       { key: 'finance', label: 'Finance' },
@@ -224,6 +226,50 @@ export function useViewModel() {
         onToggle: () => api.toggleTask(t.id),
       };
     });
+
+  // Eisenhower matrix — open tasks split by urgency × importance.
+  const tomorrowISO = isoLocal(new Date(now.getTime() + 86400000));
+  const isUrgent = (t: Task) => taskDate(t) <= tomorrowISO;
+  const matrixRow = (t: Task) => {
+    const m = metaOf(t.area);
+    return {
+      id: t.id,
+      title: t.title,
+      tint: m.tint,
+      areaLabel: m.label,
+      badge: t.priority.toUpperCase(),
+      badgeStyle: badgeStyles[t.priority],
+      onToggle: () => api.toggleTask(t.id),
+      boxStyle:
+        'width:19px;height:19px;flex:0 0 19px;margin-top:1px;border-radius:6px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .15s;border:1.5px solid var(--line2);background:transparent',
+    };
+  };
+  const openTasksAll = s.tasks.filter((t) => !t.done);
+  const eisenDefs = [
+    { roman: 'I', title: 'Urgent & Important', sub: 'Do first', color: '#e0566f', f: (t: Task) => t.priority === 'high' && isUrgent(t) },
+    { roman: 'II', title: 'Important, Not Urgent', sub: 'Schedule', color: 'var(--accent)', f: (t: Task) => t.priority === 'high' && !isUrgent(t) },
+    { roman: 'III', title: 'Urgent, Not Important', sub: 'Delegate', color: '#6f90b4', f: (t: Task) => t.priority !== 'high' && isUrgent(t) },
+    { roman: 'IV', title: 'Not Urgent & Unimportant', sub: 'Later', color: '#74ad84', f: (t: Task) => t.priority !== 'high' && !isUrgent(t) },
+  ] as const;
+  const eisenhower = eisenDefs.map((q) => {
+    const rows = openTasksAll.filter(q.f).map(matrixRow);
+    return {
+      roman: q.roman,
+      title: q.title,
+      sub: q.sub,
+      color: q.color,
+      count: rows.length,
+      badgeStyle: `width:22px;height:22px;flex:0 0 22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:9.5px;font-weight:700;color:var(--bg);background:${q.color}`,
+      titleStyle: `font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:1px;font-weight:600;color:${q.color}`,
+      cardStyle:
+        'background:var(--inset);border:1px solid var(--line);border-radius:14px;padding:15px 16px;min-height:200px;display:flex;flex-direction:column',
+      rows,
+      empty: rows.length === 0,
+    };
+  });
+
+  // A daily word — rotates once per day across motivational lines + verses.
+  const verse = VERSES[Math.floor(now.getTime() / 86400000) % VERSES.length];
 
   const hr = now.getHours();
   const todayISO = isoLocal(now);
@@ -863,6 +909,31 @@ export function useViewModel() {
     { label: 'P&L TODAY', val: fmtSig(fd.pnlToday), color: pnlColor(fd.pnlToday) },
   ];
 
+  // Overview: tasks-done summary + compact habits/priorities progress.
+  const prioDone = s.tasks.filter((t) => t.done).length;
+  const prioTotal = s.tasks.length;
+  const taskSummary = {
+    doneToday,
+    totalToday,
+    label: `${doneToday} of ${totalToday} done today`,
+    pct: (totalToday ? Math.round((doneToday / totalToday) * 100) : 0) + '%',
+  };
+  const progress = {
+    priorities: {
+      label: `${prioDone}/${prioTotal}`,
+      pct: (prioTotal ? Math.round((prioDone / prioTotal) * 100) : 0) + '%',
+      topOpen: todayOpen[0] ? todayOpen[0].title : 'All clear',
+      onOpen: () => api.setPage('priorities'),
+    },
+    habits: {
+      label: `${habitsDone}/${s.habits.length}`,
+      ringStyle: hb.ringStyle,
+      score: habitsDone,
+      hint: hb.hint,
+      onOpen: () => api.setPage('habits'),
+    },
+  };
+
   // Morning briefing — a compact, glanceable summary line for the session card.
   const briefing = [
     {
@@ -892,6 +963,8 @@ export function useViewModel() {
     isOverview: s.page === 'overview',
     isFinance: s.page === 'finance',
     isHealth: s.page === 'health',
+    isPriorities: s.page === 'priorities',
+    isHabits: s.page === 'habits',
     isBudget: s.page === 'budget',
     isCalendar: s.page === 'calendar',
     isJournal: s.page === 'journal',
@@ -921,6 +994,10 @@ export function useViewModel() {
     }`,
     kpis,
     briefing,
+    verse,
+    taskSummary,
+    progress,
+    eisenhower,
     greeting,
     aiSummary,
     tasks,

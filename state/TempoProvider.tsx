@@ -17,9 +17,10 @@ import {
   estimateFood,
   estimateFoodSmart,
   parseTrade,
-  respondAssistant,
+  respondAssistantSmart,
   summariseDay,
   transcribeVoice,
+  type AssistantReply,
   type AssistantSnapshot,
   type MemoryItem,
 } from '@/lib/ai';
@@ -467,14 +468,46 @@ export function TempoProvider({ children }: { children: React.ReactNode }) {
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [set, flashToast]);
+  // File one or more tasks from a real spoken transcript.
+  const finishVoiceReal = useCallback(
+    (text: string) => {
+      const items = text
+        .split(/\band\b|[,.;]/i)
+        .map((s) => s.trim())
+        .filter((s) => s.length > 2);
+      const list = items.length ? items : [text];
+      const newTasks = list.map((it) => makeTask(it, true));
+      set((s) => ({
+        processing: false,
+        transcript: text,
+        tasks: [...newTasks, ...s.tasks],
+      }));
+      const highs = newTasks.filter((t) => t.priority === 'high').length;
+      flashToast(
+        `Captured ${newTasks.length} task${newTasks.length > 1 ? 's' : ''} from voice${
+          highs ? ` · ${highs} flagged high` : ''
+        }`,
+      );
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    },
+    [set, flashToast],
+  );
   const onVoice = useCallback(() => {
     if (ref.current.recording || ref.current.processing) return;
     set({ recording: true, transcript: '' });
-    timers.current.v1 = setTimeout(() => {
-      set({ recording: false, processing: true });
-      timers.current.v2 = setTimeout(() => finishVoice(), 950);
-    }, 2400);
-  }, [set, finishVoice]);
+    recognizeOnce().then((text) => {
+      if (!ref.current.recording) return;
+      if (text) {
+        set({ recording: false, processing: true });
+        timers.current.v2 = setTimeout(() => finishVoiceReal(text), 450);
+      } else {
+        // No real speech available — fall back to the scripted demo capture.
+        set({ recording: false, processing: true });
+        timers.current.v2 = setTimeout(() => finishVoice(), 800);
+      }
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [set, finishVoice, finishVoiceReal]);
 
   // ── fuel / training / trade ─────────────────────────────────────────────────
   const onFoodInput = (e: React.ChangeEvent<HTMLInputElement>) =>
@@ -1129,7 +1162,7 @@ export function TempoProvider({ children }: { children: React.ReactNode }) {
     };
   };
 
-  const executeIntent = (intent: ReturnType<typeof respondAssistant>['intent']) => {
+  const executeIntent = (intent: AssistantReply['intent']) => {
     if (intent.type === 'setTheme') setTheme(intent.themeKey);
     else if (intent.type === 'navigate') set({ page: intent.page });
     else if (intent.type === 'addTask') {
@@ -1139,9 +1172,13 @@ export function TempoProvider({ children }: { children: React.ReactNode }) {
   };
 
   const finishNateman = useCallback(
-    (q: string) => {
+    async (q: string) => {
+      const r = await respondAssistantSmart(
+        q,
+        snapshot(),
+        THEMES.map((t) => ({ key: t.key, name: t.name })),
+      );
       beep([659, 880]);
-      const r = respondAssistant(q, snapshot());
       set({ naPhase: 'answer', naAnswer: r.answer, naActionLabel: r.actionLabel || '' });
       executeIntent(r.intent);
       speak(r.answer);
@@ -1164,16 +1201,24 @@ export function TempoProvider({ children }: { children: React.ReactNode }) {
         naActionLabel: '',
       });
       if (provided) {
-        timers.current.na2 = setTimeout(() => finishNateman(provided), 750);
+        timers.current.na2 = setTimeout(() => finishNateman(provided), 650);
       } else {
-        const demo =
-          ['What’s on my plate today?', 'Add: review my SPY setup tonight', 'How am I doing today?', 'Switch to Midnight theme', 'What’s my net liquid?'][
-            ref.current.naTake % 5
-          ];
-        timers.current.na1 = setTimeout(() => {
-          set((st) => ({ naPhase: 'thinking', naQuery: demo, naTake: st.naTake + 1 }));
-          timers.current.na2 = setTimeout(() => finishNateman(demo), 800);
-        }, 1900);
+        // Listen for a real question; fall back to a demo prompt if speech is
+        // unavailable so the assistant still demonstrates itself.
+        recognizeOnce().then((heard) => {
+          if (!ref.current.naOpen) return;
+          if (heard) {
+            set({ naPhase: 'thinking', naQuery: heard });
+            timers.current.na2 = setTimeout(() => finishNateman(heard), 250);
+          } else {
+            const demo =
+              ['What’s on my plate today?', 'How am I doing today?', 'What did I journal about trades?', 'What’s my net liquid?'][
+                ref.current.naTake % 4
+              ];
+            set((st) => ({ naPhase: 'thinking', naQuery: demo, naTake: st.naTake + 1 }));
+            timers.current.na2 = setTimeout(() => finishNateman(demo), 600);
+          }
+        });
       }
     },
     [beep, set, finishNateman],
@@ -1199,6 +1244,55 @@ export function TempoProvider({ children }: { children: React.ReactNode }) {
   const onNaKey = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') onNaSend();
   };
+
+  // ── real speech-to-text (single utterance) ──────────────────────────────────
+  // Resolves with the recognised transcript, or null when the Web Speech API is
+  // unavailable / denied — callers then fall back to the scripted simulation.
+  function recognizeOnce(): Promise<string | null> {
+    return new Promise((resolve) => {
+      const SR =
+        (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      if (!SR) return resolve(null);
+      let rec: any;
+      try {
+        rec = new SR();
+      } catch {
+        return resolve(null);
+      }
+      rec.lang = 'en-US';
+      rec.interimResults = false;
+      rec.maxAlternatives = 1;
+      rec.continuous = false;
+      let done = false;
+      const finish = (val: string | null) => {
+        if (done) return;
+        done = true;
+        try {
+          rec.stop();
+        } catch {
+          /* ignore */
+        }
+        resolve(val);
+      };
+      rec.onresult = (e: any) => {
+        let txt = '';
+        try {
+          txt = e.results[0][0].transcript;
+        } catch {
+          /* ignore */
+        }
+        finish(txt && txt.trim() ? txt.trim() : null);
+      };
+      rec.onerror = () => finish(null);
+      rec.onend = () => finish(null);
+      try {
+        rec.start();
+      } catch {
+        finish(null);
+      }
+      setTimeout(() => finish(null), 12000);
+    });
+  }
 
   // ── voice wake word ─────────────────────────────────────────────────────────
   function startWake() {

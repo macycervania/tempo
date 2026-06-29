@@ -305,11 +305,32 @@ export function summariseDay(d: DaySnapshot): string {
 // { answer, actionLabel, intent } contract. The provider executes the intent so
 // the UI never needs to change.
 
+export type NavPage =
+  | 'overview'
+  | 'priorities'
+  | 'habits'
+  | 'health'
+  | 'budget'
+  | 'finance'
+  | 'calendar'
+  | 'journal';
+
+export const NAV_PAGES: NavPage[] = [
+  'overview',
+  'priorities',
+  'habits',
+  'health',
+  'budget',
+  'finance',
+  'calendar',
+  'journal',
+];
+
 export type AssistantIntent =
   | { type: 'none' }
   | { type: 'setTheme'; themeKey: string }
   | { type: 'addTask'; text: string }
-  | { type: 'navigate'; page: 'finance' | 'health' };
+  | { type: 'navigate'; page: NavPage };
 
 /** One searchable fact from the user's history — the "brain" index. */
 export interface MemoryItem {
@@ -477,4 +498,50 @@ export function respondAssistant(
     actionLabel: '',
     intent: { type: 'none' },
   };
+}
+
+/**
+ * AI SEAM — the real Nateman.
+ *
+ * Posts to /api/nateman, which calls Claude when an API key is configured. The
+ * route returns { answer, actionLabel, action }; we validate the action against
+ * the known themes/pages and map it to an AssistantIntent. With no key (or any
+ * failure) we fall back to the deterministic respondAssistant() above, so the
+ * assistant always answers.
+ */
+export async function respondAssistantSmart(
+  query: string,
+  snap: AssistantSnapshot,
+  themes: { key: string; name: string }[],
+): Promise<AssistantReply> {
+  if (typeof fetch === 'undefined') return respondAssistant(query, snap);
+  try {
+    const res = await fetch('/api/nateman', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ query, snapshot: snap, themes }),
+    });
+    if (!res.ok) return respondAssistant(query, snap);
+    const data = (await res.json()) as {
+      answer?: string;
+      actionLabel?: string;
+      action?: { type?: string; themeKey?: string; text?: string; page?: string };
+    };
+    const a = data.action || { type: 'none' };
+    let intent: AssistantIntent = { type: 'none' };
+    if (a.type === 'setTheme' && a.themeKey && THEMES.some((t) => t.key === a.themeKey)) {
+      intent = { type: 'setTheme', themeKey: a.themeKey };
+    } else if (a.type === 'addTask' && a.text) {
+      intent = { type: 'addTask', text: a.text };
+    } else if (a.type === 'navigate' && a.page && NAV_PAGES.includes(a.page as NavPage)) {
+      intent = { type: 'navigate', page: a.page as NavPage };
+    }
+    return {
+      answer: data.answer || 'On it.',
+      actionLabel: data.actionLabel || '',
+      intent,
+    };
+  } catch {
+    return respondAssistant(query, snap);
+  }
 }

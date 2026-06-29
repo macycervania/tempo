@@ -177,6 +177,18 @@ input:focus {
   }
 }
 
+/* Eisenhower matrix — 2×2 on desktop, single column on phones. */
+.eisengrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+@media (max-width: 720px) {
+  .eisengrid {
+    grid-template-columns: 1fr;
+  }
+}
+
 @keyframes naFloat {
   0%,
   100% {
