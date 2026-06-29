@@ -106,24 +106,23 @@ input:focus {
 }
 
 #ovgrid {
-  column-count: 3;
-  column-gap: 12px;
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
 }
-#ovgrid > section {
-  break-inside: avoid;
-  -webkit-column-break-inside: avoid;
-  margin: 0 0 12px;
-  padding: 15px 17px !important;
-  border-radius: 13px !important;
+.ovcol {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
 }
-@media (max-width: 1100px) {
+@media (max-width: 900px) {
   #ovgrid {
-    column-count: 2;
+    flex-direction: column;
   }
-}
-@media (max-width: 720px) {
-  #ovgrid {
-    column-count: 1;
+  .ovcol {
+    width: 100%;
   }
 }
 

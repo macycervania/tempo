@@ -796,8 +796,6 @@ export function useViewModel() {
   const kpis = [
     { label: 'OPEN TODAY', val: String(todayOpen.length), color: 'var(--text)' },
     { label: 'FOCUS', val: `${doneToday}/${totalToday}`, color: 'var(--text)' },
-    { label: 'NET KCAL', val: String(net), color: 'var(--text)' },
-    { label: 'BURNED', val: String(burned), color: '#74ad84' },
     { label: 'HABITS', val: `${habitsDone}/${s.habits.length}`, color: 'var(--text)' },
     { label: 'NET LIQUID', val: fin.liquid, color: 'var(--text)' },
     { label: 'P&L TODAY', val: fmtSig(fd.pnlToday), color: pnlColor(fd.pnlToday) },
