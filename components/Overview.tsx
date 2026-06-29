@@ -145,6 +145,27 @@ export default function Overview({ vm }: { vm: VM }) {
                   <p style={css('font-size:14px;color:var(--text-muted);margin-top:7px;line-height:1.5;max-width:440px')}>
                     {vm.aiSummary}
                   </p>
+                  <div style={css('display:flex;flex-wrap:wrap;gap:8px;margin-top:13px')}>
+                    {vm.briefing.map((b, i) => (
+                      <div
+                        key={i}
+                        style={css(
+                          'display:flex;align-items:center;gap:7px;background:var(--inset);border:1px solid var(--line);border-radius:8px;padding:5px 10px;max-width:100%',
+                        )}
+                      >
+                        <span style={css(mono + 'font-size:8.5px;letter-spacing:1px;color:var(--text-faint2)')}>
+                          {b.label}
+                        </span>
+                        <span
+                          style={css(
+                            `font-size:12px;font-weight:600;color:${b.color};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:200px`,
+                          )}
+                        >
+                          {b.val}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
                   <div style={{ marginTop: 10 }}>
                     {vm.nameShow && (
                       <Hov

@@ -10,6 +10,7 @@ import HealthView from './HealthView';
 import BudgetView from './BudgetView';
 import FinanceView from './FinanceView';
 import CalendarView from './CalendarView';
+import JournalView from './JournalView';
 import SettingsView from './SettingsView';
 import Nateman from './Nateman';
 import Toast from './Toast';
@@ -19,13 +20,14 @@ function Shell() {
   return (
     <div style={css(vm.rootStyle)} className={vm.rootClass}>
       <TopBar vm={vm} />
-      <div style={{ flex: 1, overflowY: 'auto' }}>
-        <div style={{ maxWidth: 1320, margin: '0 auto', padding: '18px 22px 40px' }}>
+      <div className="appScroll" style={{ flex: 1, overflowY: 'auto' }}>
+        <div className="appContent">
           {vm.isOverview && <Overview vm={vm} />}
           {vm.isFinance && <FinanceView vm={vm} />}
           {vm.isHealth && <HealthView vm={vm} />}
           {vm.isBudget && <BudgetView vm={vm} />}
           {vm.isCalendar && <CalendarView vm={vm} />}
+          {vm.isJournal && <JournalView vm={vm} />}
           {vm.isSettings && <SettingsView vm={vm} />}
         </div>
       </div>

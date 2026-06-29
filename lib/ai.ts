@@ -129,7 +129,18 @@ export function classifyTask(text: string, areas: Area[]) {
   };
 }
 
-export function estimateFood(text: string) {
+export interface Macros {
+  kcal: number;
+  p: number;
+  c: number;
+  f: number;
+}
+
+/**
+ * Local, deterministic macro estimate. Used for the instant typing hint and as
+ * the offline fallback when no LLM key is configured.
+ */
+export function estimateFood(text: string): Macros | null {
   if (!text.trim()) return null;
   const parts = text
     .toLowerCase()
@@ -167,6 +178,45 @@ export function estimateFood(text: string) {
   };
 }
 
+export interface MacroResult extends Macros {
+  /** Where the numbers came from — surfaced in the UI. */
+  source: 'ai' | 'local';
+}
+
+/**
+ * AI SEAM — meal text → macros.
+ *
+ * Posts to /api/nutrition/estimate, which calls a real LLM when an API key is
+ * configured (see the route). With no key the route 501s and we fall back to the
+ * local food table, so the app stays fully functional with zero setup. Swap the
+ * route's body for a nutrition provider (Nutritionix, USDA FoodData, etc.) any
+ * time without touching the UI — this contract stays the same.
+ */
+export async function estimateFoodSmart(text: string): Promise<MacroResult | null> {
+  const local = estimateFood(text);
+  if (!local) return null;
+  if (typeof fetch === 'undefined') return { ...local, source: 'local' };
+  try {
+    const res = await fetch('/api/nutrition/estimate', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ text }),
+    });
+    if (!res.ok) return { ...local, source: 'local' };
+    const data = (await res.json()) as Partial<Macros>;
+    if (typeof data.kcal !== 'number') return { ...local, source: 'local' };
+    return {
+      kcal: Math.round(data.kcal),
+      p: Math.round(data.p ?? local.p),
+      c: Math.round(data.c ?? local.c),
+      f: Math.round(data.f ?? local.f),
+      source: 'ai',
+    };
+  } catch {
+    return { ...local, source: 'local' };
+  }
+}
+
 export function estimateExercise(text: string) {
   if (!text.trim()) return null;
   const lo = text.toLowerCase();
@@ -199,6 +249,57 @@ export function parseTrade(text: string) {
   return { sym, pnl: Math.round(num) };
 }
 
+// ── journal · "summarise my day" ────────────────────────────────────────────────
+// AI SEAM: replace summariseDay with an LLM call over the same DaySnapshot. The
+// deterministic version below stitches the day's signals into a short reflection.
+
+export interface DaySnapshot {
+  doneTasks: string[];
+  openTasks: string[];
+  habitsDone: number;
+  habitsTotal: number;
+  consumedKcal: number;
+  burnedKcal: number;
+  workouts: string[];
+  pnlTodayLabel: string;
+  topGoal: string | null;
+}
+
+export function summariseDay(d: DaySnapshot): string {
+  const bits: string[] = [];
+  if (d.doneTasks.length) {
+    const head = d.doneTasks.slice(0, 2).join(' and ');
+    bits.push(
+      `You closed ${d.doneTasks.length} task${d.doneTasks.length > 1 ? 's' : ''} — ${head}${
+        d.doneTasks.length > 2 ? ' and more' : ''
+      }.`,
+    );
+  } else {
+    bits.push('No tasks checked off yet today.');
+  }
+  if (d.habitsTotal) {
+    bits.push(
+      d.habitsDone === d.habitsTotal
+        ? `Every habit done — a perfect ${d.habitsTotal}/${d.habitsTotal}.`
+        : `Habits at ${d.habitsDone}/${d.habitsTotal}.`,
+    );
+  }
+  if (d.workouts.length) {
+    bits.push(`Trained: ${d.workouts.join(', ')} (${d.burnedKcal} kcal burned).`);
+  }
+  if (d.consumedKcal) {
+    bits.push(`Ate ${d.consumedKcal} kcal.`);
+  }
+  bits.push(`Today's P&L is ${d.pnlTodayLabel}.`);
+  if (d.openTasks.length) {
+    bits.push(`Still open: ${d.openTasks.slice(0, 2).join(', ')}.`);
+  }
+  if (d.topGoal) {
+    bits.push(`Keep pulling toward "${d.topGoal}".`);
+  }
+  return bits.join(' ');
+}
+
 // ── Nateman assistant ──────────────────────────────────────────────────────────
 // AI SEAM: replace respondAssistant with an LLM call that returns the same
 // { answer, actionLabel, intent } contract. The provider executes the intent so
@@ -209,6 +310,14 @@ export type AssistantIntent =
   | { type: 'setTheme'; themeKey: string }
   | { type: 'addTask'; text: string }
   | { type: 'navigate'; page: 'finance' | 'health' };
+
+/** One searchable fact from the user's history — the "brain" index. */
+export interface MemoryItem {
+  kind: 'task' | 'meal' | 'workout' | 'habit' | 'journal' | 'trade';
+  text: string;
+  /** Human-friendly when, e.g. 'today', 'Jun 27'. */
+  when: string;
+}
 
 export interface AssistantSnapshot {
   /** Number of open (incomplete) tasks due today. */
@@ -224,6 +333,44 @@ export interface AssistantSnapshot {
   consumedKcal: number;
   burnedKcal: number;
   remainingKcal: number;
+  /** Everything the user has logged — searched for recall ("ask my OS"). */
+  memory: MemoryItem[];
+}
+
+const STOP = new Set([
+  'the', 'a', 'an', 'and', 'or', 'to', 'of', 'in', 'on', 'for', 'my', 'me', 'i',
+  'did', 'do', 'does', 'have', 'has', 'had', 'was', 'were', 'is', 'are', 'am',
+  'what', 'when', 'where', 'which', 'who', 'how', 'about', 'that', 'this', 'it',
+  'recall', 'remember', 'find', 'search', 'show', 'tell', 'any', 'some', 'last',
+  'nateman', 'with', 'from', 'at', 'be', 'been', 'get', 'got', 'up',
+]);
+
+const KIND_LABEL: Record<MemoryItem['kind'], string> = {
+  task: 'task',
+  meal: 'meal',
+  workout: 'workout',
+  habit: 'habit',
+  journal: 'journal entry',
+  trade: 'trade',
+};
+
+/** Keyword search across the memory index — the deterministic "brain". */
+export function searchMemory(query: string, memory: MemoryItem[]): MemoryItem[] {
+  const terms = query
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .split(/\s+/)
+    .filter((w) => w.length > 2 && !STOP.has(w));
+  if (!terms.length) return [];
+  const scored = memory
+    .map((m) => {
+      const hay = m.text.toLowerCase();
+      const score = terms.reduce((n, t) => n + (hay.includes(t) ? 1 : 0), 0);
+      return { m, score };
+    })
+    .filter((x) => x.score > 0)
+    .sort((a, b) => b.score - a.score);
+  return scored.slice(0, 3).map((x) => x.m);
 }
 
 export interface AssistantReply {
@@ -238,6 +385,31 @@ export function respondAssistant(
 ): AssistantReply {
   const lo = query.toLowerCase();
   const th: Theme | undefined = THEMES.find((t) => lo.includes(t.name.toLowerCase()));
+
+  // Recall / "ask my OS" — search the user's logged history and cite a source.
+  if (
+    /\b(when|what|did|have|recall|remember|find|search|last time|history|ago|note|wrote|journal(ed)?|ate|eat|log(ged)?)\b/.test(
+      lo,
+    ) &&
+    !/today|plate|agenda|schedule|net liquid|theme/.test(lo)
+  ) {
+    const hits = searchMemory(query, snap.memory);
+    if (hits.length) {
+      const top = hits[0];
+      const more =
+        hits.length > 1
+          ? ` I also found ${hits.length - 1} related ${
+              hits.length - 1 > 1 ? 'entries' : 'entry'
+            }.`
+          : '';
+      return {
+        answer: `From your ${KIND_LABEL[top.kind]} on ${top.when}: "${top.text}".${more}`,
+        actionLabel: `Recalled · ${top.when}`,
+        intent: { type: 'none' },
+      };
+    }
+    // fall through to the generic handlers if nothing matched
+  }
 
   if (th && /theme|mode|switch|change|colou?r|look/.test(lo)) {
     return {

@@ -15,10 +15,13 @@ import {
   classifyTask,
   estimateExercise,
   estimateFood,
+  estimateFoodSmart,
   parseTrade,
   respondAssistant,
+  summariseDay,
   transcribeVoice,
   type AssistantSnapshot,
+  type MemoryItem,
 } from '@/lib/ai';
 import {
   fmtMoney,
@@ -121,6 +124,13 @@ export interface TempoApi {
   onNaInput: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onNaKey: (e: React.KeyboardEvent) => void;
   onNaSend: () => void;
+  // journal
+  onJournalInput: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
+  onJournalKey: (e: React.KeyboardEvent) => void;
+  onJournalSubmit: () => void;
+  setJournalMood: (m: import('@/lib/types').Mood) => void;
+  removeJournalEntry: (id: string) => void;
+  summariseToday: () => void;
 }
 
 const Ctx = createContext<TempoApi | null>(null);
@@ -469,10 +479,13 @@ export function TempoProvider({ children }: { children: React.ReactNode }) {
   // ── fuel / training / trade ─────────────────────────────────────────────────
   const onFoodInput = (e: React.ChangeEvent<HTMLInputElement>) =>
     set({ foodDraft: e.target.value });
-  const onFoodSubmit = useCallback(() => {
+  const onFoodSubmit = useCallback(async () => {
     const t = ref.current.foodDraft.trim();
     if (!t) return;
-    const est = estimateFood(t);
+    // Clear the input immediately; resolve macros via the AI seam (falls back to
+    // the local estimate when no LLM key is configured).
+    set({ foodDraft: '' });
+    const est = await estimateFoodSmart(t);
     if (!est) return;
     const meal = {
       id: 'm' + Date.now(),
@@ -483,8 +496,10 @@ export function TempoProvider({ children }: { children: React.ReactNode }) {
       c: est.c,
       f: est.f,
     };
-    set((s) => ({ foodDraft: '', meals: [...s.meals, meal] }));
-    flashToast(`Logged ${est.kcal} kcal · ${est.p}g protein`);
+    set((s) => ({ meals: [...s.meals, meal] }));
+    flashToast(
+      `Logged ${est.kcal} kcal · ${est.p}g protein${est.source === 'ai' ? ' · AI' : ''}`,
+    );
   }, [set, flashToast]);
   const onFoodKey = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') onFoodSubmit();
@@ -922,6 +937,75 @@ export function TempoProvider({ children }: { children: React.ReactNode }) {
     if (e.key === 'Enter') onCalAdd();
   };
 
+  // ── journal ─────────────────────────────────────────────────────────────────
+  const onJournalInput = (e: React.ChangeEvent<HTMLTextAreaElement>) =>
+    set({ journalDraft: e.target.value });
+  const onJournalSubmit = useCallback(() => {
+    const t = ref.current.journalDraft.trim();
+    if (!t) return;
+    const entry = {
+      id: 'j' + Date.now(),
+      date: isoLocal(new Date()),
+      time: nowTime(),
+      text: t,
+      mood: ref.current.journalMood,
+    };
+    set((s) => ({ journalDraft: '', journal: [entry, ...s.journal] }));
+    flashToast('Journal entry saved');
+  }, [set, flashToast]);
+  const onJournalKey = (e: React.KeyboardEvent) => {
+    // Cmd/Ctrl+Enter saves; plain Enter keeps a newline.
+    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+      e.preventDefault();
+      onJournalSubmit();
+    }
+  };
+  const setJournalMood = useCallback(
+    (m: import('@/lib/types').Mood) => set({ journalMood: m }),
+    [set],
+  );
+  const removeJournalEntry = useCallback(
+    (id: string) =>
+      set((s) => ({ journal: s.journal.filter((j) => j.id !== id) })),
+    [set],
+  );
+  const summariseToday = useCallback(() => {
+    set({ summarizing: true });
+    const s = ref.current;
+    const today = isoLocal(new Date());
+    const todayTasks = s.tasks.filter((t) => taskDate(t) === today);
+    const ti = todayIndex();
+    const snap = {
+      doneTasks: todayTasks.filter((t) => t.done).map((t) => t.title),
+      openTasks: todayTasks.filter((t) => !t.done).map((t) => t.title),
+      habitsDone: s.habits.filter((h) => h.week[ti]).length,
+      habitsTotal: s.habits.length,
+      consumedKcal: s.meals.reduce((a, m) => a + m.kcal, 0),
+      burnedKcal: s.workouts.reduce((a, w) => a + w.kcal, 0),
+      workouts: s.workouts.map((w) => w.name),
+      pnlTodayLabel: fmtSigned(s.fin.pnlToday, s.currency),
+      topGoal:
+        s.goals.weekly.krs.find((k) => !k.done)?.label ||
+        s.goals.weekly.title ||
+        null,
+    };
+    const text = summariseDay(snap);
+    const entry = {
+      id: 'j' + Date.now(),
+      date: today,
+      time: nowTime(),
+      text,
+      mood: ref.current.journalMood,
+      summary: text,
+    };
+    // Brief beat so the "summarising…" state is perceptible.
+    clearTimeout(timers.current.sum);
+    timers.current.sum = setTimeout(() => {
+      set((st) => ({ summarizing: false, journal: [entry, ...st.journal] }));
+      flashToast('Summarised your day');
+    }, 450);
+  }, [set, flashToast]);
+
   // ── settings ────────────────────────────────────────────────────────────────
   const setTheme = useCallback((k: string) => set({ theme: k }), [set]);
   const setCurrency = useCallback(
@@ -990,6 +1074,46 @@ export function TempoProvider({ children }: { children: React.ReactNode }) {
     const liq = s.fin.cashOpening + inc - sp + s.fin.savings + s.fin.ewallet;
     const consumed = s.meals.reduce((a, m) => a + m.kcal, 0);
     const burned = s.workouts.reduce((a, w) => a + w.kcal, 0);
+    // Build the searchable "brain" index from everything the user has logged.
+    const whenOf = (iso: string) =>
+      iso === today
+        ? 'today'
+        : new Date(iso + 'T00:00:00').toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric',
+          });
+    const memory: MemoryItem[] = [
+      ...s.journal.map((j) => ({
+        kind: 'journal' as const,
+        text: j.text,
+        when: whenOf(j.date),
+      })),
+      ...s.tasks.map((t) => ({
+        kind: 'task' as const,
+        text: t.title + (t.done ? ' (done)' : ''),
+        when: whenOf(taskDate(t)),
+      })),
+      ...s.meals.map((m) => ({
+        kind: 'meal' as const,
+        text: `${m.name} — ${m.kcal} kcal, ${m.p}g protein`,
+        when: m.time,
+      })),
+      ...s.workouts.map((w) => ({
+        kind: 'workout' as const,
+        text: `${w.name} — ${w.minutes} min, ${w.kcal} kcal`,
+        when: w.time,
+      })),
+      ...s.habits.map((h) => ({
+        kind: 'habit' as const,
+        text: `${h.name} habit (${h.cat})`,
+        when: 'today',
+      })),
+      ...s.fin.trades.map((tr) => ({
+        kind: 'trade' as const,
+        text: `${tr.sym} trade — ${fmtSigned(tr.pnl, s.currency)}`,
+        when: tr.date,
+      })),
+    ];
     return {
       openToday: open.length,
       firstOpenTitle: open[0] ? open[0].title : null,
@@ -1001,6 +1125,7 @@ export function TempoProvider({ children }: { children: React.ReactNode }) {
       consumedKcal: consumed,
       burnedKcal: burned,
       remainingKcal: s.targets.kcal - (consumed - burned),
+      memory,
     };
   };
 
@@ -1223,6 +1348,12 @@ export function TempoProvider({ children }: { children: React.ReactNode }) {
       onNaInput,
       onNaKey,
       onNaSend,
+      onJournalInput,
+      onJournalKey,
+      onJournalSubmit,
+      setJournalMood,
+      removeJournalEntry,
+      summariseToday,
     }),
     // state is the only value that needs to retrigger consumers; handlers are stable enough
     // eslint-disable-next-line react-hooks/exhaustive-deps

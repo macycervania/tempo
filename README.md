@@ -1,20 +1,25 @@
 # tempo // OS
 
-A dense, dark, AI-built command center for four lives — **school, internship, gym, and trading** — implemented in **Next.js + TypeScript** from the Claude Design prototype in [`project/Tempo.dc.html`](project/Tempo.dc.html).
+A dense, dark, AI-built command center for four lives — **school, internship, gym, and trading** — implemented in **Next.js + TypeScript** from the Claude Design prototype in [`project/Tempo.dc.html`](project/Tempo.dc.html), and extended with ideas from the *Personal OS Build Cheat Sheet*.
 
-It's a single-page dashboard with six views, a warm-black + amber palette, six switchable themes (including a true light mode), and **Nateman**, a CSS-rendered assistant orb.
+It's a single-page, **phone-friendly** dashboard with seven views, a warm-black + amber palette, six switchable themes (including a true light mode), and **Nateman**, a CSS-rendered assistant orb.
 
 ## Features
 
-- **Overview** — editable category bar, KPI summary strip, natural-language capture (type or simulated voice) that auto-files tasks and sets priority, weekly/monthly goals with key results, an auto-ordered priorities list, Fuel (food → macros), Training (workout → calories), and a Habits board with a daily-score ring, fire streaks, and sub-tasks.
-- **Health** — today's intake / burned / net with macros, a 7-day intake trend, and full meal & training logs.
+- **Overview** — a focused two-column board: a Session card with a compact **morning briefing** (first task, habits, weekly-goal progress, P&L), natural-language capture (type or simulated voice) that auto-files tasks and sets priority, weekly/monthly goals with key results, an auto-ordered Priorities list, and a Habits board with a daily-score ring, fire streaks, and sub-tasks.
+- **Health** — today's intake / burned / net with macros, a 7-day intake trend, and full meal & training logs. Meal logging runs through the **AI macro seam** (see below).
 - **Budget** — a zero-based monthly budget in pesos: income + eight expense groups with subcategories, inline editing, and a smart expense logger. Drives the Finance page's cash.
 - **Finance** — net liquid (linked live to the budget), assets/portfolio, realized P&L with a last-10-sessions chart, and a trade journal you can log into.
 - **Calendar** — a month grid wired to your tasks; click a day to view, complete, or add tasks to it.
+- **Journal** — dated reflections with a mood tag; write your own, or hit **"Summarise my day"** to generate an entry from today's tasks, habits, training and P&L. Entries feed Nateman's recall.
 - **Settings** — profile (name + photo), six themes, currency, daily targets, notifications, reduce-motion, and the Nateman assistant controls.
-- **Nateman** — summon by clicking the orb, typing `nateman …`, or (where supported) the "hey nateman" voice wake word. He answers from real app data and can switch themes, add tasks, or jump to a page. Talking mouth, confetti on a perfect habit day, and optional text-to-speech.
+- **Nateman** — summon by clicking the orb, typing `nateman …`, or (where supported) the "hey nateman" voice wake word. Beyond planning your day and switching themes, he now does **"ask my OS" recall** — search across your tasks, meals, workouts, habits and journal and cite the source (e.g. *"what did I journal about trades"*). Talking mouth, confetti on a perfect habit day, and optional text-to-speech.
 
 Preferences and your profile persist to `localStorage`.
+
+## Installable on your phone
+
+The app ships a web manifest and Apple touch metadata, renders edge-to-edge under the iOS notch (safe-area insets), and reflows to a single column with a scrollable nav on small screens — so "Add to Home Screen" gives you a standalone, app-like experience.
 
 ## Tech
 
@@ -24,7 +29,14 @@ Preferences and your profile persist to `localStorage`.
 
 ### The "AI" layer
 
-All smart behavior — natural-language task classification, food → macros, workout → burn, trade parsing, scripted voice transcription, and the Nateman assistant — is a **local, deterministic simulation** isolated in [`lib/ai.ts`](lib/ai.ts). Each function is a small, pure seam (search for `AI SEAM`) you can swap for a real LLM, speech-to-text stream, or nutrition API **without touching the UI** — `respondAssistant` already returns a structured `{ answer, actionLabel, intent }` contract that the provider executes.
+All smart behavior — natural-language task classification, food → macros, workout → burn, trade parsing, scripted voice transcription, the day-summary, recall, and the Nateman assistant — lives behind small, pure seams in [`lib/ai.ts`](lib/ai.ts) (search for `AI SEAM`). They ship as a **local, deterministic simulation** so the app runs with zero configuration, and each one is a drop-in point for a real model or API **without touching the UI**.
+
+**Macros are wired for a real LLM.** Logging a meal calls `estimateFoodSmart`, which POSTs to [`app/api/nutrition/estimate`](app/api/nutrition/estimate/route.ts). That route calls Claude (via the official `@anthropic-ai/sdk`) when `ANTHROPIC_API_KEY` is set, and otherwise returns `501` so the client falls back to the built-in food table — the app stays fully functional offline. The route is also the obvious place to swap in a nutrition provider (Nutritionix, USDA FoodData Central, etc.); the `{ kcal, p, c, f }` contract is all the UI knows.
+
+```bash
+ANTHROPIC_API_KEY=sk-ant-...   # enables AI macro estimation (optional)
+NUTRITION_MODEL=claude-haiku-4-5   # optional model override (default: claude-opus-4-8)
+```
 
 ## Getting started
 
@@ -40,9 +52,10 @@ npm run build && npm start   # production
 ## Project layout
 
 ```
-app/            Next.js App Router (layout, page, global CSS, favicon)
+app/            Next.js App Router (layout, page, global CSS, icon, manifest,
+                api/nutrition/estimate — the server-side macro LLM seam)
 components/     React views (TopBar, Overview, Health, Budget, Finance,
-                Calendar, Settings, Nateman, Toast) + the css() helper
+                Calendar, Journal, Settings, Nateman, Toast) + the css() helper
 lib/            types, constants/seed data, format helpers, storage, ai.ts
 state/          TempoProvider (state + actions) and useViewModel (derived data)
 project/        the original Claude Design prototype + reference assets

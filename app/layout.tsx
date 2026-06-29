@@ -5,11 +5,23 @@ export const metadata: Metadata = {
   title: 'tempo // OS',
   description:
     'A dense, dark, AI-built command center for your four lives — school, internship, gym, and trading.',
+  applicationName: 'Tempo',
+  // Installable / standalone behaviour when added to an iOS home screen.
+  appleWebApp: {
+    capable: true,
+    title: 'Tempo',
+    statusBarStyle: 'black-translucent',
+  },
+  formatDetection: { telephone: false },
 };
 
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
+  // Let the UI extend under the iOS notch / home indicator (paired with the
+  // env(safe-area-inset-*) padding in globals.css).
+  viewportFit: 'cover',
+  themeColor: '#0c0b0a',
 };
 
 export default function RootLayout({

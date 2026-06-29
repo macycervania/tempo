@@ -41,6 +41,20 @@ export interface Workout {
   kcal: number;
 }
 
+export type Mood = 'great' | 'good' | 'okay' | 'low' | 'rough';
+
+export interface JournalEntry {
+  id: string;
+  /** ISO date (en-CA) the entry belongs to. */
+  date: string;
+  /** Clock time the entry was written. */
+  time: string;
+  text: string;
+  mood?: Mood;
+  /** AI 'summarise my day' output, generated on demand. */
+  summary?: string;
+}
+
 export interface HabitSub {
   label: string;
   done: boolean;
@@ -163,6 +177,7 @@ export type Page =
   | 'budget'
   | 'finance'
   | 'calendar'
+  | 'journal'
   | 'settings';
 
 export type NaPhase = 'idle' | 'listening' | 'thinking' | 'answer';
@@ -220,4 +235,9 @@ export interface TempoState {
   habits: Habit[];
   habitExpanded: string | null;
   fin: Finance;
+  // journal
+  journal: JournalEntry[];
+  journalDraft: string;
+  journalMood: Mood;
+  summarizing: boolean;
 }

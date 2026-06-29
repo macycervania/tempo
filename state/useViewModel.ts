@@ -17,7 +17,15 @@ import {
   taskDate,
   todayIndex,
 } from '@/lib/format';
-import type { Area, Priority, Task } from '@/lib/types';
+import type { Area, Mood, Priority, Task } from '@/lib/types';
+
+const MOODS: { key: Mood; label: string; glyph: string; color: string }[] = [
+  { key: 'great', label: 'Great', glyph: '◉', color: '#74ad84' },
+  { key: 'good', label: 'Good', glyph: '◍', color: '#9bbf7a' },
+  { key: 'okay', label: 'Okay', glyph: '◑', color: 'var(--accent)' },
+  { key: 'low', label: 'Low', glyph: '◌', color: '#bd9166' },
+  { key: 'rough', label: 'Rough', glyph: '○', color: '#c77b6b' },
+];
 
 const rank: Record<Priority, number> = { high: 0, med: 1, low: 2 };
 
@@ -150,6 +158,7 @@ export function useViewModel() {
       { key: 'budget', label: 'Budget' },
       { key: 'finance', label: 'Finance' },
       { key: 'calendar', label: 'Calendar' },
+      { key: 'journal', label: 'Journal' },
     ] as const
   ).map((t) => ({
     label: t.label,
@@ -629,6 +638,58 @@ export function useViewModel() {
   };
   const goals = { weekly: goalCard('weekly', 'w'), monthly: goalCard('monthly', 'm') };
 
+  // journal
+  const moodMeta = (m?: Mood) => MOODS.find((x) => x.key === m) || MOODS[1];
+  const journalDateLabel = (iso: string) =>
+    iso === todayISO
+      ? 'Today'
+      : new Date(iso + 'T00:00:00').toLocaleDateString('en-US', {
+          weekday: 'short',
+          month: 'short',
+          day: 'numeric',
+        });
+  const journal = {
+    draft: s.journalDraft,
+    onInput: api.onJournalInput,
+    onKey: api.onJournalKey,
+    onSubmit: api.onJournalSubmit,
+    onSummarise: api.summariseToday,
+    summarizing: s.summarizing,
+    canSave: !!s.journalDraft.trim(),
+    count: s.journal.length,
+    moodPicker: MOODS.map((m) => ({
+      key: m.key,
+      label: m.label,
+      glyph: m.glyph,
+      onClick: () => api.setJournalMood(m.key),
+      style: `display:flex;align-items:center;gap:6px;padding:6px 11px;border-radius:9px;cursor:pointer;font-size:12px;font-weight:600;transition:all .12s;border:1px solid ${
+        s.journalMood === m.key ? m.color : 'var(--line2)'
+      };color:${
+        s.journalMood === m.key ? 'var(--text)' : 'var(--text-faint)'
+      };background:${
+        s.journalMood === m.key
+          ? `color-mix(in srgb, ${m.color} 14%, transparent)`
+          : 'transparent'
+      }`,
+      dotStyle: `color:${m.color};font-size:13px`,
+    })),
+    empty: s.journal.length === 0,
+    entries: s.journal.map((j) => {
+      const mm = moodMeta(j.mood);
+      return {
+        id: j.id,
+        text: j.text,
+        time: j.time,
+        dateLabel: journalDateLabel(j.date),
+        moodLabel: mm.label,
+        moodGlyph: mm.glyph,
+        moodColor: mm.color,
+        isSummary: !!j.summary,
+        onRemove: () => api.removeJournalEntry(j.id),
+      };
+    }),
+  };
+
   // calendar (linked to tasks)
   const monthBase = new Date(now.getFullYear(), now.getMonth() + s.calOffset, 1);
   const firstWeekday = (monthBase.getDay() + 6) % 7;
@@ -786,6 +847,7 @@ export function useViewModel() {
     onNaSend: api.onNaSend,
     chips: [
       { label: 'My day', q: 'what’s on my plate today' },
+      { label: 'Recall', q: 'what did I journal about trades' },
       { label: 'Net liquid', q: 'what’s my net liquid' },
       { label: 'Add a task', q: 'add review my trades tonight' },
       { label: 'Midnight theme', q: 'switch to midnight theme' },
@@ -801,6 +863,30 @@ export function useViewModel() {
     { label: 'P&L TODAY', val: fmtSig(fd.pnlToday), color: pnlColor(fd.pnlToday) },
   ];
 
+  // Morning briefing — a compact, glanceable summary line for the session card.
+  const briefing = [
+    {
+      label: 'FIRST UP',
+      val: todayOpen[0] ? todayOpen[0].title : 'All clear',
+      color: 'var(--text-dim)',
+    },
+    {
+      label: 'HABITS',
+      val: `${habitsDone}/${s.habits.length}`,
+      color: habitsDone === s.habits.length && s.habits.length ? '#74ad84' : 'var(--text-dim)',
+    },
+    {
+      label: 'WEEKLY GOAL',
+      val: goals.weekly.progressLabel,
+      color: 'var(--text-dim)',
+    },
+    {
+      label: 'P&L',
+      val: fmtSig(fd.pnlToday),
+      color: pnlColor(fd.pnlToday),
+    },
+  ];
+
   return {
     pageTabs,
     isOverview: s.page === 'overview',
@@ -808,6 +894,7 @@ export function useViewModel() {
     isHealth: s.page === 'health',
     isBudget: s.page === 'budget',
     isCalendar: s.page === 'calendar',
+    isJournal: s.page === 'journal',
     isSettings: s.page === 'settings',
     rootStyle,
     rootClass,
@@ -833,6 +920,7 @@ export function useViewModel() {
       s.managing ? 'var(--text)' : 'var(--text-faint)'
     }`,
     kpis,
+    briefing,
     greeting,
     aiSummary,
     tasks,
@@ -870,6 +958,7 @@ export function useViewModel() {
     onExSubmit: api.onExSubmit,
     exHint: ee ? `~${ee.kcal} kcal burned · ${ee.minutes} min` : '',
     hb,
+    journal,
     fin,
     tradeDraft: s.tradeDraft,
     onTradeInput: api.onTradeInput,

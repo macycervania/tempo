@@ -17,6 +17,57 @@ body {
   font-family: 'Hanken Grotesk', system-ui, sans-serif;
   color: var(--text);
   -webkit-font-smoothing: antialiased;
+  /* iOS: don't auto-inflate text, and kill the grey tap flash on buttons. */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior-y: none;
+}
+
+/* ── App shell layout (responsive + iOS safe areas) ─────────────────────────── */
+.appScroll {
+  -webkit-overflow-scrolling: touch;
+}
+.appContent {
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: 18px 22px 40px;
+  padding-left: max(22px, env(safe-area-inset-left));
+  padding-right: max(22px, env(safe-area-inset-right));
+  padding-bottom: max(40px, env(safe-area-inset-bottom));
+}
+@media (max-width: 640px) {
+  .appContent {
+    padding-top: 14px;
+    padding-left: max(13px, env(safe-area-inset-left));
+    padding-right: max(13px, env(safe-area-inset-right));
+    padding-bottom: max(32px, env(safe-area-inset-bottom));
+  }
+}
+
+/* Top bar: nav scrolls horizontally on narrow screens instead of overflowing. */
+.tb-nav {
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+.tb-nav::-webkit-scrollbar {
+  display: none;
+}
+.tb-nav > button {
+  flex: 0 0 auto;
+}
+@media (max-width: 560px) {
+  .tb-clock {
+    display: none;
+  }
+}
+
+/* Comfortable tap targets on touch devices. */
+@media (hover: none) and (pointer: coarse) {
+  button {
+    touch-action: manipulation;
+  }
 }
 
 :root {

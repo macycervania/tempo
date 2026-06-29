@@ -172,6 +172,11 @@ export function todayISO(): string {
   return new Date().toLocaleDateString('en-CA');
 }
 
+/** An en-CA ISO date string `n` days before today, in local time. */
+export function daysAgoISO(n: number): string {
+  return new Date(Date.now() - n * 86400000).toLocaleDateString('en-CA');
+}
+
 /** The initial application state — the prototype's seed data. */
 export function makeInitialState(): TempoState {
   return {
@@ -359,5 +364,24 @@ export function makeInitialState(): TempoState {
         { id: 't4', sym: 'AAPL', date: 'Mon', pnl: 520 },
       ],
     },
+    journal: [
+      {
+        id: 'j1',
+        date: daysAgoISO(1),
+        time: '22:10',
+        text: 'Closed a green trading day and finally merged the rate-limit PR. Felt scattered in the afternoon — too many context switches. Tomorrow: one deep-work block before standup.',
+        mood: 'good',
+      },
+      {
+        id: 'j2',
+        date: daysAgoISO(2),
+        time: '21:30',
+        text: 'Skipped the gym, regret it. Studied OS chapter 6 instead. Need to protect the morning workout slot.',
+        mood: 'okay',
+      },
+    ],
+    journalDraft: '',
+    journalMood: 'good',
+    summarizing: false,
   };
 }
