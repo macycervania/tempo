@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{background:#0c0b0a;font-family:'Hanken Grotesk',system-ui,sans-serif;color:#ececea;-webkit-font-smoothing:antialiased}
+  ::-webkit-scrollbar{width:10px;height:10px}
+  ::-webkit-scrollbar-thumb{background:#262320;border-radius:6px;border:3px solid #0c0b0a}
+  ::-webkit-scrollbar-thumb:hover{background:#322e2a}
+  ::-webkit-scrollbar-track{background:transparent}
+  input,textarea{font-family:inherit}
+  input:focus,textarea:focus{outline:none}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+  @keyframes pulse{0%,100%{opacity:.45}50%{opacity:1}}
+  @keyframes pop{0%{transform:scale(.6)}60%{transform:scale(1.15)}100%{transform:scale(1)}}
+</style>
+</helmet>
+<div style="display:flex;height:100vh;min-height:640px;overflow:hidden;background:#0c0b0a">
+
+  <!-- ============ SIDEBAR ============ -->
+  <aside style="width:248px;flex:0 0 248px;background:#100e0d;border-right:1px solid #1f1c19;display:flex;flex-direction:column;padding:20px 14px">
+    <div style="display:flex;align-items:center;gap:9px;padding:4px 8px 22px">
+      <div style="width:9px;height:9px;border-radius:50%;background:#e8a44c;box-shadow:0 0 12px rgba(232,164,76,.6)"></div>
+      <span style="font-family:'JetBrains Mono',monospace;font-weight:500;font-size:15px;letter-spacing:1px;color:#ececea">tempo</span>
+      <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#635c54;margin-left:auto">v1</span>
+    </div>
+
+    <nav style="display:flex;flex-direction:column;gap:2px">
+      <sc-for list="{{ navItems }}" as="nav" hint-placeholder-count="4">
+        <button onClick="{{ nav.onClick }}" style="{{ nav.style }}" style-hover="background:#1a1714">
+          <span style="font-size:13.5px;font-weight:500">{{ nav.label }}</span>
+          <sc-if value="{{ nav.showCount }}" hint-placeholder-val="{{ true }}">
+            <span style="{{ nav.countStyle }}">{{ nav.count }}</span>
+          </sc-if>
+        </button>
+      </sc-for>
+    </nav>
+
+    <div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1.5px;color:#5c554d;padding:24px 8px 10px">LIFE AREAS</div>
+    <div style="display:flex;flex-direction:column;gap:2px">
+      <sc-for list="{{ areaItems }}" as="area" hint-placeholder-count="5">
+        <button onClick="{{ area.onClick }}" style="{{ area.style }}" style-hover="background:#1a1714">
+          <span style="width:7px;height:7px;border-radius:2px;flex:0 0 7px;background:{{ area.tint }}"></span>
+          <span style="font-size:13.5px;font-weight:500;flex:1;text-align:left">{{ area.label }}</span>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#5c554d">{{ area.count }}</span>
+        </button>
+      </sc-for>
+    </div>
+
+    <div style="margin-top:auto;display:flex;align-items:center;gap:10px;padding:12px 8px;border-top:1px solid #1f1c19">
+      <div style="width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#2a2722,#181614);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:#cfc8bf">JK</div>
+      <div style="line-height:1.2">
+        <div style="font-size:12.5px;font-weight:600">My day</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#635c54">{{ shortDate }}</div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ============ MAIN ============ -->
+  <main style="flex:1;min-width:0;display:flex;flex-direction:column;overflow:hidden">
+
+    <!-- Capture bar -->
+    <div style="padding:18px 28px 14px;border-bottom:1px solid #1f1c19;background:#0c0b0a">
+      <div style="display:flex;align-items:flex-start;gap:12px">
+        <div style="flex:1">
+          <div style="display:flex;align-items:center;gap:11px;background:#161412;border:1px solid #2a2622;border-radius:11px;padding:0 14px;height:48px;transition:border-color .15s" style-focus-within="border-color:#3d362f">
+            <div style="width:7px;height:7px;border-radius:50%;background:#e8a44c;flex:0 0 7px;animation:pulse 2.4s ease-in-out infinite"></div>
+            <input value="{{ capture }}" onInput="{{ onCaptureInput }}" onKeyDown="{{ onCaptureKey }}" placeholder="Tell me what's on your mind — &quot;gym push day today !&quot;, &quot;read OS ch.7 tomorrow&quot;" style="flex:1;background:none;border:none;color:#ececea;font-size:14.5px" />
+            <button onClick="{{ onCaptureSubmit }}" style="{{ addBtnStyle }}" style-hover="filter:brightness(1.08)">Add</button>
+          </div>
+          <sc-if value="{{ hasCapture }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;align-items:center;gap:8px;padding:9px 4px 0;animation:fadeUp .18s ease">
+              <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#635c54;letter-spacing:.5px">AI READS</span>
+              <span style="display:inline-flex;align-items:center;gap:6px;background:{{ preview.areaBg }};border:1px solid {{ preview.areaBorder }};border-radius:6px;padding:3px 9px;font-size:12px;font-weight:500;color:{{ preview.areaColor }}">
+                <span style="width:6px;height:6px;border-radius:2px;background:{{ preview.tint }}"></span>{{ preview.areaLabel }}
+              </span>
+              <span style="background:#1d1a16;border:1px solid #2a2622;border-radius:6px;padding:3px 9px;font-size:12px;font-weight:500;color:#b6aea4">{{ preview.dueLabel }}</span>
+              <sc-if value="{{ preview.priority }}" hint-placeholder-val="{{ false }}">
+                <span style="background:rgba(232,164,76,.14);border:1px solid rgba(232,164,76,.3);border-radius:6px;padding:3px 9px;font-size:12px;font-weight:600;color:#e8a44c">High priority</span>
+              </sc-if>
+            </div>
+          </sc-if>
+        </div>
+      </div>
+    </div>
+
+    <!-- Scroll body -->
+    <div style="flex:1;overflow-y:auto;padding:26px 28px 60px">
+
+      <!-- header -->
+      <div style="display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:22px">
+        <div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:1.5px;color:#e8a44c;margin-bottom:7px">{{ viewKicker }}</div>
+          <h1 style="font-size:27px;font-weight:700;letter-spacing:-.5px;line-height:1.05">{{ viewTitle }}</h1>
+        </div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#635c54;text-align:right">{{ longDate }}</div>
+      </div>
+
+      <!-- TASK VIEWS (today / upcoming) -->
+      <sc-if value="{{ isTaskView }}" hint-placeholder-val="{{ true }}">
+        <div style="display:flex;flex-direction:column;gap:26px">
+          <sc-for list="{{ groups }}" as="group" hint-placeholder-count="3">
+            <section>
+              <div style="display:flex;align-items:center;gap:10px;margin-bottom:11px">
+                <span style="width:7px;height:7px;border-radius:2px;background:{{ group.tint }}"></span>
+                <h2 style="font-size:13px;font-weight:600;letter-spacing:.3px;color:#cfc8bf">{{ group.label }}</h2>
+                <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#5c554d">{{ group.count }}</span>
+                <div style="flex:1;height:1px;background:#1c1916"></div>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:6px">
+                <sc-for list="{{ group.tasks }}" as="task" hint-placeholder-count="3">
+                  <div style="{{ task.rowStyle }}" style-hover="background:#161412;border-color:#2a2622">
+                    <button onClick="{{ task.onToggle }}" style="{{ task.boxStyle }}">
+                      <sc-if value="{{ task.done }}" hint-placeholder-val="{{ false }}">
+                        <span style="font-size:12px;color:#0c0b0a;font-weight:700;animation:pop .2s ease">✓</span>
+                      </sc-if>
+                    </button>
+                    <div style="flex:1;min-width:0">
+                      <div style="{{ task.titleStyle }}">{{ task.title }}</div>
+                      <sc-if value="{{ task.hasMeta }}" hint-placeholder-val="{{ false }}">
+                        <div style="display:flex;align-items:center;gap:8px;margin-top:3px">
+                          <span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;color:#635c54">{{ task.metaLabel }}</span>
+                        </div>
+                      </sc-if>
+                    </div>
+                    <sc-if value="{{ task.priority }}" hint-placeholder-val="{{ false }}">
+                      <span style="color:#e8a44c;font-weight:700;font-size:15px;flex:0 0 auto">!</span>
+                    </sc-if>
+                    <span style="display:inline-flex;align-items:center;gap:6px;flex:0 0 auto;background:#1a1714;border-radius:6px;padding:3px 9px;font-size:11.5px;font-weight:500;color:#a59d93">
+                      <span style="width:6px;height:6px;border-radius:2px;background:{{ task.tint }}"></span>{{ task.areaLabel }}
+                    </span>
+                  </div>
+                </sc-for>
+              </div>
+            </section>
+          </sc-for>
+          <sc-if value="{{ groupsEmpty }}" hint-placeholder-val="{{ false }}">
+            <div style="text-align:center;padding:70px 20px;color:#5c554d">
+              <div style="font-size:34px;margin-bottom:10px">✦</div>
+              <div style="font-size:15px;font-weight:600;color:#948d84">All clear here.</div>
+              <div style="font-size:13px;margin-top:5px">Capture something above and I'll sort it for you.</div>
+            </div>
+          </sc-if>
+        </div>
+      </sc-if>
+
+      <!-- HABITS VIEW -->
+      <sc-if value="{{ isHabits }}" hint-placeholder-val="{{ false }}">
+        <div style="background:#100e0d;border:1px solid #1f1c19;border-radius:14px;overflow:hidden">
+          <div style="display:grid;grid-template-columns:1fr repeat(7,42px);align-items:center;padding:14px 20px;border-bottom:1px solid #1c1916">
+            <span style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1.5px;color:#5c554d">ROUTINE</span>
+            <sc-for list="{{ weekDays }}" as="d" hint-placeholder-count="7">
+              <span style="{{ d.style }}">{{ d.label }}</span>
+            </sc-for>
+          </div>
+          <sc-for list="{{ habits }}" as="habit" hint-placeholder-count="5">
+            <div style="display:grid;grid-template-columns:1fr repeat(7,42px);align-items:center;padding:13px 20px;border-bottom:1px solid #161310" style-hover="background:#13110f">
+              <div style="display:flex;align-items:center;gap:11px">
+                <span style="font-size:14px;font-weight:600;color:#dcd5cc">{{ habit.name }}</span>
+                <span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;color:#e8a44c">{{ habit.streakLabel }}</span>
+              </div>
+              <sc-for list="{{ habit.cells }}" as="cell" hint-placeholder-count="7">
+                <div style="display:flex;justify-content:center">
+                  <button onClick="{{ cell.onToggle }}" style="{{ cell.style }}">
+                    <sc-if value="{{ cell.done }}" hint-placeholder-val="{{ false }}">
+                      <span style="font-size:11px;color:#0c0b0a;font-weight:700">✓</span>
+                    </sc-if>
+                  </button>
+                </div>
+              </sc-for>
+            </div>
+          </sc-for>
+        </div>
+      </sc-if>
+
+      <!-- NOTES VIEW -->
+      <sc-if value="{{ isNotes }}" hint-placeholder-val="{{ false }}">
+        <div>
+          <div style="display:flex;gap:10px;margin-bottom:20px">
+            <input value="{{ noteDraft }}" onInput="{{ onNoteInput }}" onKeyDown="{{ onNoteKey }}" placeholder="Jot a quick thought…" style="flex:1;background:#161412;border:1px solid #2a2622;border-radius:10px;padding:0 14px;height:44px;color:#ececea;font-size:14px" />
+            <button onClick="{{ onNoteSubmit }}" style="{{ addBtnStyle }}">Save note</button>
+          </div>
+          <div style="columns:3;column-gap:14px">
+            <sc-for list="{{ notes }}" as="note" hint-placeholder-count="4">
+              <div style="break-inside:avoid;margin-bottom:14px;background:#13110f;border:1px solid #211e1a;border-radius:12px;padding:15px 16px;animation:fadeUp .2s ease">
+                <p style="font-size:13.5px;line-height:1.5;color:#cfc8bf">{{ note.text }}</p>
+                <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#5c554d;margin-top:9px">{{ note.time }}</div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </sc-if>
+
+    </div>
+  </main>
+
+  <!-- ============ RIGHT RAIL ============ -->
+  <aside style="width:312px;flex:0 0 312px;background:#100e0d;border-left:1px solid #1f1c19;overflow-y:auto;padding:22px 18px;display:flex;flex-direction:column;gap:18px">
+
+    <!-- Progress -->
+    <div style="background:#13110f;border:1px solid #211e1a;border-radius:14px;padding:18px">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:14px">
+        <span style="font-size:13px;font-weight:600;color:#cfc8bf">Today's progress</span>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#948d84">{{ progress.label }}</span>
+      </div>
+      <div style="height:8px;border-radius:5px;background:#211e1a;overflow:hidden">
+        <div style="height:100%;border-radius:5px;background:linear-gradient(90deg,#c7853a,#e8a44c);width:{{ progress.pct }};transition:width .4s ease"></div>
+      </div>
+      <div style="display:flex;gap:18px;margin-top:16px">
+        <div><div style="font-size:21px;font-weight:700;color:#ececea">{{ progress.doneCount }}</div><div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#635c54;margin-top:2px">DONE</div></div>
+        <div><div style="font-size:21px;font-weight:700;color:#ececea">{{ progress.openCount }}</div><div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#635c54;margin-top:2px">OPEN</div></div>
+        <div><div style="font-size:21px;font-weight:700;color:#e8a44c">{{ progress.streak }}</div><div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#635c54;margin-top:2px">DAY STREAK</div></div>
+      </div>
+    </div>
+
+    <!-- AI assistant -->
+    <div style="background:linear-gradient(160deg,#1a1611,#13110f);border:1px solid #2c2620;border-radius:14px;padding:18px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:11px">
+        <div style="width:7px;height:7px;border-radius:50%;background:#e8a44c;animation:pulse 2.4s ease-in-out infinite"></div>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1.5px;color:#e8a44c">ASSISTANT</span>
+      </div>
+      <p style="font-size:13.5px;line-height:1.55;color:#d4cdc4">{{ ai.message }}</p>
+      <div style="display:flex;flex-wrap:wrap;gap:7px;margin-top:14px">
+        <sc-for list="{{ ai.chips }}" as="chip" hint-placeholder-count="2">
+          <button onClick="{{ chip.onClick }}" style="background:#211d18;border:1px solid #322c25;border-radius:8px;padding:7px 11px;font-size:12px;font-weight:500;color:#cabfb2;cursor:pointer" style-hover="border-color:#4a4138;color:#ececea">{{ chip.label }}</button>
+        </sc-for>
+      </div>
+    </div>
+
+    <!-- Routines today -->
+    <div style="background:#13110f;border:1px solid #211e1a;border-radius:14px;padding:18px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:13px">
+        <span style="font-size:13px;font-weight:600;color:#cfc8bf">Routines today</span>
+        <button onClick="{{ goHabits }}" style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#635c54;background:none;border:none;cursor:pointer" style-hover="color:#e8a44c">ALL →</button>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:9px">
+        <sc-for list="{{ routines }}" as="r" hint-placeholder-count="4">
+          <button onClick="{{ r.onToggle }}" style="display:flex;align-items:center;gap:11px;background:none;border:none;cursor:pointer;padding:0;text-align:left">
+            <span style="{{ r.boxStyle }}">
+              <sc-if value="{{ r.done }}" hint-placeholder-val="{{ false }}">
+                <span style="font-size:11px;color:#0c0b0a;font-weight:700">✓</span>
+              </sc-if>
+            </span>
+            <span style="{{ r.labelStyle }}">{{ r.name }}</span>
+          </button>
+        </sc-for>
+      </div>
+    </div>
+  </aside>
+
+  <!-- toast -->
+  <sc-if value="{{ hasToast }}" hint-placeholder-val="{{ false }}">
+    <div style="position:fixed;bottom:26px;left:50%;transform:translateX(-50%);background:#1c1915;border:1px solid #322c25;border-radius:10px;padding:12px 18px;font-size:13px;color:#ececea;box-shadow:0 10px 30px rgba(0,0,0,.5);animation:fadeUp .2s ease;z-index:50">{{ toast }}</div>
+  </sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:&quot;100%&quot;,&quot;height&quot;:&quot;100%&quot;}}">
+class Component extends DCLogic {
+  state = {
+    view: 'today',
+    area: 'all',
+    capture: '',
+    noteDraft: '',
+    toast: null,
+    nextId: 200,
+    tasks: [
+      { id: 1, title: 'Finish data structures problem set', area: 'school', due: 'today', done: false, priority: true },
+      { id: 2, title: 'Read OS textbook — Ch. 7 (scheduling)', area: 'school', due: 'tomorrow', done: false, priority: false },
+      { id: 3, title: 'Email Prof. Reyes about deadline extension', area: 'school', due: 'today', done: true, priority: false },
+      { id: 4, title: 'Push the API rate-limit fix to staging', area: 'internship', due: 'today', done: false, priority: true },
+      { id: 5, title: 'Write standup notes for mentor 1:1', area: 'internship', due: 'today', done: false, priority: false },
+      { id: 6, title: 'Review onboarding doc PR', area: 'internship', due: 'wed', done: false, priority: false },
+      { id: 7, title: 'Push day — chest & triceps', area: 'gym', due: 'today', done: false, priority: false },
+      { id: 8, title: 'Log macros + protein target', area: 'gym', due: 'today', done: true, priority: false },
+      { id: 9, title: 'Review SPY weekly setup before open', area: 'business', due: 'today', done: false, priority: true },
+      { id: 10, title: 'Journal yesterday\u2019s 3 trades', area: 'business', due: 'today', done: false, priority: false },
+      { id: 11, title: 'Backtest the breakout strategy on Q1 data', area: 'business', due: 'fri', done: false, priority: false },
+    ],
+    habits: [
+      { id: 'h1', name: 'Workout', week: [true, true, false, true, true, false, false] },
+      { id: 'h2', name: 'Read 30 min', week: [true, false, true, true, false, false, false] },
+      { id: 'h3', name: 'Journal trades', week: [true, true, true, true, true, false, false] },
+      { id: 'h4', name: 'No phone in bed', week: [false, true, true, false, true, false, false] },
+      { id: 'h5', name: 'Meditate 10 min', week: [true, true, true, false, false, false, false] },
+    ],
+    notes: [
+      { id: 'n1', text: 'Idea: ask mentor if I can shadow the on-call rotation next sprint.', time: 'YESTERDAY 21:14' },
+      { id: 'n2', text: 'Trading thesis — semis cooling off, watch for rotation into energy. Size small.', time: 'YESTERDAY 18:02' },
+      { id: 'n3', text: 'Prof office hours moved to Thurs 2pm this week.', time: 'MON 11:30' },
+    ],
+  };
+
+  AREAS = [
+    { key: 'all', label: 'All areas', tint: '#9b938a' },
+    { key: 'school', label: 'School', tint: '#6f90b4' },
+    { key: 'internship', label: 'Internship', tint: '#bd9166' },
+    { key: 'gym', label: 'Gym', tint: '#74ad84' },
+    { key: 'business', label: 'Trading', tint: '#e8a44c' },
+  ];
+  DAY_LABELS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+
+  meta(key) { return this.AREAS.find(a => a.key === key) || this.AREAS[0]; }
+
+  todayIndex() {
+    const js = new Date().getDay(); // 0 Sun .. 6 Sat
+    return (js + 6) % 7; // Mon=0
+  }
+
+  dueLabel(due) {
+    const m = { today: 'Today', tomorrow: 'Tomorrow', wed: 'Wed', fri: 'Fri' };
+    return m[due] || due;
+  }
+
+  flashToast(msg) {
+    this.setState({ toast: msg });
+    clearTimeout(this._t);
+    this._t = setTimeout(() => this.setState({ toast: null }), 2600);
+  }
+
+  parse(text) {
+    const t = (text || '').trim();
+    const lower = t.toLowerCase();
+    const kw = {
+      school: ['school', 'class', 'homework', 'study', 'exam', 'professor', 'prof', 'problem set', 'read', 'lecture', 'assignment', 'os', 'ch.', 'chapter'],
+      internship: ['internship', 'work', 'intern', 'standup', 'mentor', 'api', 'pr', 'deploy', 'ticket', 'jira', 'staging', 'bug', 'code', 'review'],
+      gym: ['gym', 'workout', 'lift', 'push', 'pull', 'legs', 'run', 'cardio', 'macros', 'protein', 'train'],
+      business: ['trade', 'trading', 'spy', 'market', 'backtest', 'journal', 'setup', 'strategy', 'chart', 'position', 'stock', 'options'],
+    };
+    let area = 'school';
+    let best = 0;
+    for (const k of Object.keys(kw)) {
+      const hits = kw[k].reduce((n, w) => n + (lower.includes(w) ? 1 : 0), 0);
+      if (hits > best) { best = hits; area = k; }
+    }
+    let due = 'today';
+    if (/\btomorrow\b|\btmrw\b|\btmr\b/.test(lower)) due = 'tomorrow';
+    else if (/\bwed\b|wednesday/.test(lower)) due = 'wed';
+    else if (/\bfri\b|friday/.test(lower)) due = 'fri';
+    const priority = t.includes('!') || /\b(urgent|asap|important)\b/.test(lower);
+    const title = t.replace(/\s*!+\s*/g, ' ').trim() || 'New task';
+    return { area, due, priority, title };
+  }
+
+  onCaptureInput = (e) => this.setState({ capture: e.target.value });
+  onCaptureKey = (e) => { if (e.key === 'Enter') this.onCaptureSubmit(); };
+  onCaptureSubmit = () => {
+    const text = this.state.capture.trim();
+    if (!text) return;
+    const p = this.parse(text);
+    const id = this.state.nextId + 1;
+    this.setState(s => ({
+      nextId: id,
+      capture: '',
+      tasks: [{ id, title: p.title, area: p.area, due: p.due, done: false, priority: p.priority }, ...s.tasks],
+    }));
+    this.flashToast(`Added to ${this.meta(p.area).label} · ${this.dueLabel(p.due)}`);
+  };
+
+  toggleTask = (id) => this.setState(s => ({
+    tasks: s.tasks.map(t => t.id === id ? { ...t, done: !t.done } : t),
+  }));
+
+  toggleHabit = (hid, idx) => this.setState(s => ({
+    habits: s.habits.map(h => h.id === hid ? { ...h, week: h.week.map((v, i) => i === idx ? !v : v) } : h),
+  }));
+
+  onNoteInput = (e) => this.setState({ noteDraft: e.target.value });
+  onNoteKey = (e) => { if (e.key === 'Enter') this.onNoteSubmit(); };
+  onNoteSubmit = () => {
+    const text = this.state.noteDraft.trim();
+    if (!text) return;
+    const id = 'n' + (this.state.nextId + 1);
+    this.setState(s => ({
+      nextId: s.nextId + 1,
+      noteDraft: '',
+      notes: [{ id, text, time: 'JUST NOW' }, ...s.notes],
+    }));
+    this.flashToast('Note saved');
+  };
+
+  setView = (v) => this.setState({ view: v });
+  setArea = (a) => this.setState({ area: a });
+
+  streakOf(week) {
+    const ti = this.todayIndex();
+    let n = 0;
+    for (let i = ti; i >= 0; i--) { if (week[i]) n++; else break; }
+    return n;
+  }
+
+  renderVals() {
+    const s = this.state;
+    const ti = this.todayIndex();
+    const now = new Date();
+
+    const openByArea = {};
+    this.AREAS.forEach(a => openByArea[a.key] = 0);
+    s.tasks.forEach(t => { if (!t.done) { openByArea[t.area]++; openByArea.all++; } });
+
+    const todayOpen = s.tasks.filter(t => t.due === 'today' && !t.done).length;
+
+    const navDefs = [
+      { key: 'today', label: 'Today', count: todayOpen, showCount: true },
+      { key: 'upcoming', label: 'Upcoming', showCount: false },
+      { key: 'notes', label: 'Notes', showCount: false },
+      { key: 'habits', label: 'Habits', showCount: false },
+    ];
+    const navItems = navDefs.map(n => {
+      const active = s.view === n.key;
+      return {
+        ...n,
+        onClick: () => this.setView(n.key),
+        style: `display:flex;align-items:center;gap:8px;width:100%;padding:9px 12px;border:none;border-radius:9px;cursor:pointer;transition:background .12s;background:${active ? '#1f1b16' : 'transparent'};color:${active ? '#ececea' : '#948d84'};text-align:left`,
+        showCount: n.showCount && n.count > 0,
+        countStyle: `margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:11px;background:${active ? '#e8a44c' : '#262320'};color:${active ? '#0c0b0a' : '#948d84'};border-radius:20px;padding:1px 8px;font-weight:600`,
+      };
+    });
+
+    const areaItems = this.AREAS.map(a => {
+      const active = s.area === a.key;
+      return {
+        ...a,
+        onClick: () => this.setArea(a.key),
+        count: openByArea[a.key] || 0,
+        style: `display:flex;align-items:center;gap:9px;width:100%;padding:8px 12px;border:none;border-radius:9px;cursor:pointer;transition:background .12s;background:${active ? '#1a1714' : 'transparent'};color:${active ? '#ececea' : '#948d84'}`,
+      };
+    });
+
+    // ---- capture preview ----
+    const pv = this.parse(s.capture);
+    const pm = this.meta(pv.area);
+    const preview = {
+      areaLabel: pm.label,
+      tint: pm.tint,
+      areaBg: 'rgba(255,255,255,.03)',
+      areaBorder: '#2a2622',
+      areaColor: '#cabfb2',
+      dueLabel: this.dueLabel(pv.due),
+      priority: pv.priority,
+    };
+
+    // ---- task groups ----
+    const viewIsToday = s.view === 'today';
+    const viewIsUpcoming = s.view === 'upcoming';
+    const isTaskView = viewIsToday || viewIsUpcoming;
+
+    let pool = s.tasks;
+    if (viewIsToday) pool = pool.filter(t => t.due === 'today');
+    if (viewIsUpcoming) pool = pool.filter(t => t.due !== 'today');
+    if (s.area !== 'all') pool = pool.filter(t => t.area === s.area);
+
+    const decorate = (t) => {
+      const m = this.meta(t.area);
+      return {
+        ...t,
+        tint: m.tint,
+        areaLabel: m.label,
+        hasMeta: viewIsUpcoming,
+        metaLabel: this.dueLabel(t.due),
+        rowStyle: `display:flex;align-items:center;gap:13px;padding:12px 14px;border:1px solid ${t.done ? '#171411' : '#211e1a'};border-radius:11px;background:${t.done ? '#100e0c' : '#13110f'};transition:background .12s,border-color .12s;animation:fadeUp .22s ease`,
+        boxStyle: `width:20px;height:20px;flex:0 0 20px;border-radius:6px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .15s;border:1.5px solid ${t.done ? '#e8a44c' : '#3a352f'};background:${t.done ? '#e8a44c' : 'transparent'}`,
+        titleStyle: `font-size:14.5px;font-weight:500;line-height:1.3;${t.done ? 'color:#5c554d;text-decoration:line-through' : 'color:#e6e0d8'}`,
+        onToggle: () => this.toggleTask(t.id),
+      };
+    };
+
+    let groups = [];
+    if (isTaskView) {
+      const order = (arr) => arr.slice().sort((a, b) => (a.done - b.done) || (b.priority - a.priority));
+      if (viewIsUpcoming) {
+        const buckets = ['tomorrow', 'wed', 'fri'];
+        groups = buckets.map(due => {
+          const ts = order(pool.filter(t => t.due === due)).map(decorate);
+          return { key: due, label: this.dueLabel(due), tint: '#9b938a', count: ts.length, tasks: ts };
+        }).filter(g => g.count > 0);
+      } else if (s.area === 'all') {
+        groups = this.AREAS.filter(a => a.key !== 'all').map(a => {
+          const ts = order(pool.filter(t => t.area === a.key)).map(decorate);
+          return { key: a.key, label: a.label, tint: a.tint, count: ts.length, tasks: ts };
+        }).filter(g => g.count > 0);
+      } else {
+        const m = this.meta(s.area);
+        const ts = order(pool).map(decorate);
+        groups = ts.length ? [{ key: m.key, label: m.label, tint: m.tint, count: ts.length, tasks: ts }] : [];
+      }
+    }
+
+    // ---- habits ----
+    const weekDays = this.DAY_LABELS.map((label, i) => ({
+      label,
+      style: `text-align:center;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:500;color:${i === ti ? '#e8a44c' : '#5c554d'}`,
+    }));
+    const habits = s.habits.map(h => {
+      const streak = this.streakOf(h.week);
+      return {
+        ...h,
+        streakLabel: streak > 0 ? `${streak}\u00d7 streak` : '',
+        cells: h.week.map((done, i) => ({
+          done,
+          onToggle: () => this.toggleHabit(h.id, i),
+          style: `width:26px;height:26px;border-radius:7px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .15s;border:1.5px solid ${done ? '#e8a44c' : (i === ti ? '#4a4138' : '#231f1b')};background:${done ? '#e8a44c' : 'transparent'}`,
+        })),
+      };
+    });
+
+    // routines today (right rail)
+    const routines = s.habits.map(h => {
+      const done = h.week[ti];
+      return {
+        name: h.name,
+        done,
+        onToggle: () => this.toggleHabit(h.id, ti),
+        boxStyle: `width:19px;height:19px;flex:0 0 19px;border-radius:6px;display:flex;align-items:center;justify-content:center;transition:all .15s;border:1.5px solid ${done ? '#e8a44c' : '#3a352f'};background:${done ? '#e8a44c' : 'transparent'}`,
+        labelStyle: `font-size:13.5px;font-weight:500;${done ? 'color:#5c554d;text-decoration:line-through' : 'color:#cabfb2'}`,
+      };
+    });
+
+    // ---- progress ----
+    const todayAll = s.tasks.filter(t => t.due === 'today');
+    const doneCount = todayAll.filter(t => t.done).length;
+    const openCount = todayAll.length - doneCount;
+    const pct = todayAll.length ? Math.round((doneCount / todayAll.length) * 100) : 0;
+    const streak = Math.max(...s.habits.map(h => this.streakOf(h.week)), 0);
+    const progress = {
+      label: `${doneCount}/${todayAll.length}`,
+      pct: pct + '%',
+      doneCount, openCount, streak,
+    };
+
+    // ---- AI message ----
+    const areasHot = [...new Set(todayAll.filter(t => !t.done).map(t => this.meta(t.area).label))];
+    const highPri = todayAll.filter(t => !t.done && t.priority).length;
+    let aiMsg;
+    if (openCount === 0) aiMsg = 'Everything for today is done. Want me to pull tomorrow\u2019s work forward, or protect the evening for recovery?';
+    else if (highPri > 0) aiMsg = `${openCount} task${openCount > 1 ? 's' : ''} left today, ${highPri} high-priority. Knock out the trading review before the open, then the rate-limit fix.`;
+    else aiMsg = `${openCount} task${openCount > 1 ? 's' : ''} left across ${areasHot.length} area${areasHot.length > 1 ? 's' : ''}. Want me to time-block your afternoon around the gym?`;
+    const ai = {
+      message: aiMsg,
+      chips: [
+        { label: 'Plan my day', onClick: () => this.flashToast('Drafted a time-blocked plan around your 5pm gym slot.') },
+        { label: 'What\u2019s most urgent?', onClick: () => { this.setState({ view: 'today', area: 'all' }); this.flashToast('Sorted today by priority.'); } },
+      ],
+    };
+
+    const fmtLong = now.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+    const fmtShort = now.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+
+    const kickers = { today: 'YOUR FOCUS', upcoming: 'WHAT\u2019S NEXT', notes: 'QUICK CAPTURE', habits: 'CONSISTENCY' };
+    const titles = { today: 'Today', upcoming: 'Upcoming', notes: 'Notes', habits: 'Habits' };
+
+    return {
+      navItems, areaItems,
+      shortDate: fmtShort,
+      longDate: fmtLong,
+      viewKicker: kickers[s.view],
+      viewTitle: titles[s.view],
+      isTaskView, isHabits: s.view === 'habits', isNotes: s.view === 'notes',
+      groups, groupsEmpty: isTaskView && groups.length === 0,
+      capture: s.capture, hasCapture: s.capture.trim().length > 0, preview,
+      onCaptureInput: this.onCaptureInput, onCaptureKey: this.onCaptureKey, onCaptureSubmit: this.onCaptureSubmit,
+      addBtnStyle: 'background:#e8a44c;color:#0c0b0a;border:none;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:600;cursor:pointer;transition:filter .12s;white-space:nowrap',
+      weekDays, habits, routines,
+      noteDraft: s.noteDraft, notes: s.notes,
+      onNoteInput: this.onNoteInput, onNoteKey: this.onNoteKey, onNoteSubmit: this.onNoteSubmit,
+      progress, ai,
+      goHabits: () => this.setView('habits'),
+      hasToast: !!s.toast, toast: s.toast,
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{background:#0c0b0a;font-family:'Hanken Grotesk',system-ui,sans-serif;color:#ececea;-webkit-font-smoothing:antialiased}
+  ::-webkit-scrollbar{width:10px;height:10px}
+  ::-webkit-scrollbar-thumb{background:#262320;border-radius:6px;border:3px solid #0c0b0a}
+  ::-webkit-scrollbar-thumb:hover{background:#322e2a}
+  ::-webkit-scrollbar-track{background:transparent}
+  input{font-family:inherit}
+  input:focus{outline:none}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+  @keyframes pulse{0%,100%{opacity:.4}50%{opacity:1}}
+  @keyframes pop{0%{transform:scale(.5)}60%{transform:scale(1.15)}100%{transform:scale(1)}}
+  @keyframes wave{0%,100%{transform:scaleY(.25)}50%{transform:scaleY(1)}}
+  @keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</helmet>
+<div style="min-height:100vh;background:#0c0b0a;display:flex;flex-direction:column">
+
+  <!-- ===== OS TOP BAR ===== -->
+  <header style="position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:20px;height:46px;padding:0 22px;background:rgba(16,14,13,.92);backdrop-filter:blur(8px);border-bottom:1px solid #1f1c19">
+    <div style="display:flex;align-items:center;gap:9px">
+      <div style="width:8px;height:8px;border-radius:50%;background:#e8a44c;box-shadow:0 0 10px rgba(232,164,76,.6)"></div>
+      <span style="font-family:'JetBrains Mono',monospace;font-weight:600;font-size:13px;letter-spacing:2px;color:#ececea">tempo</span>
+      <span style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1px;color:#5c554d">// OS</span>
+    </div>
+    <nav style="display:flex;align-items:center;gap:4px">
+      <sc-for list="{{ pageTabs }}" as="tab" hint-placeholder-count="2">
+        <button onClick="{{ tab.onClick }}" style="{{ tab.style }}" style-hover="color:#ececea">{{ tab.label }}</button>
+      </sc-for>
+    </nav>
+    <div style="flex:1"></div>
+    <div style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:1px;color:#7a726a">{{ clock }}<span style="color:#5c554d"> · {{ dateShort }}</span></div>
+  </header>
+
+  <div style="flex:1;overflow-y:auto">
+  <div style="max-width:1320px;margin:0 auto;padding:18px 22px 40px">
+
+    <!-- ============================ OVERVIEW ============================ -->
+    <sc-if value="{{ isOverview }}" hint-placeholder-val="{{ true }}">
+
+      <!-- CATEGORY BAR (editable) -->
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 14px;background:#110f0d;border:1px solid #1f1c19;border-radius:12px;margin-bottom:14px">
+        <span style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1.5px;color:#5c554d">CATEGORIES</span>
+        <sc-for list="{{ cats }}" as="c" hint-placeholder-count="4">
+          <div style="display:flex;align-items:center;gap:7px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.5px;color:#a59d93;background:#16130f;border:1px solid #221e1a;border-radius:7px;padding:4px 9px">
+            <span style="width:7px;height:7px;border-radius:2px;background:{{ c.tint }}"></span>
+            <span>{{ c.label }}</span>
+            <span style="color:#ececea;font-weight:600">{{ c.count }}</span>
+            <sc-if value="{{ managing }}" hint-placeholder-val="{{ false }}">
+              <button onClick="{{ c.onRemove }}" style="background:none;border:none;color:#6f675e;cursor:pointer;font-size:13px;line-height:1;padding:0 0 0 2px" style-hover="color:#c77b6b">×</button>
+            </sc-if>
+          </div>
+        </sc-for>
+        <sc-if value="{{ managing }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;align-items:center;gap:6px;background:#16130f;border:1px dashed #322c25;border-radius:7px;padding:2px 4px 2px 9px">
+            <input value="{{ catDraft }}" onInput="{{ onCatInput }}" onKeyDown="{{ onCatKey }}" placeholder="New category" style="background:none;border:none;color:#ececea;font-size:12px;width:108px" />
+            <button onClick="{{ onCatAdd }}" style="background:#211d18;border:1px solid #322c25;border-radius:5px;padding:3px 8px;font-size:11px;font-weight:600;color:#cabfb2;cursor:pointer">Add</button>
+          </div>
+        </sc-if>
+        <div style="flex:1"></div>
+        <button onClick="{{ onToggleManage }}" style="{{ manageBtnStyle }}" style-hover="border-color:#4a4138;color:#ececea">{{ manageLabel }}</button>
+      </div>
+
+      <!-- KPI SUMMARY STRIP -->
+      <div style="display:flex;flex-wrap:wrap;align-items:stretch;background:linear-gradient(150deg,#15120e,#110f0d);border:1px solid #242019;border-radius:14px;padding:4px 6px;margin-bottom:16px">
+        <sc-for list="{{ kpis }}" as="k" hint-placeholder-count="7">
+          <div style="flex:1;min-width:128px;padding:13px 16px;border-right:1px solid #1d1a16">
+            <div style="font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:1.5px;color:#7a726a;margin-bottom:6px">{{ k.label }}</div>
+            <div style="font-size:21px;font-weight:700;letter-spacing:-.5px;line-height:1;color:{{ k.color }}">{{ k.val }}</div>
+          </div>
+        </sc-for>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px">
+
+        <!-- 01 SESSION + VOICE -->
+        <section style="grid-column:1 / -1;background:#110f0d;border:1px solid #1f1c19;border-radius:16px;padding:22px 24px">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px">
+            <span style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;letter-spacing:1px;color:#0c0b0a;background:#e8a44c;border-radius:5px;padding:2px 7px">01</span>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:2.5px;color:#7a726a">// SESSION</span>
+          </div>
+          <div style="display:flex;gap:28px;flex-wrap:wrap;align-items:flex-end">
+            <div style="flex:1;min-width:260px">
+              <h1 style="font-size:30px;font-weight:700;letter-spacing:-.5px;line-height:1.05">{{ greeting }}</h1>
+              <p style="font-size:14px;color:#948d84;margin-top:7px;line-height:1.5;max-width:440px">{{ aiSummary }}</p>
+            </div>
+            <div style="flex:0 0 auto;min-width:300px">
+              <button onClick="{{ onVoice }}" style="{{ voiceBtnStyle }}">
+                <sc-if value="{{ voiceIdle }}" hint-placeholder-val="{{ true }}">
+                  <span style="display:flex;align-items:center;gap:12px">
+                    <span style="width:34px;height:34px;border-radius:50%;border:1.5px solid #e8a44c;display:flex;align-items:center;justify-content:center;flex:0 0 34px"><span style="width:12px;height:12px;border-radius:50%;background:#e8a44c"></span></span>
+                    <span style="text-align:left;line-height:1.25">
+                      <span style="display:block;font-size:14px;font-weight:600;color:#ececea">Talk through your day</span>
+                      <span style="display:block;font-family:'JetBrains Mono',monospace;font-size:10.5px;color:#7a726a;margin-top:1px">I'll file it & set priority</span>
+                    </span>
+                  </span>
+                </sc-if>
+                <sc-if value="{{ voiceRec }}" hint-placeholder-val="{{ false }}">
+                  <span style="display:flex;align-items:center;gap:13px">
+                    <span style="width:34px;height:34px;border-radius:50%;background:#e8a44c;display:flex;align-items:center;justify-content:center;flex:0 0 34px;animation:pulse 1.1s ease-in-out infinite"><span style="width:12px;height:12px;border-radius:3px;background:#0c0b0a"></span></span>
+                    <span style="display:flex;align-items:center;gap:3px;height:26px">
+                      <span style="width:3px;height:26px;background:#e8a44c;border-radius:2px;transform-origin:center;animation:wave .9s ease-in-out 0s infinite"></span>
+                      <span style="width:3px;height:26px;background:#e8a44c;border-radius:2px;transform-origin:center;animation:wave .9s ease-in-out -.2s infinite"></span>
+                      <span style="width:3px;height:26px;background:#e8a44c;border-radius:2px;transform-origin:center;animation:wave .9s ease-in-out -.4s infinite"></span>
+                      <span style="width:3px;height:26px;background:#e8a44c;border-radius:2px;transform-origin:center;animation:wave .9s ease-in-out -.1s infinite"></span>
+                      <span style="width:3px;height:26px;background:#e8a44c;border-radius:2px;transform-origin:center;animation:wave .9s ease-in-out -.5s infinite"></span>
+                      <span style="width:3px;height:26px;background:#e8a44c;border-radius:2px;transform-origin:center;animation:wave .9s ease-in-out -.3s infinite"></span>
+                      <span style="width:3px;height:26px;background:#e8a44c;border-radius:2px;transform-origin:center;animation:wave .9s ease-in-out -.15s infinite"></span>
+                    </span>
+                    <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#e8a44c;margin-left:4px">listening…</span>
+                  </span>
+                </sc-if>
+                <sc-if value="{{ voiceProc }}" hint-placeholder-val="{{ false }}">
+                  <span style="display:flex;align-items:center;gap:12px">
+                    <span style="width:20px;height:20px;border-radius:50%;border:2px solid #2a2622;border-top-color:#e8a44c;animation:spin .7s linear infinite"></span>
+                    <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#b6aea4">filing & prioritizing…</span>
+                  </span>
+                </sc-if>
+              </button>
+              <div style="display:flex;align-items:center;gap:10px;margin-top:10px;background:#161412;border:1px solid #2a2622;border-radius:10px;padding:0 12px;height:42px">
+                <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#5c554d">↵</span>
+                <input value="{{ capture }}" onInput="{{ onCaptureInput }}" onKeyDown="{{ onCaptureKey }}" placeholder="…or type it (“fix API today !”)" style="flex:1;background:none;border:none;color:#ececea;font-size:13.5px" />
+                <button onClick="{{ onCaptureSubmit }}" style="background:#211d18;border:1px solid #322c25;border-radius:7px;padding:5px 11px;font-size:12px;font-weight:600;color:#cabfb2;cursor:pointer" style-hover="border-color:#4a4138">Add</button>
+              </div>
+              <sc-if value="{{ hasTranscript }}" hint-placeholder-val="{{ false }}">
+                <div style="margin-top:10px;font-size:12.5px;color:#8a837a;line-height:1.45;animation:fadeUp .2s ease"><span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#e8a44c;letter-spacing:1px">HEARD </span>"{{ transcript }}"</div>
+              </sc-if>
+            </div>
+          </div>
+        </section>
+
+        <!-- 02 PRIORITIES -->
+        <section style="grid-column:1 / -1;background:#110f0d;border:1px solid #1f1c19;border-radius:16px;padding:20px 22px">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
+            <span style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;letter-spacing:1px;color:#cabfb2;border:1px solid #322c25;border-radius:5px;padding:2px 7px">02</span>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:2.5px;color:#7a726a">// PRIORITIES</span>
+            <div style="flex:1"></div>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:1px;color:#5c554d">AUTO-ORDERED BY TEMPO</span>
+          </div>
+          <p style="font-size:12.5px;color:#635c54;margin-bottom:16px">Ranked by deadline, blockers & impact — newest captures slot in automatically.</p>
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:8px">
+            <sc-for list="{{ tasks }}" as="task" hint-placeholder-count="6">
+              <div style="{{ task.rowStyle }}" style-hover="border-color:#322c25;background:#161412">
+                <button onClick="{{ task.onToggle }}" style="{{ task.boxStyle }}">
+                  <sc-if value="{{ task.done }}" hint-placeholder-val="{{ false }}"><span style="font-size:12px;color:#0c0b0a;font-weight:700;animation:pop .2s ease">✓</span></sc-if>
+                </button>
+                <div style="flex:1;min-width:0">
+                  <div style="display:flex;align-items:center;gap:8px">
+                    <span style="{{ task.badgeStyle }}">{{ task.badge }}</span>
+                    <sc-if value="{{ task.viaVoice }}" hint-placeholder-val="{{ false }}"><span style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.5px;color:#7a726a;border:1px solid #2a2622;border-radius:4px;padding:1px 5px">◉ VOICE</span></sc-if>
+                  </div>
+                  <div style="{{ task.titleStyle }}">{{ task.title }}</div>
+                </div>
+                <div style="display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex:0 0 auto">
+                  <span style="display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:500;color:#a59d93"><span style="width:6px;height:6px;border-radius:2px;background:{{ task.tint }}"></span>{{ task.areaLabel }}</span>
+                  <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#5c554d">{{ task.dueLabel }}</span>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+        </section>
+
+        <!-- 03 FUEL -->
+        <section style="background:#110f0d;border:1px solid #1f1c19;border-radius:16px;padding:20px 22px;display:flex;flex-direction:column">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+            <span style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;letter-spacing:1px;color:#cabfb2;border:1px solid #322c25;border-radius:5px;padding:2px 7px">03</span>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:2.5px;color:#7a726a">// FUEL</span>
+            <div style="flex:1"></div><span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:1px;color:#5c554d">TODAY</span>
+          </div>
+          <div style="display:flex;align-items:flex-end;gap:8px;margin-bottom:4px">
+            <span style="font-size:34px;font-weight:700;letter-spacing:-1px;line-height:1">{{ fuel.consumed }}</span>
+            <span style="font-size:14px;color:#635c54;margin-bottom:4px">/ {{ fuel.target }} kcal</span>
+            <div style="flex:1"></div><span style="{{ fuel.netStyle }}">{{ fuel.netLabel }}</span>
+          </div>
+          <div style="height:7px;border-radius:5px;background:#211e1a;overflow:hidden;margin:10px 0 16px"><div style="height:100%;border-radius:5px;background:linear-gradient(90deg,#c7853a,#e8a44c);width:{{ fuel.pct }};transition:width .4s ease"></div></div>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px">
+            <sc-for list="{{ fuel.macros }}" as="m" hint-placeholder-count="3">
+              <div>
+                <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:5px"><span style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1px;color:#7a726a">{{ m.label }}</span><span style="font-size:12px;font-weight:600;color:#cfc8bf">{{ m.val }}</span></div>
+                <div style="height:5px;border-radius:4px;background:#211e1a;overflow:hidden"><div style="height:100%;border-radius:4px;background:{{ m.color }};width:{{ m.pct }};transition:width .4s ease"></div></div>
+              </div>
+            </sc-for>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px">
+            <sc-for list="{{ fuel.meals }}" as="meal" hint-placeholder-count="2">
+              <div style="display:flex;align-items:center;gap:10px;padding:9px 11px;background:#161412;border:1px solid #211e1a;border-radius:9px;animation:fadeUp .2s ease">
+                <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#5c554d;flex:0 0 auto">{{ meal.time }}</span>
+                <span style="flex:1;min-width:0;font-size:13px;color:#dcd5cc;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ meal.name }}</span>
+                <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#cfc8bf;flex:0 0 auto">{{ meal.kcal }}k</span>
+                <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#74ad84;flex:0 0 auto">{{ meal.p }}p</span>
+              </div>
+            </sc-for>
+          </div>
+          <div style="margin-top:auto;display:flex;align-items:center;gap:9px;background:#161412;border:1px solid #2a2622;border-radius:10px;padding:0 12px;height:42px">
+            <span style="font-family:'JetBrains Mono',monospace;font-size:14px;color:#e8a44c">+</span>
+            <input value="{{ foodDraft }}" onInput="{{ onFoodInput }}" onKeyDown="{{ onFoodKey }}" placeholder="What did you eat? (“3 eggs, oatmeal, coffee”)" style="flex:1;background:none;border:none;color:#ececea;font-size:13px" />
+            <button onClick="{{ onFoodSubmit }}" style="background:#211d18;border:1px solid #322c25;border-radius:7px;padding:5px 11px;font-size:12px;font-weight:600;color:#cabfb2;cursor:pointer" style-hover="border-color:#4a4138">Log</button>
+          </div>
+          <sc-if value="{{ foodHint }}" hint-placeholder-val="{{ false }}"><div style="margin-top:8px;font-size:11.5px;color:#7a726a;animation:fadeUp .18s ease"><span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#e8a44c">EST </span>{{ foodHint }}</div></sc-if>
+        </section>
+
+        <!-- 04 TRAINING -->
+        <section style="background:#110f0d;border:1px solid #1f1c19;border-radius:16px;padding:20px 22px;display:flex;flex-direction:column">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+            <span style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;letter-spacing:1px;color:#cabfb2;border:1px solid #322c25;border-radius:5px;padding:2px 7px">04</span>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:2.5px;color:#7a726a">// TRAINING</span>
+            <div style="flex:1"></div><span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:1px;color:#5c554d">TODAY</span>
+          </div>
+          <div style="display:flex;align-items:flex-end;gap:18px;margin-bottom:18px">
+            <div style="display:flex;align-items:flex-end;gap:7px"><span style="font-size:34px;font-weight:700;letter-spacing:-1px;line-height:1;color:#74ad84">{{ train.burned }}</span><span style="font-size:14px;color:#635c54;margin-bottom:4px">kcal burned</span></div>
+            <div style="flex:1"></div>
+            <div style="text-align:right"><div style="font-size:18px;font-weight:700;color:#ececea">{{ train.minutes }}<span style="font-size:12px;color:#635c54;font-weight:500"> min</span></div><div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#5c554d;margin-top:2px">{{ train.sessionLabel }}</div></div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px;flex:1">
+            <sc-for list="{{ train.sessions }}" as="w" hint-placeholder-count="2">
+              <div style="display:flex;align-items:center;gap:11px;padding:11px 13px;background:#161412;border:1px solid #211e1a;border-radius:10px;animation:fadeUp .2s ease">
+                <span style="width:8px;height:8px;border-radius:2px;background:#74ad84;flex:0 0 auto"></span>
+                <div style="flex:1;min-width:0"><div style="font-size:13.5px;font-weight:500;color:#dcd5cc;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ w.name }}</div><div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#5c554d;margin-top:2px">{{ w.time }} · {{ w.minutes }} min</div></div>
+                <span style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600;color:#74ad84;flex:0 0 auto">{{ w.kcal }}</span>
+              </div>
+            </sc-for>
+            <sc-if value="{{ train.empty }}" hint-placeholder-val="{{ false }}"><div style="text-align:center;padding:24px;font-size:13px;color:#5c554d">No sessions logged yet today.</div></sc-if>
+          </div>
+          <div style="display:flex;align-items:center;gap:9px;background:#161412;border:1px solid #2a2622;border-radius:10px;padding:0 12px;height:42px">
+            <span style="font-family:'JetBrains Mono',monospace;font-size:14px;color:#74ad84">+</span>
+            <input value="{{ exDraft }}" onInput="{{ onExInput }}" onKeyDown="{{ onExKey }}" placeholder="What did you train? (“push day 45 min”)" style="flex:1;background:none;border:none;color:#ececea;font-size:13px" />
+            <button onClick="{{ onExSubmit }}" style="background:#211d18;border:1px solid #322c25;border-radius:7px;padding:5px 11px;font-size:12px;font-weight:600;color:#cabfb2;cursor:pointer" style-hover="border-color:#4a4138">Log</button>
+          </div>
+          <sc-if value="{{ exHint }}" hint-placeholder-val="{{ false }}"><div style="margin-top:8px;font-size:11.5px;color:#7a726a;animation:fadeUp .18s ease"><span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#74ad84">EST </span>{{ exHint }}</div></sc-if>
+        </section>
+
+        <!-- 05 HABITS -->
+        <section style="grid-column:1 / -1;background:#110f0d;border:1px solid #1f1c19;border-radius:16px;padding:20px 22px">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+            <span style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;letter-spacing:1px;color:#cabfb2;border:1px solid #322c25;border-radius:5px;padding:2px 7px">05</span>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:2.5px;color:#7a726a">// HABITS</span>
+            <div style="flex:1"></div><span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:1px;color:#5c554d">{{ habitScore }}</span>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr repeat(7,38px);align-items:center;padding-bottom:11px;border-bottom:1px solid #1c1916;margin-bottom:4px">
+            <span></span>
+            <sc-for list="{{ weekDays }}" as="d" hint-placeholder-count="7"><span style="{{ d.style }}">{{ d.label }}</span></sc-for>
+          </div>
+          <sc-for list="{{ habits }}" as="habit" hint-placeholder-count="5">
+            <div style="display:grid;grid-template-columns:1fr repeat(7,38px);align-items:center;padding:9px 0;border-bottom:1px solid #161310" style-hover="background:#13110f">
+              <div style="display:flex;align-items:center;gap:10px"><span style="font-size:13.5px;font-weight:500;color:#dcd5cc">{{ habit.name }}</span><span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#e8a44c">{{ habit.streakLabel }}</span></div>
+              <sc-for list="{{ habit.cells }}" as="cell" hint-placeholder-count="7">
+                <div style="display:flex;justify-content:center"><button onClick="{{ cell.onToggle }}" style="{{ cell.style }}"><sc-if value="{{ cell.done }}" hint-placeholder-val="{{ false }}"><span style="font-size:10px;color:#0c0b0a;font-weight:700">✓</span></sc-if></button></div>
+              </sc-for>
+            </div>
+          </sc-for>
+        </section>
+
+      </div>
+    </sc-if>
+
+    <!-- ============================ FINANCE ============================ -->
+    <sc-if value="{{ isFinance }}" hint-placeholder-val="{{ false }}">
+      <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px">
+
+        <!-- 01 NET LIQUID -->
+        <section style="background:linear-gradient(150deg,#15120e,#110f0d);border:1px solid #242019;border-radius:16px;padding:22px 24px;display:flex;flex-direction:column">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px">
+            <span style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;letter-spacing:1px;color:#0c0b0a;background:#e8a44c;border-radius:5px;padding:2px 7px">01</span>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:2.5px;color:#7a726a">// NET LIQUID</span>
+            <div style="flex:1"></div><span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;color:#74ad84">{{ fin.netDelta }}</span>
+          </div>
+          <div style="font-size:46px;font-weight:700;letter-spacing:-1.5px;line-height:1">{{ fin.liquid }}</div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#5c554d;margin-top:6px">AVAILABLE ACROSS ALL ACCOUNTS</div>
+          <div style="display:flex;flex-direction:column;gap:11px;margin-top:22px">
+            <sc-for list="{{ fin.breakdown }}" as="b" hint-placeholder-count="3">
+              <div>
+                <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px"><span style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:1px;color:#a59d93">{{ b.label }}</span><span style="font-size:14px;font-weight:600;color:#ececea">{{ b.val }}</span></div>
+                <div style="height:6px;border-radius:4px;background:#211e1a;overflow:hidden"><div style="height:100%;border-radius:4px;background:{{ b.color }};width:{{ b.pct }}"></div></div>
+              </div>
+            </sc-for>
+          </div>
+        </section>
+
+        <!-- 02 P&L -->
+        <section style="background:#110f0d;border:1px solid #1f1c19;border-radius:16px;padding:22px 24px;display:flex;flex-direction:column">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px">
+            <span style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;letter-spacing:1px;color:#cabfb2;border:1px solid #322c25;border-radius:5px;padding:2px 7px">02</span>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:2.5px;color:#7a726a">// PROFIT & LOSS</span>
+            <div style="flex:1"></div><span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;color:#5c554d">REALIZED</span>
+          </div>
+          <div style="display:flex;gap:10px;margin-bottom:20px">
+            <sc-for list="{{ fin.pnlStats }}" as="p" hint-placeholder-count="3">
+              <div style="flex:1;background:#161412;border:1px solid #211e1a;border-radius:11px;padding:13px 14px">
+                <div style="font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:1px;color:#7a726a;margin-bottom:7px">{{ p.label }}</div>
+                <div style="font-size:21px;font-weight:700;letter-spacing:-.5px;color:{{ p.color }}">{{ p.val }}</div>
+              </div>
+            </sc-for>
+          </div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:1.5px;color:#5c554d;margin-bottom:9px">LAST 10 SESSIONS</div>
+          <div style="position:relative;height:88px;display:flex;align-items:stretch;gap:5px;margin-bottom:18px">
+            <div style="position:absolute;top:50%;left:0;right:0;height:1px;background:#2a2622;z-index:1"></div>
+            <sc-for list="{{ fin.history }}" as="bar" hint-placeholder-count="10">
+              <div style="position:relative;flex:1;height:100%"><div style="{{ bar.style }}"></div></div>
+            </sc-for>
+          </div>
+          <div style="margin-top:auto;display:flex;align-items:center;gap:9px;background:#161412;border:1px solid #2a2622;border-radius:10px;padding:0 12px;height:42px">
+            <span style="font-family:'JetBrains Mono',monospace;font-size:13px;color:#e8a44c">↵</span>
+            <input value="{{ tradeDraft }}" onInput="{{ onTradeInput }}" onKeyDown="{{ onTradeKey }}" placeholder="Log a trade (“SPY +210”, “TSLA -85”)" style="flex:1;background:none;border:none;color:#ececea;font-size:13px" />
+            <button onClick="{{ onTradeSubmit }}" style="background:#211d18;border:1px solid #322c25;border-radius:7px;padding:5px 11px;font-size:12px;font-weight:600;color:#cabfb2;cursor:pointer" style-hover="border-color:#4a4138">Log</button>
+          </div>
+          <sc-if value="{{ tradeHint }}" hint-placeholder-val="{{ false }}"><div style="margin-top:8px;font-size:11.5px;color:#7a726a;animation:fadeUp .18s ease">{{ tradeHint }}</div></sc-if>
+        </section>
+
+        <!-- 03 TRADE JOURNAL -->
+        <section style="grid-column:1 / -1;background:#110f0d;border:1px solid #1f1c19;border-radius:16px;padding:20px 22px">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+            <span style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;letter-spacing:1px;color:#cabfb2;border:1px solid #322c25;border-radius:5px;padding:2px 7px">03</span>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:2.5px;color:#7a726a">// TRADE JOURNAL</span>
+            <div style="flex:1"></div><span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;color:#5c554d">{{ fin.tradeCount }} TRADES</span>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:8px">
+            <sc-for list="{{ fin.trades }}" as="t" hint-placeholder-count="4">
+              <div style="display:flex;align-items:center;gap:12px;padding:12px 14px;background:#13110f;border:1px solid #211e1a;border-radius:11px;animation:fadeUp .2s ease">
+                <span style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600;color:#ececea;width:54px;flex:0 0 auto">{{ t.sym }}</span>
+                <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#5c554d;flex:1">{{ t.date }}</span>
+                <span style="{{ t.pnlStyle }}">{{ t.pnl }}</span>
+              </div>
+            </sc-for>
+          </div>
+        </section>
+
+      </div>
+    </sc-if>
+
+  </div>
+  </div>
+
+  <sc-if value="{{ hasToast }}" hint-placeholder-val="{{ false }}">
+    <div style="position:fixed;bottom:26px;left:50%;transform:translateX(-50%);background:#1c1915;border:1px solid #322c25;border-radius:10px;padding:12px 18px;font-size:13px;color:#ececea;box-shadow:0 10px 30px rgba(0,0,0,.5);animation:fadeUp .2s ease;z-index:50">{{ toast }}</div>
+  </sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:&quot;100%&quot;,&quot;height&quot;:&quot;100%&quot;}}">
+class Component extends DCLogic {
+  state = {
+    page: 'overview',
+    managing: false, catDraft: '',
+    capture: '', foodDraft: '', exDraft: '', tradeDraft: '',
+    recording: false, processing: false, transcript: '',
+    voiceTake: 0, toast: null, tick: 0,
+    areas: [
+      { key: 'school', label: 'School', tint: '#6f90b4' },
+      { key: 'internship', label: 'Intern', tint: '#bd9166' },
+      { key: 'gym', label: 'Gym', tint: '#74ad84' },
+      { key: 'business', label: 'Trading', tint: '#e8a44c' },
+    ],
+    tasks: [
+      { id: 1, title: 'Finish data structures problem set', area: 'school', due: 'today', priority: 'high', done: false },
+      { id: 2, title: 'Push the API rate-limit fix to staging', area: 'internship', due: 'today', priority: 'high', done: false },
+      { id: 9, title: 'Review SPY weekly setup before the open', area: 'business', due: 'today', priority: 'high', done: false },
+      { id: 5, title: 'Write standup notes for mentor 1:1', area: 'internship', due: 'today', priority: 'med', done: false },
+      { id: 10, title: 'Journal yesterday\u2019s 3 trades', area: 'business', due: 'today', priority: 'med', done: false },
+      { id: 7, title: 'Push day — chest & triceps', area: 'gym', due: 'today', priority: 'med', done: true },
+      { id: 25, title: 'Read OS textbook — Ch. 7', area: 'school', due: 'tomorrow', priority: 'low', done: false },
+      { id: 11, title: 'Backtest the breakout strategy', area: 'business', due: 'fri', priority: 'low', done: false },
+    ],
+    meals: [
+      { id: 'm1', time: '07:40', name: 'Greek yogurt, banana, granola', kcal: 380, p: 24, c: 52, f: 9 },
+      { id: 'm2', time: '12:30', name: 'Chicken, rice & broccoli bowl', kcal: 610, p: 48, c: 70, f: 12 },
+    ],
+    workouts: [
+      { id: 'w1', time: '06:30', name: 'Push day — chest & triceps', minutes: 48, kcal: 384 },
+    ],
+    habits: [
+      { id: 'h1', name: 'Workout', week: [true, true, false, true, true, false, false] },
+      { id: 'h2', name: 'Read 30 min', week: [true, false, true, true, false, false, false] },
+      { id: 'h3', name: 'Journal trades', week: [true, true, true, true, true, false, false] },
+      { id: 'h4', name: 'No phone in bed', week: [false, true, true, false, true, false, false] },
+      { id: 'h5', name: 'Meditate 10 min', week: [true, true, true, false, false, false, false] },
+    ],
+    fin: {
+      liquid: 12480,
+      breakdown: [
+        { label: 'CASH', val: 4280, color: '#6f90b4' },
+        { label: 'BROKERAGE', val: 6900, color: '#74ad84' },
+        { label: 'CRYPTO', val: 1300, color: '#e8a44c' },
+      ],
+      pnlToday: 340, pnlMonth: 1920, pnlTotal: 6240,
+      history: [-120, 80, 210, -60, 150, 300, -90, 180, 260, 340],
+      trades: [
+        { id: 't1', sym: 'SPY', date: 'Today · 09:41', pnl: 210 },
+        { id: 't2', sym: 'NVDA', date: 'Today · 10:15', pnl: 130 },
+        { id: 't3', sym: 'TSLA', date: 'Yesterday', pnl: -85 },
+        { id: 't4', sym: 'AAPL', date: 'Mon', pnl: 95 },
+      ],
+    },
+  };
+
+  PALETTE = ['#6f90b4', '#bd9166', '#74ad84', '#e8a44c', '#9b7fb4', '#b46f8a', '#7fb4a8', '#b4a466'];
+  DAY_LABELS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+  TARGET = { kcal: 2800, p: 180, c: 300, f: 80 };
+  BASE_KW = {
+    school: ['school', 'class', 'homework', 'study', 'exam', 'professor', 'prof', 'problem set', 'read', 'lecture', 'assignment', ' os ', 'ch.', 'chapter', 'essay', 'reyes'],
+    internship: ['internship', 'work', 'intern', 'standup', 'mentor', 'api', ' pr ', 'deploy', 'ticket', 'staging', 'bug', 'rate-limit', 'rate limit', 'on-call', 'review', 'fix'],
+    gym: ['gym', 'workout', 'lift', 'push day', 'pull day', 'legs', 'run', 'cardio', 'macros', 'protein', 'train', 'session', 'meal prep'],
+    business: ['trade', 'trading', 'spy', 'market', 'backtest', 'journal', 'setup', 'strategy', 'chart', 'position', 'stock', 'option', 'open'],
+  };
+  FOODS = {
+    egg: { a: ['egg'], k: 78, p: 6, c: 1, f: 5 }, oatmeal: { a: ['oat', 'oatmeal'], k: 150, p: 5, c: 27, f: 3 },
+    chicken: { a: ['chicken'], k: 230, p: 43, c: 2, f: 5 }, rice: { a: ['rice'], k: 205, p: 4, c: 45, f: 0 },
+    banana: { a: ['banana'], k: 105, p: 1, c: 27, f: 0 }, shake: { a: ['shake', 'whey', 'protein powder', 'protein shake'], k: 160, p: 30, c: 6, f: 3 },
+    salad: { a: ['salad'], k: 140, p: 5, c: 12, f: 8 }, pasta: { a: ['pasta', 'spaghetti'], k: 350, p: 12, c: 70, f: 5 },
+    steak: { a: ['steak', 'beef'], k: 450, p: 46, c: 0, f: 28 }, salmon: { a: ['salmon'], k: 280, p: 39, c: 0, f: 13 },
+    yogurt: { a: ['yogurt', 'greek'], k: 140, p: 17, c: 9, f: 4 }, coffee: { a: ['coffee', 'espresso', 'latte'], k: 15, p: 1, c: 2, f: 0 },
+    pizza: { a: ['pizza'], k: 285, p: 12, c: 36, f: 10 }, burger: { a: ['burger'], k: 550, p: 30, c: 40, f: 28 },
+    toast: { a: ['toast', 'bread'], k: 160, p: 5, c: 24, f: 5 }, almonds: { a: ['almond', 'nuts', 'cashew'], k: 170, p: 6, c: 6, f: 15 },
+    apple: { a: ['apple'], k: 95, p: 0, c: 25, f: 0 }, bagel: { a: ['bagel'], k: 270, p: 11, c: 53, f: 2 },
+    pb: { a: ['peanut butter', 'pb'], k: 190, p: 8, c: 6, f: 16 }, milk: { a: ['milk'], k: 120, p: 8, c: 12, f: 5 },
+    broccoli: { a: ['broccoli', 'veg', 'vegetable'], k: 55, p: 4, c: 11, f: 1 }, avocado: { a: ['avocado'], k: 160, p: 2, c: 9, f: 15 },
+    tuna: { a: ['tuna'], k: 180, p: 40, c: 0, f: 2 }, granola: { a: ['granola', 'cereal'], k: 200, p: 5, c: 38, f: 6 },
+    smoothie: { a: ['smoothie'], k: 220, p: 8, c: 38, f: 4 },
+  };
+  EX = [
+    { a: ['push', 'pull', 'legs', 'lift', 'weights', 'strength', 'gym', 'workout', 'chest', 'back', 'squat', 'deadlift'], rate: 8, def: 45 },
+    { a: ['hiit', 'circuit'], rate: 12, def: 25 }, { a: ['sprint'], rate: 13, def: 20 },
+    { a: ['run', 'jog'], rate: 11, def: 30 }, { a: ['cardio', 'elliptical', 'rower', 'row'], rate: 10, def: 30 },
+    { a: ['swim'], rate: 10, def: 30 }, { a: ['cycle', 'cycling', 'bike', 'spin'], rate: 9, def: 40 },
+    { a: ['basketball', 'soccer', 'ball', 'tennis'], rate: 9, def: 45 }, { a: ['walk'], rate: 5, def: 40 },
+    { a: ['yoga', 'stretch', 'mobility'], rate: 4, def: 30 },
+  ];
+  VOICE = [
+    { tr: 'I need to finish the data structures problem set before tomorrow\u2019s deadline, and journal yesterday\u2019s trades.', items: ['finish the data structures problem set before tomorrow\u2019s deadline', 'journal yesterday\u2019s trades'] },
+    { tr: 'Push the rate-limit fix today, it\u2019s blocking the team, and maybe book a gym session this evening.', items: ['push the rate-limit fix today, it\u2019s blocking the team', 'maybe book a gym session this evening'] },
+    { tr: 'I keep forgetting to email professor Reyes about my extension, and I should review the SPY setup before the open.', items: ['email professor Reyes about my extension', 'review the SPY setup before the open'] },
+    { tr: 'Remember to meal prep chicken and rice for the week, and follow up with my mentor about the on-call rotation.', items: ['meal prep chicken and rice for the week', 'follow up with my mentor about the on-call rotation'] },
+  ];
+
+  componentDidMount() { this._clk = setInterval(() => this.setState(s => ({ tick: s.tick + 1 })), 30000); }
+  componentWillUnmount() { clearInterval(this._clk); clearTimeout(this._t); clearTimeout(this._v1); clearTimeout(this._v2); }
+
+  meta(key) { return this.state.areas.find(a => a.key === key) || this.state.areas[0] || { label: '—', tint: '#9b938a' }; }
+  dueLabel(d) { return ({ today: 'Today', tomorrow: 'Tomorrow', wed: 'Wed', fri: 'Fri' })[d] || d; }
+  todayIndex() { return (new Date().getDay() + 6) % 7; }
+  nowTime() { const n = new Date(); return String(n.getHours()).padStart(2, '0') + ':' + String(n.getMinutes()).padStart(2, '0'); }
+  cap(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+  fmtMoney(n) { const neg = n < 0; const v = Math.abs(Math.round(n)).toLocaleString('en-US'); return (neg ? '-$' : '$') + v; }
+  fmtSigned(n) { return (n >= 0 ? '+' : '−') + '$' + Math.abs(Math.round(n)).toLocaleString('en-US'); }
+  flashToast(msg) { this.setState({ toast: msg }); clearTimeout(this._t); this._t = setTimeout(() => this.setState({ toast: null }), 2800); }
+
+  parseArea(text) {
+    const lo = ' ' + text.toLowerCase() + ' ';
+    let best = 0, area = (this.state.areas[0] || {}).key;
+    for (const a of this.state.areas) {
+      const kws = (this.BASE_KW[a.key] || []).concat([a.label.toLowerCase()]);
+      const hits = kws.reduce((n, w) => n + (lo.includes(w) ? 1 : 0), 0);
+      if (hits > best) { best = hits; area = a.key; }
+    }
+    return area;
+  }
+  parsePriority(text) {
+    const lo = text.toLowerCase();
+    if (/\bmaybe\b|someday|sometime|eventually|low.?pri|could|at some point/.test(lo)) return 'low';
+    if (/deadline|today|urgent|asap|block|before the open|before open|due\b|exam|important|fix|!/.test(lo)) return 'high';
+    return 'med';
+  }
+  parseDue(text) { const lo = text.toLowerCase(); if (/tomorrow|tmrw|tmr/.test(lo)) return 'tomorrow'; if (/\bfri/.test(lo)) return 'fri'; if (/\bwed/.test(lo)) return 'wed'; return 'today'; }
+  makeTask(text, viaVoice) {
+    const clean = text.replace(/\s*!+\s*/g, ' ').replace(/\s+/g, ' ').trim();
+    this._idc = (this._idc || 0) + 1;
+    return { id: 'g' + Date.now() + '_' + this._idc, title: this.cap(clean) || 'New task', area: this.parseArea(text), due: this.parseDue(text), priority: this.parsePriority(text), done: false, viaVoice: !!viaVoice };
+  }
+  estimateFood(text) {
+    if (!text.trim()) return null;
+    const parts = text.toLowerCase().split(/,|\band\b|\+/).map(p => p.trim()).filter(Boolean);
+    let tot = { k: 0, p: 0, c: 0, f: 0 };
+    for (const part of parts) {
+      const qm = part.match(/^(\d+)/) || part.match(/x\s?(\d+)/);
+      const qty = qm ? Math.min(parseInt(qm[1], 10), 12) : 1;
+      let hit = null;
+      for (const key of Object.keys(this.FOODS)) { if (this.FOODS[key].a.some(al => part.includes(al))) { hit = this.FOODS[key]; break; } }
+      if (hit) { tot.k += hit.k * qty; tot.p += hit.p * qty; tot.c += hit.c * qty; tot.f += hit.f * qty; }
+      else { tot.k += 250; tot.p += 8; tot.c += 30; tot.f += 9; }
+    }
+    return { kcal: Math.round(tot.k), p: Math.round(tot.p), c: Math.round(tot.c), f: Math.round(tot.f) };
+  }
+  estimateEx(text) {
+    if (!text.trim()) return null;
+    const lo = text.toLowerCase();
+    let rate = 7, def = 30;
+    for (const e of this.EX) { if (e.a.some(al => lo.includes(al))) { rate = e.rate; def = e.def; break; } }
+    let min = def;
+    const mm = lo.match(/(\d+)\s*(min|m\b|minutes)/), hm = lo.match(/(\d+)\s*(h|hr|hour)/), km = lo.match(/(\d+)\s*k\b/);
+    if (mm) min = parseInt(mm[1], 10); else if (hm) min = parseInt(hm[1], 10) * 60; else if (km) min = parseInt(km[1], 10) * 6 + 6;
+    min = Math.max(5, Math.min(min, 240));
+    return { kcal: Math.round(rate * min), minutes: min };
+  }
+  parseTrade(text) {
+    const m = text.match(/([a-zA-Z]{1,5})\s*([+\-]?\$?\s*\d+(\.\d+)?)/);
+    if (!m) return null;
+    const sym = m[1].toUpperCase();
+    let num = parseFloat(m[2].replace(/[^0-9.\-]/g, ''));
+    if (/-/.test(m[2])) num = -Math.abs(num);
+    return { sym, pnl: Math.round(num) };
+  }
+
+  // ---- handlers ----
+  setPage = (p) => this.setState({ page: p });
+  onToggleManage = () => this.setState(s => ({ managing: !s.managing, catDraft: '' }));
+  onCatInput = (e) => this.setState({ catDraft: e.target.value });
+  onCatKey = (e) => { if (e.key === 'Enter') this.onCatAdd(); };
+  onCatAdd = () => {
+    const label = this.state.catDraft.trim();
+    if (!label) return;
+    const key = 'c_' + Date.now();
+    this.setState(s => ({ catDraft: '', areas: [...s.areas, { key, label, tint: this.PALETTE[s.areas.length % this.PALETTE.length] }] }));
+    this.flashToast(`Added category “${label}”`);
+  };
+  onCatRemove = (key) => {
+    this.setState(s => {
+      const remaining = s.areas.filter(a => a.key !== key);
+      const fallback = (remaining[0] || {}).key;
+      return { areas: remaining, tasks: s.tasks.map(t => t.area === key ? { ...t, area: fallback } : t) };
+    });
+  };
+
+  onCaptureInput = (e) => this.setState({ capture: e.target.value });
+  onCaptureKey = (e) => { if (e.key === 'Enter') this.onCaptureSubmit(); };
+  onCaptureSubmit = () => {
+    const t = this.state.capture.trim(); if (!t) return;
+    const task = this.makeTask(t, false);
+    this.setState(s => ({ capture: '', tasks: [task, ...s.tasks] }));
+    this.flashToast(`Filed to ${this.meta(task.area).label} · ${task.priority.toUpperCase()} priority`);
+  };
+  onVoice = () => {
+    if (this.state.recording || this.state.processing) return;
+    this.setState({ recording: true, transcript: '' });
+    this._v1 = setTimeout(() => { this.setState({ recording: false, processing: true }); this._v2 = setTimeout(() => this.finishVoice(), 950); }, 2400);
+  };
+  finishVoice() {
+    const v = this.VOICE[this.state.voiceTake % this.VOICE.length];
+    const newTasks = v.items.map(it => this.makeTask(it, true));
+    this.setState(s => ({ processing: false, transcript: v.tr, voiceTake: s.voiceTake + 1, tasks: [...newTasks, ...s.tasks] }));
+    const highs = newTasks.filter(t => t.priority === 'high').length;
+    this.flashToast(`Captured ${newTasks.length} tasks from voice${highs ? ` · ${highs} flagged high` : ''}`);
+  }
+
+  onFoodInput = (e) => this.setState({ foodDraft: e.target.value });
+  onFoodKey = (e) => { if (e.key === 'Enter') this.onFoodSubmit(); };
+  onFoodSubmit = () => {
+    const t = this.state.foodDraft.trim(); if (!t) return;
+    const est = this.estimateFood(t); if (!est) return;
+    const meal = { id: 'm' + Date.now(), time: this.nowTime(), name: this.cap(t), kcal: est.kcal, p: est.p, c: est.c, f: est.f };
+    this.setState(s => ({ foodDraft: '', meals: [...s.meals, meal] }));
+    this.flashToast(`Logged ${est.kcal} kcal · ${est.p}g protein`);
+  };
+  onExInput = (e) => this.setState({ exDraft: e.target.value });
+  onExKey = (e) => { if (e.key === 'Enter') this.onExSubmit(); };
+  onExSubmit = () => {
+    const t = this.state.exDraft.trim(); if (!t) return;
+    const est = this.estimateEx(t); if (!est) return;
+    const w = { id: 'w' + Date.now(), time: this.nowTime(), name: this.cap(t), minutes: est.minutes, kcal: est.kcal };
+    this.setState(s => ({ exDraft: '', workouts: [...s.workouts, w] }));
+    this.flashToast(`Logged ${est.minutes} min · ${est.kcal} kcal burned`);
+  };
+  onTradeInput = (e) => this.setState({ tradeDraft: e.target.value });
+  onTradeKey = (e) => { if (e.key === 'Enter') this.onTradeSubmit(); };
+  onTradeSubmit = () => {
+    const t = this.state.tradeDraft.trim(); if (!t) return;
+    const tr = this.parseTrade(t);
+    if (!tr) { this.flashToast('Try a format like “SPY +210”'); return; }
+    this.setState(s => {
+      const fin = { ...s.fin };
+      fin.trades = [{ id: 'tr' + Date.now(), sym: tr.sym, date: 'Today · ' + this.nowTime(), pnl: tr.pnl }, ...fin.trades];
+      fin.pnlToday = s.fin.pnlToday + tr.pnl;
+      fin.pnlMonth = s.fin.pnlMonth + tr.pnl;
+      fin.pnlTotal = s.fin.pnlTotal + tr.pnl;
+      fin.liquid = s.fin.liquid + tr.pnl;
+      fin.breakdown = s.fin.breakdown.map(b => b.label === 'BROKERAGE' ? { ...b, val: b.val + tr.pnl } : b);
+      fin.history = s.fin.history.slice(); fin.history[fin.history.length - 1] = fin.pnlToday;
+      return { tradeDraft: '', fin };
+    });
+    this.flashToast(`Logged ${tr.sym} ${this.fmtSigned(tr.pnl)}`);
+  };
+
+  toggleTask = (id) => this.setState(s => ({ tasks: s.tasks.map(t => t.id === id ? { ...t, done: !t.done } : t) }));
+  toggleHabit = (hid, idx) => this.setState(s => ({ habits: s.habits.map(h => h.id === hid ? { ...h, week: h.week.map((v, i) => i === idx ? !v : v) } : h) }));
+  streakOf(week) { const ti = this.todayIndex(); let n = 0; for (let i = ti; i >= 0; i--) { if (week[i]) n++; else break; } return n; }
+
+  renderVals() {
+    const s = this.state, now = new Date(), ti = this.todayIndex();
+
+    const pageTabs = [{ key: 'overview', label: 'Overview' }, { key: 'finance', label: 'Finance' }].map(t => ({
+      label: t.label, onClick: () => this.setPage(t.key),
+      style: `background:${s.page === t.key ? '#211d18' : 'transparent'};border:1px solid ${s.page === t.key ? '#322c25' : 'transparent'};border-radius:7px;padding:5px 13px;font-size:12.5px;font-weight:600;cursor:pointer;transition:all .12s;color:${s.page === t.key ? '#ececea' : '#7a726a'}`,
+    }));
+
+    const openByArea = {};
+    s.areas.forEach(a => openByArea[a.key] = 0);
+    s.tasks.forEach(t => { if (!t.done && openByArea[t.area] !== undefined) openByArea[t.area]++; });
+    const cats = s.areas.map(a => ({ label: a.label.toUpperCase(), tint: a.tint, count: openByArea[a.key] || 0, onRemove: () => this.onCatRemove(a.key) }));
+
+    // priorities
+    const rank = { high: 0, med: 1, low: 2 };
+    const badgeStyles = {
+      high: 'font-family:\'JetBrains Mono\',monospace;font-size:9.5px;font-weight:600;letter-spacing:.5px;color:#e8a44c;background:rgba(232,164,76,.13);border:1px solid rgba(232,164,76,.32);border-radius:4px;padding:1.5px 6px',
+      med: 'font-family:\'JetBrains Mono\',monospace;font-size:9.5px;font-weight:600;letter-spacing:.5px;color:#b6aea4;background:#1d1a16;border:1px solid #2a2622;border-radius:4px;padding:1.5px 6px',
+      low: 'font-family:\'JetBrains Mono\',monospace;font-size:9.5px;font-weight:600;letter-spacing:.5px;color:#6f675e;background:transparent;border:1px solid #231f1b;border-radius:4px;padding:1.5px 6px',
+    };
+    const tasks = s.tasks.slice().sort((a, b) => (a.done - b.done) || (rank[a.priority] - rank[b.priority]) || 0).map(t => {
+      const m = this.meta(t.area);
+      return {
+        ...t, tint: m.tint, areaLabel: m.label, dueLabel: this.dueLabel(t.due), badge: t.priority.toUpperCase(), badgeStyle: badgeStyles[t.priority],
+        rowStyle: `display:flex;align-items:flex-start;gap:12px;padding:12px 14px;border:1px solid ${t.done ? '#171411' : '#211e1a'};border-radius:11px;background:${t.done ? '#100e0c' : '#13110f'};transition:background .12s,border-color .12s;animation:fadeUp .22s ease`,
+        boxStyle: `width:20px;height:20px;flex:0 0 20px;margin-top:1px;border-radius:6px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .15s;border:1.5px solid ${t.done ? '#e8a44c' : '#3a352f'};background:${t.done ? '#e8a44c' : 'transparent'}`,
+        titleStyle: `font-size:14px;font-weight:500;line-height:1.35;margin-top:4px;${t.done ? 'color:#5c554d;text-decoration:line-through' : 'color:#e6e0d8'}`,
+        onToggle: () => this.toggleTask(t.id),
+      };
+    });
+
+    const hr = now.getHours();
+    const greeting = hr < 12 ? 'Good morning.' : hr < 18 ? 'Good afternoon.' : 'Good evening.';
+    const todayOpen = s.tasks.filter(t => !t.done && t.due === 'today');
+    const highs = todayOpen.filter(t => t.priority === 'high').length;
+    const aiSummary = todayOpen.length === 0 ? 'Nothing open for today — you\u2019re clear. Want me to pull tomorrow forward?' : `${todayOpen.length} open for today${highs ? `, ${highs} high-priority` : ''}. I\u2019ve ordered them below — start at the top.`;
+    const doneToday = s.tasks.filter(t => t.due === 'today' && t.done).length;
+    const totalToday = s.tasks.filter(t => t.due === 'today').length;
+
+    // fuel
+    const consumed = s.meals.reduce((a, m) => a + m.kcal, 0);
+    const pSum = s.meals.reduce((a, m) => a + m.p, 0), cSum = s.meals.reduce((a, m) => a + m.c, 0), fSum = s.meals.reduce((a, m) => a + m.f, 0);
+    const burned = s.workouts.reduce((a, w) => a + w.kcal, 0);
+    const net = consumed - burned;
+    const remaining = this.TARGET.kcal - net;
+    const fuel = {
+      consumed, target: this.TARGET.kcal, pct: Math.min(100, Math.round((consumed / this.TARGET.kcal) * 100)) + '%',
+      netLabel: remaining >= 0 ? `${remaining} left` : `${Math.abs(remaining)} over`,
+      netStyle: `font-family:'JetBrains Mono',monospace;font-size:11px;margin-bottom:5px;color:${remaining >= 0 ? '#74ad84' : '#e8a44c'}`,
+      macros: [
+        { label: 'PROTEIN', val: `${pSum}/${this.TARGET.p}g`, pct: Math.min(100, Math.round(pSum / this.TARGET.p * 100)) + '%', color: '#74ad84' },
+        { label: 'CARBS', val: `${cSum}/${this.TARGET.c}g`, pct: Math.min(100, Math.round(cSum / this.TARGET.c * 100)) + '%', color: '#bd9166' },
+        { label: 'FAT', val: `${fSum}/${this.TARGET.f}g`, pct: Math.min(100, Math.round(fSum / this.TARGET.f * 100)) + '%', color: '#6f90b4' },
+      ],
+      meals: s.meals.slice().reverse(),
+    };
+
+    const totalMin = s.workouts.reduce((a, w) => a + w.minutes, 0);
+    const train = { burned, minutes: totalMin, sessionLabel: s.workouts.length + (s.workouts.length === 1 ? ' SESSION' : ' SESSIONS'), sessions: s.workouts.slice().reverse(), empty: s.workouts.length === 0 };
+
+    const weekDays = this.DAY_LABELS.map((label, i) => ({ label, style: `text-align:center;font-family:'JetBrains Mono',monospace;font-size:10.5px;font-weight:500;color:${i === ti ? '#e8a44c' : '#5c554d'}` }));
+    const habits = s.habits.map(h => {
+      const streak = this.streakOf(h.week);
+      return { name: h.name, streakLabel: streak > 1 ? `${streak}\u00d7` : '', cells: h.week.map((done, i) => ({ done, onToggle: () => this.toggleHabit(h.id, i), style: `width:24px;height:24px;border-radius:7px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .15s;border:1.5px solid ${done ? '#e8a44c' : (i === ti ? '#4a4138' : '#231f1b')};background:${done ? '#e8a44c' : 'transparent'}` })) };
+    });
+    const habitDoneToday = s.habits.filter(h => h.week[ti]).length;
+
+    const fe = this.estimateFood(s.foodDraft), ee = this.estimateEx(s.exDraft);
+
+    // finance derived
+    const fd = s.fin;
+    const totalLiq = fd.breakdown.reduce((a, b) => a + b.val, 0) || 1;
+    const pnlColor = (n) => n >= 0 ? '#74ad84' : '#c77b6b';
+    const fin = {
+      liquid: this.fmtMoney(fd.liquid),
+      netDelta: '+' + (Math.round((fd.pnlMonth / fd.liquid) * 1000) / 10) + '% · 30D',
+      breakdown: fd.breakdown.map(b => ({ label: b.label, color: b.color, val: this.fmtMoney(b.val), pct: Math.round(b.val / totalLiq * 100) + '%' })),
+      pnlStats: [
+        { label: 'TODAY', val: this.fmtSigned(fd.pnlToday), color: pnlColor(fd.pnlToday) },
+        { label: 'THIS MONTH', val: this.fmtSigned(fd.pnlMonth), color: pnlColor(fd.pnlMonth) },
+        { label: 'ALL-TIME', val: this.fmtSigned(fd.pnlTotal), color: pnlColor(fd.pnlTotal) },
+      ],
+      history: (() => {
+        const max = Math.max(...fd.history.map(v => Math.abs(v)), 1);
+        return fd.history.map(v => {
+          const h = Math.round(Math.abs(v) / max * 48);
+          const pos = v >= 0;
+          return { style: `position:absolute;left:2px;right:2px;${pos ? 'bottom:50%' : 'top:50%'};height:${h}%;background:${pos ? '#74ad84' : '#c77b6b'};border-radius:${pos ? '3px 3px 0 0' : '0 0 3px 3px'}` };
+        });
+      })(),
+      trades: fd.trades.map(t => ({ sym: t.sym, date: t.date, pnl: this.fmtSigned(t.pnl), pnlStyle: `font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600;flex:0 0 auto;color:${pnlColor(t.pnl)}` })),
+      tradeCount: fd.trades.length,
+    };
+    const te = this.parseTrade(s.tradeDraft);
+
+    // KPIs
+    const kpis = [
+      { label: 'OPEN TODAY', val: String(todayOpen.length), color: '#ececea' },
+      { label: 'FOCUS', val: `${doneToday}/${totalToday}`, color: '#ececea' },
+      { label: 'NET KCAL', val: String(net), color: '#ececea' },
+      { label: 'BURNED', val: String(burned), color: '#74ad84' },
+      { label: 'HABITS', val: `${habitDoneToday}/${s.habits.length}`, color: '#ececea' },
+      { label: 'NET LIQUID', val: this.fmtMoney(fd.liquid), color: '#ececea' },
+      { label: 'P&L TODAY', val: this.fmtSigned(fd.pnlToday), color: pnlColor(fd.pnlToday) },
+    ];
+
+    return {
+      pageTabs, isOverview: s.page === 'overview', isFinance: s.page === 'finance',
+      clock: this.nowTime(), dateShort: now.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }).toUpperCase(),
+      cats, managing: s.managing, catDraft: s.catDraft, onCatInput: this.onCatInput, onCatKey: this.onCatKey, onCatAdd: this.onCatAdd, onToggleManage: this.onToggleManage,
+      manageLabel: s.managing ? 'DONE' : '+ MANAGE',
+      manageBtnStyle: `font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1px;background:${s.managing ? '#211d18' : 'transparent'};border:1px solid #322c25;border-radius:7px;padding:5px 11px;cursor:pointer;transition:all .12s;color:${s.managing ? '#ececea' : '#7a726a'}`,
+      kpis,
+      greeting, aiSummary,
+      tasks,
+      onVoice: this.onVoice, voiceIdle: !s.recording && !s.processing, voiceRec: s.recording, voiceProc: s.processing,
+      voiceBtnStyle: `display:flex;align-items:center;width:100%;min-height:56px;padding:11px 16px;border-radius:13px;cursor:${(s.recording || s.processing) ? 'default' : 'pointer'};transition:all .15s;border:1px solid ${s.recording ? 'rgba(232,164,76,.4)' : '#2c2620'};background:${s.recording ? 'rgba(232,164,76,.06)' : '#161210'}`,
+      hasTranscript: !!s.transcript, transcript: s.transcript,
+      capture: s.capture, onCaptureInput: this.onCaptureInput, onCaptureKey: this.onCaptureKey, onCaptureSubmit: this.onCaptureSubmit,
+      fuel, foodDraft: s.foodDraft, onFoodInput: this.onFoodInput, onFoodKey: this.onFoodKey, onFoodSubmit: this.onFoodSubmit, foodHint: fe ? `~${fe.kcal} kcal · ${fe.p}p / ${fe.c}c / ${fe.f}f` : '',
+      train, exDraft: s.exDraft, onExInput: this.onExInput, onExKey: this.onExKey, onExSubmit: this.onExSubmit, exHint: ee ? `~${ee.kcal} kcal burned · ${ee.minutes} min` : '',
+      weekDays, habits, habitScore: `${habitDoneToday}/${s.habits.length} TODAY`,
+      fin, tradeDraft: s.tradeDraft, onTradeInput: this.onTradeInput, onTradeKey: this.onTradeKey, onTradeSubmit: this.onTradeSubmit,
+      tradeHint: te ? `${te.sym} · ${this.fmtSigned(te.pnl)} realized` : '',
+      hasToast: !!s.toast, toast: s.toast,
+    };
+  }
+}
+</script>
+</body>
+</html>
