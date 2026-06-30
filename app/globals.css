@@ -376,6 +376,24 @@ input:focus {
   }
 }
 
+/* Settings grids: minmax(0,1fr) tracks so number inputs never force the page
+   wider than the screen; the 3-up grids drop to 2-up on phones. */
+.setGrid2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.setGrid3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.setGrid2 > *,
+.setGrid3 > * {
+  min-width: 0;
+}
+@media (max-width: 720px) {
+  .setGrid3 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 /* Two-up page grids (Health, Finance) collapse to one column on phones so
    cards get full width instead of cramping and overlapping. */
 .grid2 {

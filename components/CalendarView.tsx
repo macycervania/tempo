@@ -42,8 +42,13 @@ export default function CalendarView({ vm }: { vm: VM }) {
       </section>
       <section style={css('background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:20px 22px;display:flex;flex-direction:column')}>
         <div style={css(mono + 'font-size:10px;letter-spacing:1.5px;color:var(--accent);margin-bottom:4px')}>SELECTED</div>
-        <div style={css('font-size:18px;font-weight:700;color:var(--text);margin-bottom:16px')}>{cal.selectedLabel}</div>
-        <div style={css('display:flex;flex-direction:column;gap:7px;margin-bottom:14px;flex:1')}>
+        <div style={css('font-size:18px;font-weight:700;color:var(--text);margin-bottom:14px')}>{cal.selectedLabel}</div>
+        <div style={css('display:flex;align-items:center;gap:9px;background:var(--inset);border:1px solid var(--line2);border-radius:10px;padding:0 12px;height:42px;margin-bottom:14px')}>
+          <span style={css(mono + 'font-size:13px;color:var(--accent)')}>+</span>
+          <input value={cal.calDraft} onChange={cal.onCalDraftInput} onKeyDown={cal.onCalDraftKey} placeholder="Add a task to this day…" style={css('flex:1;background:none;border:none;color:var(--text);font-size:13px')} />
+          <Hov as="button" onClick={cal.onCalAdd} styleStr="background:var(--inset);border:1px solid var(--line2);border-radius:7px;padding:5px 11px;font-size:12px;font-weight:600;color:var(--text-dim);cursor:pointer" hover="border-color:var(--line2)">Add</Hov>
+        </div>
+        <div style={css('display:flex;flex-direction:column;gap:7px;flex:1')}>
           {cal.selTasks.map((task) => (
             <div key={task.id} style={css('display:flex;align-items:flex-start;gap:11px;padding:11px 13px;background:var(--inset);border:1px solid var(--line);border-radius:11px;animation:fadeUp .2s ease')}>
               <button onClick={task.onToggle} style={css(task.boxStyle)}>
@@ -60,13 +65,8 @@ export default function CalendarView({ vm }: { vm: VM }) {
             </div>
           ))}
           {cal.selEmpty && (
-            <div style={css('text-align:center;padding:30px 10px;font-size:13px;color:var(--text-faint2)')}>Nothing scheduled. Add something below.</div>
+            <div style={css('text-align:center;padding:30px 10px;font-size:13px;color:var(--text-faint2)')}>Nothing scheduled. Add one above.</div>
           )}
-        </div>
-        <div style={css('display:flex;align-items:center;gap:9px;background:var(--inset);border:1px solid var(--line2);border-radius:10px;padding:0 12px;height:42px')}>
-          <span style={css(mono + 'font-size:13px;color:var(--accent)')}>+</span>
-          <input value={cal.calDraft} onChange={cal.onCalDraftInput} onKeyDown={cal.onCalDraftKey} placeholder="Add a task to this day…" style={css('flex:1;background:none;border:none;color:var(--text);font-size:13px')} />
-          <Hov as="button" onClick={cal.onCalAdd} styleStr="background:var(--inset);border:1px solid var(--line2);border-radius:7px;padding:5px 11px;font-size:12px;font-weight:600;color:var(--text-dim);cursor:pointer" hover="border-color:var(--line2)">Add</Hov>
         </div>
       </section>
     </div>

@@ -268,6 +268,8 @@ export function makeInitialState(): TempoState {
     newTaskQuad: 0,
     capture: '',
     foodDraft: '',
+    foodResults: [],
+    foodSearching: false,
     exDraft: '',
     tradeDraft: '',
     recording: false,

@@ -48,7 +48,7 @@ export default function SettingsView({ vm }: { vm: VM }) {
       {/* THEME */}
       <section style={css('background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:20px 22px')}>
         <div style={css(mono + 'font-size:10px;letter-spacing:2px;color:var(--text-faint);margin-bottom:14px')}>THEME</div>
-        <div style={css('display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:0 0 14px;border-bottom:1px solid var(--line)')}>
+        <div className="setGrid3" style={css('display:grid;gap:10px;padding:0 0 14px;border-bottom:1px solid var(--line)')}>
           {st.themes.map((th, i) => (
             <button key={i} onClick={th.onClick} style={css(th.style)}>
               <span style={css(th.dotStyle)} />
@@ -85,7 +85,7 @@ export default function SettingsView({ vm }: { vm: VM }) {
       {/* DAILY TARGETS */}
       <section style={css('background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:20px 22px')}>
         <div style={css(mono + 'font-size:10px;letter-spacing:2px;color:var(--text-faint);margin-bottom:14px')}>DAILY TARGETS</div>
-        <div style={css('display:grid;grid-template-columns:repeat(2,1fr);gap:12px')}>
+        <div className="setGrid2" style={css('display:grid;gap:12px')}>
           {st.targets.map((t, i) => (
             <div key={i} style={css('display:flex;align-items:center;justify-content:space-between;background:var(--inset);border:1px solid var(--line);border-radius:10px;padding:11px 14px')}>
               <span style={css('font-size:13px;color:var(--text-dim)')}>{t.label}</span>
@@ -106,7 +106,7 @@ export default function SettingsView({ vm }: { vm: VM }) {
       {/* BODY */}
       <section style={css('background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:20px 22px')}>
         <div style={css(mono + 'font-size:10px;letter-spacing:2px;color:var(--text-faint);margin-bottom:14px')}>BODY</div>
-        <div style={css('display:grid;grid-template-columns:repeat(3,1fr);gap:12px')}>
+        <div className="setGrid3" style={css('display:grid;gap:12px')}>
           {st.body.fields.map((f, i) => (
             <div key={i} style={css('display:flex;align-items:center;justify-content:space-between;background:var(--inset);border:1px solid var(--line);border-radius:10px;padding:11px 14px')}>
               <span style={css('font-size:13px;color:var(--text-dim)')}>{f.label}</span>

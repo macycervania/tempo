@@ -73,14 +73,32 @@ export default function HealthView({ vm }: { vm: VM }) {
           ))}
         </div>
         <div style={css('margin-top:auto;display:flex;align-items:center;gap:9px;background:var(--inset);border:1px solid var(--line2);border-radius:10px;padding:0 12px;height:42px')}>
-          <span style={css(mono + 'font-size:14px;color:var(--accent)')}>+</span>
-          <input value={vm.foodDraft} onChange={vm.onFoodInput} onKeyDown={vm.onFoodKey} placeholder="What did you eat? (“3 eggs, oatmeal, coffee”)" style={css('flex:1;background:none;border:none;color:var(--text);font-size:13px')} />
+          <span style={css(mono + 'font-size:14px;color:var(--accent)')}>⌕</span>
+          <input value={vm.foodDraft} onChange={vm.onFoodInput} onKeyDown={vm.onFoodKey} placeholder="Search a food (“pho”, “chicken rice”)…" style={css('flex:1;background:none;border:none;color:var(--text);font-size:13px')} />
           <Hov as="button" onClick={vm.onFoodSubmit} styleStr="background:var(--inset);border:1px solid var(--line2);border-radius:7px;padding:5px 11px;font-size:12px;font-weight:600;color:var(--text-dim);cursor:pointer" hover="border-color:var(--line2)">Log</Hov>
         </div>
-        {vm.foodHint && (
+
+        {/* MyFitnessPal-style search results */}
+        {(vm.foodResults.length > 0 || vm.foodSearching) && (
+          <div style={css('margin-top:8px;display:flex;flex-direction:column;gap:6px;max-height:300px;overflow-y:auto')}>
+            {vm.foodSearching && vm.foodResults.length === 0 && (
+              <div style={css('padding:10px 4px;font-size:12px;color:var(--text-faint2)')}>Searching…</div>
+            )}
+            {vm.foodResults.map((r) => (
+              <div key={r.id} style={css('display:flex;align-items:center;gap:10px;padding:9px 12px;background:var(--inset);border:1px solid var(--line);border-radius:10px')}>
+                <div style={css('flex:1;min-width:0')}>
+                  <div style={css('font-size:13px;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap')}>{r.name}</div>
+                  <div style={css(mono + 'font-size:10px;color:var(--text-faint2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap')}>{r.meta} · {r.macros}</div>
+                </div>
+                <Hov as="button" onClick={r.onPick} styleStr="flex:0 0 auto;width:30px;height:30px;border-radius:50%;background:var(--accent);color:var(--bg);border:none;font-size:18px;font-weight:600;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center" hover="opacity:.9" title="Log this food">+</Hov>
+              </div>
+            ))}
+          </div>
+        )}
+        {vm.foodHint && vm.foodResults.length === 0 && !vm.foodSearching && (
           <div style={css('margin-top:8px;font-size:11.5px;color:var(--text-faint)')}>
             <span style={css(mono + 'font-size:10px;color:var(--accent)')}>EST </span>
-            {vm.foodHint}
+            {vm.foodHint} · tap Log to add as typed
           </div>
         )}
       </section>

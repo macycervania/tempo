@@ -252,6 +252,9 @@ export interface TempoState {
   // capture inputs
   capture: string;
   foodDraft: string;
+  /** MyFitnessPal-style live food search results for the meal logger. */
+  foodResults: import('./foods').FoodHit[];
+  foodSearching: boolean;
   exDraft: string;
   tradeDraft: string;
   recording: boolean;

@@ -42,6 +42,8 @@ import {
 } from '@/lib/format';
 import { clearSettings, loadSettings, savePfp, saveSettings } from '@/lib/storage';
 import { fetchSolWallet, isSolAddress } from '@/lib/solana';
+import { searchFoods } from '@/lib/foods';
+import type { FoodHit } from '@/lib/foods';
 import type { Task } from '@/lib/types';
 
 // ── Context shape ───────────────────────────────────────────────────────────────
@@ -69,6 +71,7 @@ export interface TempoApi {
   onFoodInput: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onFoodKey: (e: React.KeyboardEvent) => void;
   onFoodSubmit: () => void;
+  onPickFood: (hit: FoodHit) => void;
   onExInput: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onExKey: (e: React.KeyboardEvent) => void;
   onExSubmit: () => void;
@@ -582,14 +585,67 @@ export function TempoProvider({ children }: { children: React.ReactNode }) {
   }, [set, flashToast, finishVoiceReal]);
 
   // ── fuel / training / trade ─────────────────────────────────────────────────
-  const onFoodInput = (e: React.ChangeEvent<HTMLInputElement>) =>
-    set({ foodDraft: e.target.value });
+  // MyFitnessPal-style live search: as you type, query the food database
+  // (debounced) and show matches to pick from. The typed "Log" stays as a
+  // fallback that AI/locally estimates whatever you wrote.
+  const foodSearchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const foodAbort = useRef<AbortController | null>(null);
+  const runFoodSearch = useCallback(
+    async (q: string) => {
+      if (foodAbort.current) foodAbort.current.abort();
+      const ctrl = new AbortController();
+      foodAbort.current = ctrl;
+      try {
+        const hits = await searchFoods(q, ctrl.signal);
+        if (ctrl.signal.aborted) return;
+        if (ref.current.foodDraft.trim() !== q) return; // stale
+        set({ foodResults: hits, foodSearching: false });
+      } catch {
+        if (!ctrl.signal.aborted) set({ foodSearching: false });
+      }
+    },
+    [set],
+  );
+  const onFoodInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const v = e.target.value;
+    set({ foodDraft: v });
+    if (foodSearchTimer.current) clearTimeout(foodSearchTimer.current);
+    const q = v.trim();
+    if (q.length < 2) {
+      set({ foodResults: [], foodSearching: false });
+      return;
+    }
+    set({ foodSearching: true });
+    foodSearchTimer.current = setTimeout(() => runFoodSearch(q), 280);
+  };
+  const onPickFood = useCallback(
+    (hit: FoodHit) => {
+      const meal = {
+        id: 'm' + Date.now(),
+        time: nowTime(),
+        name: hit.name,
+        kcal: hit.kcal,
+        p: hit.p,
+        c: hit.c,
+        f: hit.f,
+      };
+      if (foodAbort.current) foodAbort.current.abort();
+      set((s) => ({
+        meals: [...s.meals, meal],
+        foodDraft: '',
+        foodResults: [],
+        foodSearching: false,
+      }));
+      flashToast(`Logged ${hit.name} · ${hit.kcal} kcal`);
+    },
+    [set, flashToast],
+  );
   const onFoodSubmit = useCallback(async () => {
     const t = ref.current.foodDraft.trim();
     if (!t) return;
     // Clear the input immediately; resolve macros via the AI seam (falls back to
     // the local estimate when no LLM key is configured).
-    set({ foodDraft: '' });
+    set({ foodDraft: '', foodResults: [], foodSearching: false });
     const est = await estimateFoodSmart(t);
     if (!est) return;
     const meal = {
@@ -1656,6 +1712,7 @@ export function TempoProvider({ children }: { children: React.ReactNode }) {
       onFoodInput,
       onFoodKey,
       onFoodSubmit,
+      onPickFood,
       onExInput,
       onExKey,
       onExSubmit,

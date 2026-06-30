@@ -1232,6 +1232,15 @@ export function useViewModel() {
     onFoodKey: api.onFoodKey,
     onFoodSubmit: api.onFoodSubmit,
     foodHint: fe ? `~${fe.kcal} kcal · ${fe.p}p / ${fe.c}c / ${fe.f}f` : '',
+    foodSearching: s.foodSearching,
+    foodResults: s.foodResults.map((h) => ({
+      id: h.id,
+      name: h.name,
+      meta:
+        `${h.kcal} cal · ${h.serving}` + (h.brand ? ` · ${h.brand}` : ''),
+      macros: `${h.p}p · ${h.c}c · ${h.f}f`,
+      onPick: () => api.onPickFood(h),
+    })),
     train,
     exDraft: s.exDraft,
     onExInput: api.onExInput,
