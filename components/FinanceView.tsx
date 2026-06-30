@@ -160,7 +160,13 @@ export default function FinanceView({ vm }: { vm: VM }) {
           {fin.pnlStats.map((p, i) => (
             <div key={i} style={css('flex:1;background:var(--inset);border:1px solid var(--line);border-radius:11px;padding:13px 14px')}>
               <div style={css(mono + 'font-size:9.5px;letter-spacing:1px;color:var(--text-faint);margin-bottom:7px')}>{p.label}</div>
-              <div style={css(`font-size:21px;font-weight:700;letter-spacing:-.5px;color:${p.color}`)}>{p.val}</div>
+              {p.editing ? (
+                <EditInput vm={vm} style={"width:110px;background:var(--panel);border:1px solid var(--line2);border-radius:6px;padding:2px 6px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:18px;font-weight:700"} />
+              ) : p.managing ? (
+                <Hov as="span" onClick={p.onEdit} styleStr={`font-size:21px;font-weight:700;letter-spacing:-.5px;color:${p.color};cursor:pointer`} hover="text-decoration:underline">{p.val}</Hov>
+              ) : (
+                <div style={css(`font-size:21px;font-weight:700;letter-spacing:-.5px;color:${p.color}`)}>{p.val}</div>
+              )}
             </div>
           ))}
         </div>
@@ -201,10 +207,25 @@ export default function FinanceView({ vm }: { vm: VM }) {
         </div>
         <div style={css('display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:8px')}>
           {fin.trades.map((t, i) => (
-            <div key={i} style={css('display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--inset);border:1px solid var(--line);border-radius:11px;animation:fadeUp .2s ease')}>
-              <span style={css(mono + 'font-size:13px;font-weight:600;color:var(--text);width:54px;flex:0 0 auto')}>{t.sym}</span>
+            <div key={i} style={css('display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--inset);border:1px solid var(--line);border-radius:11px;animation:fadeUp .2s ease')}>
+              {t.managing && (
+                <Hov as="button" onClick={t.onRemove} styleStr="background:none;border:none;color:var(--text-faint2);cursor:pointer;font-size:13px;line-height:1;flex:0 0 auto" hover="color:#c77b6b">×</Hov>
+              )}
+              {t.symEditing ? (
+                <EditInput vm={vm} style={"width:62px;background:var(--panel);border:1px solid var(--line2);border-radius:5px;padding:2px 6px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600"} />
+              ) : t.managing ? (
+                <Hov as="span" onClick={t.onEditSym} styleStr={mono + 'font-size:13px;font-weight:600;color:var(--text);width:54px;flex:0 0 auto;cursor:text'} hover="text-decoration:underline">{t.sym}</Hov>
+              ) : (
+                <span style={css(mono + 'font-size:13px;font-weight:600;color:var(--text);width:54px;flex:0 0 auto')}>{t.sym}</span>
+              )}
               <span style={css(mono + 'font-size:10px;color:var(--text-faint2);flex:1')}>{t.date}</span>
-              <span style={css(t.pnlStyle)}>{t.pnl}</span>
+              {t.pnlEditing ? (
+                <EditInput vm={vm} style={"width:80px;text-align:right;background:var(--panel);border:1px solid var(--line2);border-radius:5px;padding:2px 6px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600"} />
+              ) : t.managing ? (
+                <Hov as="span" onClick={t.onEditPnl} styleStr={t.pnlStyle + ';cursor:pointer'} hover="text-decoration:underline">{t.pnl}</Hov>
+              ) : (
+                <span style={css(t.pnlStyle)}>{t.pnl}</span>
+              )}
             </div>
           ))}
         </div>

@@ -106,6 +106,7 @@ export interface TempoApi {
   onToggleFinManage: () => void;
   addAsset: () => void;
   removeAsset: (i: number) => void;
+  removeTrade: (id: string) => void;
   onWalletAddrInput: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onWalletLabelInput: (e: React.ChangeEvent<HTMLInputElement>) => void;
   addWallet: () => void;
@@ -948,6 +949,14 @@ export function TempoProvider({ children }: { children: React.ReactNode }) {
     },
     [set],
   );
+  const removeTrade = useCallback(
+    (id: string) => {
+      const fin = cloneFin();
+      fin.trades = fin.trades.filter((t: { id: string }) => t.id !== id);
+      set({ fin });
+    },
+    [set],
+  );
 
   // Solana wallets (read-only, public addresses only) ──────────────────────────
   const fetchOneWallet = useCallback(
@@ -1082,12 +1091,29 @@ export function TempoProvider({ children }: { children: React.ReactNode }) {
       }));
       return;
     }
-    if (p[0] === 'fsav' || p[0] === 'fewa' || p[0] === 'fav' || p[0] === 'fal') {
+    // Signed value for P&L figures (trades can be negative).
+    const signed = Math.round(parseFloat(editVal) || 0);
+    if (
+      p[0] === 'fsav' ||
+      p[0] === 'fewa' ||
+      p[0] === 'fav' ||
+      p[0] === 'fal' ||
+      p[0] === 'fpt' ||
+      p[0] === 'fpm' ||
+      p[0] === 'fptot' ||
+      p[0] === 'tsym' ||
+      p[0] === 'tpnl'
+    ) {
       const fin = cloneFin();
       if (p[0] === 'fsav') fin.savings = num;
       else if (p[0] === 'fewa') fin.ewallet = num;
       else if (p[0] === 'fav') fin.assets[+p[1]].val = num;
       else if (p[0] === 'fal') fin.assets[+p[1]].label = txt;
+      else if (p[0] === 'fpt') fin.pnlToday = signed;
+      else if (p[0] === 'fpm') fin.pnlMonth = signed;
+      else if (p[0] === 'fptot') fin.pnlTotal = signed;
+      else if (p[0] === 'tsym') fin.trades[+p[1]].sym = txt.toUpperCase();
+      else if (p[0] === 'tpnl') fin.trades[+p[1]].pnl = signed;
       set({ fin, edit: null, editVal: '' });
       return;
     }
@@ -1654,6 +1680,7 @@ export function TempoProvider({ children }: { children: React.ReactNode }) {
       onToggleFinManage,
       addAsset,
       removeAsset,
+      removeTrade,
       onWalletAddrInput,
       onWalletLabelInput,
       addWallet,

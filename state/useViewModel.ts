@@ -577,10 +577,18 @@ export function useViewModel() {
         : `${fmtPeso(spentTotalF - incomeTotalF)} drawn down this month`,
     incomeNote: `${fmtPeso(incomeTotalF)}/mo income · incl. allowance & rent`,
     pnlStats: [
-      { label: 'TODAY', val: fmtSig(fd.pnlToday), color: pnlColor(fd.pnlToday) },
-      { label: 'THIS MONTH', val: fmtSig(fd.pnlMonth), color: pnlColor(fd.pnlMonth) },
-      { label: 'ALL-TIME', val: fmtSig(fd.pnlTotal), color: pnlColor(fd.pnlTotal) },
-    ],
+      { label: 'TODAY', key: 'fpt', raw: fd.pnlToday, val: fmtSig(fd.pnlToday), color: pnlColor(fd.pnlToday) },
+      { label: 'THIS MONTH', key: 'fpm', raw: fd.pnlMonth, val: fmtSig(fd.pnlMonth), color: pnlColor(fd.pnlMonth) },
+      { label: 'ALL-TIME', key: 'fptot', raw: fd.pnlTotal, val: fmtSig(fd.pnlTotal), color: pnlColor(fd.pnlTotal) },
+    ].map((p) => ({
+      label: p.label,
+      val: p.val,
+      color: p.color,
+      managing: managingFin,
+      editing: s.edit === p.key,
+      show: s.edit !== p.key,
+      onEdit: () => api.startEdit(p.key, p.raw),
+    })),
     history: (() => {
       const max = Math.max(...fd.history.map((v) => Math.abs(v)), 1);
       return fd.history.map((v) => {
@@ -595,13 +603,22 @@ export function useViewModel() {
         };
       });
     })(),
-    trades: fd.trades.map((t) => ({
+    trades: fd.trades.map((t, i) => ({
+      id: t.id,
       sym: t.sym,
       date: t.date,
       pnl: fmtSig(t.pnl),
       pnlStyle: `font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600;flex:0 0 auto;color:${pnlColor(
         t.pnl,
       )}`,
+      managing: managingFin,
+      symEditing: s.edit === 'tsym.' + i,
+      symShow: s.edit !== 'tsym.' + i,
+      onEditSym: () => api.startEdit('tsym.' + i, t.sym),
+      pnlEditing: s.edit === 'tpnl.' + i,
+      pnlShow: s.edit !== 'tpnl.' + i,
+      onEditPnl: () => api.startEdit('tpnl.' + i, t.pnl),
+      onRemove: () => api.removeTrade(t.id),
     })),
     tradeCount: fd.trades.length,
   };
