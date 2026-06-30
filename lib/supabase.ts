@@ -7,13 +7,13 @@
 
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 
-// `typeof process` guard so the esbuild standalone bundle (no process global)
-// never throws — it simply reads as unconfigured.
-const env: Record<string, string | undefined> =
-  typeof process !== 'undefined' && process.env ? process.env : {};
-
-const URL = env.NEXT_PUBLIC_SUPABASE_URL;
-const ANON = env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+// These MUST be referenced as direct `process.env.NEXT_PUBLIC_*` member
+// expressions: Next.js (and the esbuild standalone via `define`) only inline
+// the value when it sees that exact static expression — reading through an
+// intermediate variable yields `undefined` in the browser bundle. The esbuild
+// standalone build defines both to "" so it reads as unconfigured (offline).
+const URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 let client: SupabaseClient | null = null;
 
