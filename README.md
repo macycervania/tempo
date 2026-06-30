@@ -7,9 +7,9 @@ It's a single-page, **phone-friendly** dashboard with seven views, a warm-black 
 ## Features
 
 - **Overview** — a calm home screen: greeting, a **daily word** (a motivational line or Bible verse), a tasks-done-today bar, the **voice button** + **Nateman**, compact **Habits & Priorities progress** (tap to open their pages), and your weekly/monthly **Goals**.
-- **Priorities** — your tasks as an **Eisenhower matrix** (urgent × important, four quadrants), with the editable category bar and quick capture; new tasks auto-file into the right quadrant by priority and due date.
+- **Tasks** — your tasks as an **Eisenhower matrix** (urgent × important, four quadrants), with the editable category bar and quick capture; new tasks auto-file into the right quadrant by priority and due date. Completing a task moves it to a **Show completed** list you can reopen and restore from.
 - **Habits** — the full habits board: daily-score ring, fire streaks, sub-tasks, add/edit/remove.
-- **Health** — today's intake / burned / net with macros, a 7-day intake trend, and full meal & training logs. Meal logging runs through the **AI macro seam** (see below).
+- **Health** — today's intake / burned / net with macros, a 7-day intake trend, full meal & training logs, and a **Body** card (editable weight, goal weight, height, BMI) with goal-weight progress. Meal logging and **body-aware training calories** run through the **AI seams** (see below).
 - **Budget** — a zero-based monthly budget in pesos: income + eight expense groups with subcategories, inline editing, and a smart expense logger. Drives the Finance page's cash.
 - **Finance** — net liquid (linked live to the budget), assets/portfolio, realized P&L with a last-10-sessions chart, and a trade journal you can log into.
 - **Calendar** — a month grid wired to your tasks; click a day to view, complete, or add tasks to it.
@@ -19,7 +19,7 @@ It's a single-page, **phone-friendly** dashboard with seven views, a warm-black 
 
 ### Voice
 
-The "Talk through your day" button and Nateman's mic use the browser **Web Speech API** (`SpeechRecognition`) for real speech-to-text — spoken tasks are transcribed and auto-filed, spoken questions go straight to Nateman. The "hey nateman" wake word listens continuously where supported. All of it degrades gracefully: where the API is unavailable (or on `file://`), it falls back to a scripted capture so nothing breaks. Voice needs HTTPS or `localhost` and microphone permission.
+The "Talk through your day" button and Nateman's mic use the browser **Web Speech API** (`SpeechRecognition`) for real speech-to-text — spoken tasks are transcribed and auto-filed, spoken questions go straight to Nateman. The "hey nateman" wake word listens continuously where supported. It's **honest about failure**: when the mic is unavailable or denied it says so and lets you type — it never fabricates what it "heard." Tapping the listening button cancels it. **Voice requires HTTPS (or `localhost`) and microphone permission** — it does not work from a `file://` page, so the standalone HTML below can't use it.
 
 Preferences and your profile persist to `localStorage`.
 
@@ -41,9 +41,12 @@ All smart behavior — natural-language task classification, food → macros, wo
 
 **Nateman is wired the same way.** The assistant POSTs to [`app/api/nateman`](app/api/nateman/route.ts), which calls Claude with a compact snapshot of your data and returns a natural answer plus an optional structured action (add task, switch theme, open a page) that the provider executes. No key → it falls back to the deterministic `respondAssistant()` brain, so Nateman always answers.
 
+Training calories work the same way: logging a workout posts to [`app/api/training/estimate`](app/api/training/estimate/route.ts) with your weight + height for a body-aware burn, falling back to a weight-scaled local estimate with no key.
+
 ```bash
-ANTHROPIC_API_KEY=sk-ant-...       # enables AI macros + the real Nateman (optional)
+ANTHROPIC_API_KEY=sk-ant-...       # enables AI macros, AI training, + the real Nateman (optional)
 NUTRITION_MODEL=claude-haiku-4-5   # optional macro model override (default: claude-opus-4-8)
+TRAINING_MODEL=claude-haiku-4-5    # optional training model override (default: claude-opus-4-8)
 NATEMAN_MODEL=claude-haiku-4-5     # optional Nateman model override (default: claude-opus-4-8)
 ```
 
@@ -62,9 +65,9 @@ npm run build && npm start   # production
 
 ```
 app/            Next.js App Router (layout, page, global CSS, icon, manifest,
-                api/nutrition/estimate + api/nateman — the server LLM seams)
-components/     React views (TopBar, Overview, Priorities, Habits, Health,
-                Budget, Finance, Calendar, Journal, Settings, Nateman, Toast)
+                api/{nutrition,training}/estimate + api/nateman — server LLM seams)
+components/     React views (TopBar, Overview, Tasks, Habits, Health, Budget,
+                Finance, Calendar, Journal, Settings, Nateman, Toast)
                 + the css() helper
 lib/            types, constants/seed data, format helpers, storage, ai.ts
 state/          TempoProvider (state + actions) and useViewModel (derived data)

@@ -6,7 +6,7 @@ import { useViewModel } from '@/state/useViewModel';
 import { css } from './css';
 import TopBar from './TopBar';
 import Overview from './Overview';
-import PrioritiesView from './PrioritiesView';
+import TasksView from './TasksView';
 import HabitsView from './HabitsView';
 import HealthView from './HealthView';
 import BudgetView from './BudgetView';
@@ -25,7 +25,7 @@ function Shell() {
       <div className="appScroll" style={{ flex: 1, overflowY: 'auto' }}>
         <div className="appContent">
           {vm.isOverview && <Overview vm={vm} />}
-          {vm.isPriorities && <PrioritiesView vm={vm} />}
+          {vm.isTasks && <TasksView vm={vm} />}
           {vm.isHabits && <HabitsView vm={vm} />}
           {vm.isFinance && <FinanceView vm={vm} />}
           {vm.isHealth && <HealthView vm={vm} />}

@@ -4,11 +4,12 @@ import React from 'react';
 import type { VM } from '@/state/useViewModel';
 import { css, Hov } from './css';
 
-export default function PrioritiesView({ vm }: { vm: VM }) {
+export default function TasksView({ vm }: { vm: VM }) {
   const mono = "font-family:'JetBrains Mono',monospace;";
+  const tv = vm.tasksView;
   return (
     <div style={css('display:flex;flex-direction:column;gap:14px')}>
-      {/* CATEGORY BAR (editable) — moved here from the Overview */}
+      {/* CATEGORY BAR (editable) */}
       <div
         style={css(
           'display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 14px;background:var(--panel);border:1px solid var(--line);border-radius:12px',
@@ -80,7 +81,7 @@ export default function PrioritiesView({ vm }: { vm: VM }) {
       >
         <div style={css('display:flex;align-items:center;gap:10px;margin-bottom:4px')}>
           <span style={css(mono + 'font-size:11px;font-weight:600;letter-spacing:1px;color:var(--text-dim);border:1px solid var(--line2);border-radius:5px;padding:2px 7px')}>02</span>
-          <span style={css(mono + 'font-size:11px;letter-spacing:2.5px;color:var(--text-faint)')}>{'// PRIORITIES'}</span>
+          <span style={css(mono + 'font-size:11px;letter-spacing:2.5px;color:var(--text-faint)')}>{'// TASKS'}</span>
           <div style={{ flex: 1 }} />
           <span style={css(mono + 'font-size:10.5px;letter-spacing:1px;color:var(--text-faint2)')}>EISENHOWER MATRIX</span>
         </div>
@@ -109,7 +110,7 @@ export default function PrioritiesView({ vm }: { vm: VM }) {
         </div>
 
         <div className="eisengrid">
-          {vm.eisenhower.map((q, i) => (
+          {tv.matrix.map((q, i) => (
             <div key={i} style={css(q.cardStyle)}>
               <div style={css('display:flex;align-items:center;gap:9px;margin-bottom:13px')}>
                 <span style={css(q.badgeStyle)}>{q.roman}</span>
@@ -152,6 +153,43 @@ export default function PrioritiesView({ vm }: { vm: VM }) {
               )}
             </div>
           ))}
+        </div>
+
+        {/* COMPLETED — viewable & restorable */}
+        <div style={css('margin-top:16px;border-top:1px solid var(--line);padding-top:14px')}>
+          <Hov
+            as="button"
+            onClick={tv.onToggleShowDone}
+            styleStr={mono + 'font-size:10.5px;letter-spacing:1px;background:transparent;border:1px solid var(--line2);border-radius:8px;padding:7px 12px;cursor:pointer;color:var(--text-faint)'}
+            hover="color:var(--text);border-color:var(--line2)"
+          >
+            {tv.doneLabel}
+          </Hov>
+          {tv.showDone && (
+            <div style={css('margin-top:12px;display:flex;flex-direction:column;gap:7px')}>
+              {tv.doneCount === 0 ? (
+                <div style={css('color:var(--text-faint2);font-size:12.5px;padding:6px 2px')}>Nothing completed yet today.</div>
+              ) : (
+                tv.done.map((t) => (
+                  <div
+                    key={t.id}
+                    style={css('display:flex;align-items:flex-start;gap:10px;padding:9px 11px;border:1px solid var(--line);border-radius:10px;background:var(--inset);animation:fadeUp .2s ease')}
+                  >
+                    <button onClick={t.onToggle} style={css(t.boxStyle)} title="Restore">
+                      <span style={css('font-size:11px;color:var(--bg);font-weight:700')}>✓</span>
+                    </button>
+                    <div style={css('flex:1;min-width:0')}>
+                      <div style={css(t.titleStyle)}>{t.title}</div>
+                      <div style={css('display:inline-flex;align-items:center;gap:6px;margin-top:4px')}>
+                        <span style={css(`width:6px;height:6px;border-radius:2px;background:${t.tint};opacity:.5`)} />
+                        <span style={css(mono + 'font-size:9.5px;letter-spacing:.5px;color:var(--text-faint2)')}>{t.areaLabel}</span>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          )}
         </div>
       </section>
     </div>

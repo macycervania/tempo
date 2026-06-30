@@ -217,7 +217,16 @@ export async function estimateFoodSmart(text: string): Promise<MacroResult | nul
   }
 }
 
-export function estimateExercise(text: string) {
+export interface BodyInput {
+  weight: number;
+  height: number;
+}
+
+/**
+ * Local exercise estimate. The per-minute burn rates assume a ~70 kg person, so
+ * when a body weight is supplied we scale linearly — heavier bodies burn more.
+ */
+export function estimateExercise(text: string, weightKg?: number) {
   if (!text.trim()) return null;
   const lo = text.toLowerCase();
   let rate = 7;
@@ -237,7 +246,50 @@ export function estimateExercise(text: string) {
   else if (hm) min = parseInt(hm[1], 10) * 60;
   else if (km) min = parseInt(km[1], 10) * 6 + 6;
   min = Math.max(5, Math.min(min, 240));
-  return { kcal: Math.round(rate * min), minutes: min };
+  const scale = weightKg && weightKg > 0 ? weightKg / 70 : 1;
+  return { kcal: Math.round(rate * min * scale), minutes: min };
+}
+
+export interface ExerciseResult {
+  kcal: number;
+  minutes: number;
+  source: 'ai' | 'local';
+}
+
+/**
+ * AI SEAM — workout text → calories, personalised by body weight & height.
+ *
+ * Posts to /api/training/estimate, which asks Claude for a body-aware burn
+ * estimate. With no key the route 501s and we fall back to the weight-scaled
+ * local estimate, so the app keeps working offline.
+ */
+export async function estimateExerciseSmart(
+  text: string,
+  body: BodyInput,
+): Promise<ExerciseResult | null> {
+  const local = estimateExercise(text, body.weight);
+  if (!local) return null;
+  if (typeof fetch === 'undefined') return { ...local, source: 'local' };
+  try {
+    const res = await fetch('/api/training/estimate', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ text, weight: body.weight, height: body.height }),
+    });
+    if (!res.ok) return { ...local, source: 'local' };
+    const data = (await res.json()) as { kcal?: number; minutes?: number };
+    if (typeof data.kcal !== 'number') return { ...local, source: 'local' };
+    return {
+      kcal: Math.max(0, Math.round(data.kcal)),
+      minutes:
+        typeof data.minutes === 'number' && data.minutes > 0
+          ? Math.round(data.minutes)
+          : local.minutes,
+      source: 'ai',
+    };
+  } catch {
+    return { ...local, source: 'local' };
+  }
 }
 
 export function parseTrade(text: string) {
@@ -307,7 +359,7 @@ export function summariseDay(d: DaySnapshot): string {
 
 export type NavPage =
   | 'overview'
-  | 'priorities'
+  | 'tasks'
   | 'habits'
   | 'health'
   | 'budget'
@@ -317,7 +369,7 @@ export type NavPage =
 
 export const NAV_PAGES: NavPage[] = [
   'overview',
-  'priorities',
+  'tasks',
   'habits',
   'health',
   'budget',

@@ -12,6 +12,7 @@ export type PersistedSettings = Pick<
   | 'currency'
   | 'reduceMotion'
   | 'targets'
+  | 'body'
   | 'notifs'
   | 'userName'
   | 'sound'
@@ -51,6 +52,7 @@ export function saveSettings(state: TempoState): void {
       currency: state.currency,
       reduceMotion: state.reduceMotion,
       targets: state.targets,
+      body: state.body,
       notifs: state.notifs,
       userName: state.userName,
       sound: state.sound,

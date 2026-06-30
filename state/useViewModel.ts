@@ -154,7 +154,7 @@ export function useViewModel() {
   const pageTabs = (
     [
       { key: 'overview', label: 'Overview' },
-      { key: 'priorities', label: 'Priorities' },
+      { key: 'tasks', label: 'Tasks' },
       { key: 'habits', label: 'Habits' },
       { key: 'health', label: 'Health' },
       { key: 'budget', label: 'Budget' },
@@ -267,6 +267,33 @@ export function useViewModel() {
       empty: rows.length === 0,
     };
   });
+
+  // Completed tasks — viewable (and restorable) instead of just vanishing.
+  const doneTasks = s.tasks
+    .filter((t) => t.done)
+    .map((t) => {
+      const m = metaOf(t.area);
+      return {
+        id: t.id,
+        title: t.title,
+        tint: m.tint,
+        areaLabel: m.label,
+        onToggle: () => api.toggleTask(t.id),
+        boxStyle:
+          'width:19px;height:19px;flex:0 0 19px;margin-top:1px;border-radius:6px;display:flex;align-items:center;justify-content:center;cursor:pointer;border:1.5px solid var(--accent);background:var(--accent)',
+        titleStyle: 'font-size:13.5px;font-weight:500;line-height:1.35;color:var(--text-faint2);text-decoration:line-through',
+      };
+    });
+  const tasksView = {
+    matrix: eisenhower,
+    done: doneTasks,
+    doneCount: doneTasks.length,
+    showDone: s.showDone,
+    onToggleShowDone: api.toggleShowDone,
+    doneLabel: s.showDone
+      ? `Hide completed (${doneTasks.length})`
+      : `Show completed (${doneTasks.length})`,
+  };
 
   // A daily word — rotates once per day across motivational lines + verses.
   const verse = VERSES[Math.floor(now.getTime() / 86400000) % VERSES.length];
@@ -408,7 +435,7 @@ export function useViewModel() {
   };
 
   const fe = estimateFood(s.foodDraft);
-  const ee = estimateExercise(s.exDraft);
+  const ee = estimateExercise(s.exDraft, s.body.weight);
 
   // finance (pesos, linked to budget)
   const fd = s.fin;
@@ -649,6 +676,43 @@ export function useViewModel() {
     targetLineStyle: `position:absolute;left:0;right:0;top:${targetTop}%;height:0;border-top:1px dashed var(--line2);z-index:2`,
     trendAvg,
     empty: s.workouts.length === 0,
+    body: (() => {
+      const b = s.body;
+      const start = Math.max(b.weight, b.goalWeight, b.weight) || 1;
+      // Progress from the heavier of (weight, goal) baseline toward the goal.
+      const losing = b.weight >= b.goalWeight;
+      const span = Math.max(Math.abs(b.weight - b.goalWeight), 0.0001);
+      const toGo = Math.abs(b.weight - b.goalWeight);
+      const reached = toGo < 0.05;
+      const bmi = b.height > 0 ? b.weight / Math.pow(b.height / 100, 2) : 0;
+      const pctToGoal = reached ? 100 : Math.max(6, Math.min(100, Math.round((1 - toGo / (span + toGo || 1)) * 100)));
+      return {
+        weight: b.weight,
+        height: b.height,
+        goalWeight: b.goalWeight,
+        bmi: bmi ? bmi.toFixed(1) : '—',
+        toGoLabel: reached
+          ? 'Goal reached — nice.'
+          : `${toGo.toFixed(1)} kg to ${losing ? 'lose' : 'gain'}`,
+        toGoColor: reached ? '#74ad84' : 'var(--text-dim)',
+        pct: pctToGoal + '%',
+        // editable fields
+        fields: (
+          [
+            { field: 'weight', label: 'WEIGHT', val: b.weight, unit: 'kg' },
+            { field: 'goalWeight', label: 'GOAL', val: b.goalWeight, unit: 'kg' },
+            { field: 'height', label: 'HEIGHT', val: b.height, unit: 'cm' },
+          ] as const
+        ).map((f) => ({
+          label: f.label,
+          val: f.val,
+          unit: f.unit,
+          onChange: (e: React.ChangeEvent<HTMLInputElement>) =>
+            api.onBodyChange(f.field, e.target.value),
+        })),
+        start,
+      };
+    })(),
   };
 
   // goals
@@ -923,7 +987,7 @@ export function useViewModel() {
       label: `${prioDone}/${prioTotal}`,
       pct: (prioTotal ? Math.round((prioDone / prioTotal) * 100) : 0) + '%',
       topOpen: todayOpen[0] ? todayOpen[0].title : 'All clear',
-      onOpen: () => api.setPage('priorities'),
+      onOpen: () => api.setPage('tasks'),
     },
     habits: {
       label: `${habitsDone}/${s.habits.length}`,
@@ -963,7 +1027,7 @@ export function useViewModel() {
     isOverview: s.page === 'overview',
     isFinance: s.page === 'finance',
     isHealth: s.page === 'health',
-    isPriorities: s.page === 'priorities',
+    isTasks: s.page === 'tasks',
     isHabits: s.page === 'habits',
     isBudget: s.page === 'budget',
     isCalendar: s.page === 'calendar',
@@ -998,6 +1062,7 @@ export function useViewModel() {
     taskSummary,
     progress,
     eisenhower,
+    tasksView,
     greeting,
     aiSummary,
     tasks,

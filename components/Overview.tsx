@@ -196,7 +196,7 @@ export default function Overview({ vm }: { vm: VM }) {
             hover="border-color:var(--line2)"
           >
             <div style={css('display:flex;align-items:baseline;justify-content:space-between;margin-bottom:8px')}>
-              <span style={css(mono + 'font-size:10px;letter-spacing:1.5px;color:var(--text-faint)')}>PRIORITIES</span>
+              <span style={css(mono + 'font-size:10px;letter-spacing:1.5px;color:var(--text-faint)')}>TASKS</span>
               <span style={css('font-size:13px;font-weight:600;color:var(--text-dim)')}>{vm.progress.priorities.label} done</span>
             </div>
             <div style={css('height:6px;border-radius:4px;background:var(--line);overflow:hidden;margin-bottom:9px')}>

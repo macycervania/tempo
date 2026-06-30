@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
     'around it, in this exact shape:\n' +
     '{"answer": string, "actionLabel": string, "action": {"type": "none" | ' +
     '"setTheme" | "addTask" | "navigate", "themeKey"?: string, "text"?: string, ' +
-    '"page"?: "overview"|"priorities"|"habits"|"health"|"budget"|"finance"|"calendar"|"journal"}}\n\n' +
+    '"page"?: "overview"|"tasks"|"habits"|"health"|"budget"|"finance"|"calendar"|"journal"}}\n\n' +
     'Rules: use "addTask" with the task text when asked to add/remind/note a task; ' +
     '"setTheme" with a themeKey when asked to change theme/colors (available themes: ' +
     themeList +

@@ -142,6 +142,16 @@ export interface Targets {
   f: number;
 }
 
+/** Body metrics used for the goal tracker and for AI calorie-burn accuracy. */
+export interface Body {
+  /** Current body weight in kg. */
+  weight: number;
+  /** Height in cm. */
+  height: number;
+  /** Goal body weight in kg. */
+  goalWeight: number;
+}
+
 export interface Notifs {
   dailySummary: boolean;
   habitReminders: boolean;
@@ -173,7 +183,7 @@ export interface Theme {
 
 export type Page =
   | 'overview'
-  | 'priorities'
+  | 'tasks'
   | 'habits'
   | 'health'
   | 'budget'
@@ -197,6 +207,7 @@ export interface TempoState {
   currency: Currency;
   reduceMotion: boolean;
   targets: Targets;
+  body: Body;
   notifs: Notifs;
   // Nateman assistant
   naOpen: boolean;
@@ -212,6 +223,8 @@ export interface TempoState {
   // category management
   managing: boolean;
   catDraft: string;
+  /** Show completed tasks on the Tasks page. */
+  showDone: boolean;
   // capture inputs
   capture: string;
   foodDraft: string;

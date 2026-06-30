@@ -13,13 +13,11 @@ import type { Currency, Page, TempoState, Theme } from '@/lib/types';
 import { makeInitialState, MOTIVATE, THEMES } from '@/lib/constants';
 import {
   classifyTask,
-  estimateExercise,
-  estimateFood,
+  estimateExerciseSmart,
   estimateFoodSmart,
   parseTrade,
   respondAssistantSmart,
   summariseDay,
-  transcribeVoice,
   type AssistantReply,
   type AssistantSnapshot,
   type MemoryItem,
@@ -114,7 +112,9 @@ export interface TempoApi {
   toggleReduceMotion: () => void;
   toggleNotif: (k: keyof TempoState['notifs']) => void;
   onTargetChange: (field: keyof TempoState['targets'], val: string) => void;
+  onBodyChange: (field: keyof TempoState['body'], val: string) => void;
   resetSettings: () => void;
+  toggleShowDone: () => void;
   toggleSound: () => void;
   setVoice: (e: React.ChangeEvent<HTMLSelectElement>) => void;
   testVoice: () => void;
@@ -167,6 +167,7 @@ export function TempoProvider({ children }: { children: React.ReactNode }) {
   const timers = useRef<Record<string, ReturnType<typeof setTimeout> | undefined>>({});
   const actx = useRef<AudioContext | null>(null);
   const recRef = useRef<any>(null);
+  const recOnceRef = useRef<any>(null);
   const naCool = useRef(false);
   const idc = useRef(0);
   const fileEl = useRef<HTMLInputElement | null>(null);
@@ -451,23 +452,6 @@ export function TempoProvider({ children }: { children: React.ReactNode }) {
     if (e.key === 'Enter') onCaptureSubmit();
   };
 
-  const finishVoice = useCallback(() => {
-    const v = transcribeVoice(ref.current.voiceTake);
-    const newTasks = v.items.map((it) => makeTask(it, true));
-    set((s) => ({
-      processing: false,
-      transcript: v.tr,
-      voiceTake: s.voiceTake + 1,
-      tasks: [...newTasks, ...s.tasks],
-    }));
-    const highs = newTasks.filter((t) => t.priority === 'high').length;
-    flashToast(
-      `Captured ${newTasks.length} tasks from voice${
-        highs ? ` · ${highs} flagged high` : ''
-      }`,
-    );
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [set, flashToast]);
   // File one or more tasks from a real spoken transcript.
   const finishVoiceReal = useCallback(
     (text: string) => {
@@ -493,21 +477,31 @@ export function TempoProvider({ children }: { children: React.ReactNode }) {
     [set, flashToast],
   );
   const onVoice = useCallback(() => {
-    if (ref.current.recording || ref.current.processing) return;
+    if (ref.current.processing) return;
+    // Tapping again while listening cancels.
+    if (ref.current.recording) {
+      set({ recording: false });
+      cancelRecognize();
+      return;
+    }
+    if (!speechSupported()) {
+      flashToast('Voice needs Chrome or Safari with microphone access — type your task below instead.');
+      return;
+    }
     set({ recording: true, transcript: '' });
     recognizeOnce().then((text) => {
-      if (!ref.current.recording) return;
+      if (!ref.current.recording) return; // cancelled
       if (text) {
         set({ recording: false, processing: true });
-        timers.current.v2 = setTimeout(() => finishVoiceReal(text), 450);
+        timers.current.v2 = setTimeout(() => finishVoiceReal(text), 350);
       } else {
-        // No real speech available — fall back to the scripted demo capture.
-        set({ recording: false, processing: true });
-        timers.current.v2 = setTimeout(() => finishVoice(), 800);
+        // No speech heard / mic denied — be honest, don't invent a task.
+        set({ recording: false });
+        flashToast('Didn’t catch that — try again, or type it below.');
       }
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [set, finishVoice, finishVoiceReal]);
+  }, [set, flashToast, finishVoiceReal]);
 
   // ── fuel / training / trade ─────────────────────────────────────────────────
   const onFoodInput = (e: React.ChangeEvent<HTMLInputElement>) =>
@@ -539,10 +533,11 @@ export function TempoProvider({ children }: { children: React.ReactNode }) {
   };
   const onExInput = (e: React.ChangeEvent<HTMLInputElement>) =>
     set({ exDraft: e.target.value });
-  const onExSubmit = useCallback(() => {
+  const onExSubmit = useCallback(async () => {
     const t = ref.current.exDraft.trim();
     if (!t) return;
-    const est = estimateExercise(t);
+    set({ exDraft: '' });
+    const est = await estimateExerciseSmart(t, ref.current.body);
     if (!est) return;
     const w = {
       id: 'w' + Date.now(),
@@ -551,8 +546,10 @@ export function TempoProvider({ children }: { children: React.ReactNode }) {
       minutes: est.minutes,
       kcal: est.kcal,
     };
-    set((s) => ({ exDraft: '', workouts: [...s.workouts, w] }));
-    flashToast(`Logged ${est.minutes} min · ${est.kcal} kcal burned`);
+    set((s) => ({ workouts: [...s.workouts, w] }));
+    flashToast(
+      `Logged ${est.minutes} min · ${est.kcal} kcal burned${est.source === 'ai' ? ' · AI' : ''}`,
+    );
   }, [set, flashToast]);
   const onExKey = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') onExSubmit();
@@ -1064,6 +1061,17 @@ export function TempoProvider({ children }: { children: React.ReactNode }) {
     },
     [set],
   );
+  const onBodyChange = useCallback(
+    (field: keyof TempoState['body'], val: string) => {
+      const n = Math.max(0, Math.min(parseFloat(val) || 0, 500));
+      set((s) => ({ body: { ...s.body, [field]: n } }));
+    },
+    [set],
+  );
+  const toggleShowDone = useCallback(
+    () => set((s) => ({ showDone: !s.showDone })),
+    [set],
+  );
   const resetSettings = useCallback(() => {
     clearSettings();
     stopWake();
@@ -1072,6 +1080,7 @@ export function TempoProvider({ children }: { children: React.ReactNode }) {
       currency: { code: 'PHP', symbol: '₱' },
       reduceMotion: false,
       targets: { kcal: 2800, p: 180, c: 300, f: 80 },
+      body: { weight: 68, height: 170, goalWeight: 64 },
       notifs: {
         dailySummary: true,
         habitReminders: true,
@@ -1202,21 +1211,25 @@ export function TempoProvider({ children }: { children: React.ReactNode }) {
       });
       if (provided) {
         timers.current.na2 = setTimeout(() => finishNateman(provided), 650);
+      } else if (!speechSupported()) {
+        set({
+          naPhase: 'answer',
+          naAnswer: 'I can’t hear you in this browser — type your question below and I’ll answer.',
+          naActionLabel: '',
+        });
       } else {
-        // Listen for a real question; fall back to a demo prompt if speech is
-        // unavailable so the assistant still demonstrates itself.
+        // Listen for a real spoken question — no fabricated demo prompts.
         recognizeOnce().then((heard) => {
           if (!ref.current.naOpen) return;
           if (heard) {
             set({ naPhase: 'thinking', naQuery: heard });
             timers.current.na2 = setTimeout(() => finishNateman(heard), 250);
           } else {
-            const demo =
-              ['What’s on my plate today?', 'How am I doing today?', 'What did I journal about trades?', 'What’s my net liquid?'][
-                ref.current.naTake % 4
-              ];
-            set((st) => ({ naPhase: 'thinking', naQuery: demo, naTake: st.naTake + 1 }));
-            timers.current.na2 = setTimeout(() => finishNateman(demo), 600);
+            set({
+              naPhase: 'answer',
+              naAnswer: 'Didn’t catch that — type your question below and I’ll answer.',
+              naActionLabel: '',
+            });
           }
         });
       }
@@ -1226,12 +1239,14 @@ export function TempoProvider({ children }: { children: React.ReactNode }) {
   const closeNateman = useCallback(() => {
     clearTimeout(timers.current.na1);
     clearTimeout(timers.current.na2);
+    cancelRecognize();
     try {
       window.speechSynthesis && window.speechSynthesis.cancel();
     } catch {
       /* ignore */
     }
     set({ naOpen: false, naPhase: 'idle' });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [set]);
   const onNaInput = (e: React.ChangeEvent<HTMLInputElement>) =>
     set({ naInput: e.target.value });
@@ -1246,8 +1261,28 @@ export function TempoProvider({ children }: { children: React.ReactNode }) {
   };
 
   // ── real speech-to-text (single utterance) ──────────────────────────────────
+  function speechSupported(): boolean {
+    return (
+      typeof window !== 'undefined' &&
+      !!((window as any).SpeechRecognition || (window as any).webkitSpeechRecognition)
+    );
+  }
+  function cancelRecognize() {
+    const r = recOnceRef.current;
+    recOnceRef.current = null;
+    if (r) {
+      try {
+        r.onresult = null;
+        r.onend = null;
+        r.onerror = null;
+        (r.abort || r.stop).call(r);
+      } catch {
+        /* ignore */
+      }
+    }
+  }
   // Resolves with the recognised transcript, or null when the Web Speech API is
-  // unavailable / denied — callers then fall back to the scripted simulation.
+  // unavailable / denied / heard nothing. Callers handle null honestly.
   function recognizeOnce(): Promise<string | null> {
     return new Promise((resolve) => {
       const SR =
@@ -1259,6 +1294,7 @@ export function TempoProvider({ children }: { children: React.ReactNode }) {
       } catch {
         return resolve(null);
       }
+      recOnceRef.current = rec;
       rec.lang = 'en-US';
       rec.interimResults = false;
       rec.maxAlternatives = 1;
@@ -1267,6 +1303,7 @@ export function TempoProvider({ children }: { children: React.ReactNode }) {
       const finish = (val: string | null) => {
         if (done) return;
         done = true;
+        if (recOnceRef.current === rec) recOnceRef.current = null;
         try {
           rec.stop();
         } catch {
@@ -1432,7 +1469,9 @@ export function TempoProvider({ children }: { children: React.ReactNode }) {
       toggleReduceMotion,
       toggleNotif,
       onTargetChange,
+      onBodyChange,
       resetSettings,
+      toggleShowDone,
       toggleSound,
       setVoice,
       testVoice,

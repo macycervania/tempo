@@ -55,6 +55,43 @@ export default function HealthView({ vm }: { vm: VM }) {
         </div>
       </section>
 
+      {/* BODY */}
+      <section style={css('grid-column:1 / -1;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:20px 22px')}>
+        <div style={css('display:flex;align-items:center;gap:10px;margin-bottom:18px')}>
+          <span style={css(mono + 'font-size:11px;font-weight:600;letter-spacing:1px;color:var(--text-dim);border:1px solid var(--line2);border-radius:5px;padding:2px 7px')}>BS</span>
+          <span style={css(mono + 'font-size:11px;letter-spacing:2.5px;color:var(--text-faint)')}>{'// BODY'}</span>
+          <div style={{ flex: 1 }} />
+          <span style={css(mono + `font-size:11px;color:${health.body.toGoColor}`)}>{health.body.toGoLabel}</span>
+        </div>
+        <div style={css('display:flex;gap:14px;flex-wrap:wrap;margin-bottom:18px')}>
+          {health.body.fields.map((f, i) => (
+            <div key={i} style={css('flex:1;min-width:120px;background:var(--inset);border:1px solid var(--line);border-radius:12px;padding:14px 16px')}>
+              <div style={css(mono + 'font-size:10px;letter-spacing:1.5px;color:var(--text-faint);margin-bottom:8px')}>{f.label}</div>
+              <div style={css('display:flex;align-items:flex-end;gap:6px')}>
+                <input
+                  type="number"
+                  value={f.val}
+                  onChange={f.onChange}
+                  style={css('width:74px;background:none;border:none;color:var(--text);font-size:26px;font-weight:700;letter-spacing:-1px;line-height:1')}
+                />
+                <span style={css('font-size:12px;color:var(--text-faint);margin-bottom:4px')}>{f.unit}</span>
+              </div>
+            </div>
+          ))}
+          <div style={css('flex:1;min-width:120px;background:var(--inset);border:1px solid var(--line);border-radius:12px;padding:14px 16px')}>
+            <div style={css(mono + 'font-size:10px;letter-spacing:1.5px;color:var(--text-faint);margin-bottom:8px')}>BMI</div>
+            <div style={css('font-size:26px;font-weight:700;letter-spacing:-1px;line-height:1')}>{health.body.bmi}</div>
+          </div>
+        </div>
+        <div style={css('display:flex;align-items:baseline;justify-content:space-between;margin-bottom:7px')}>
+          <span style={css(mono + 'font-size:10px;letter-spacing:1.5px;color:var(--text-faint)')}>TO GOAL WEIGHT</span>
+          <span style={css('font-size:12.5px;font-weight:600;color:var(--text-dim)')}>{health.body.weight} → {health.body.goalWeight} kg</span>
+        </div>
+        <div style={css('height:7px;border-radius:5px;background:var(--line);overflow:hidden')}>
+          <div style={css(`height:100%;border-radius:5px;background:linear-gradient(90deg,#74ad84,#9bbf7a);width:${health.body.pct};transition:width .4s ease`)} />
+        </div>
+      </section>
+
       {/* 02 7-DAY INTAKE */}
       <section style={css('grid-column:1 / -1;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:20px 22px')}>
         <div style={css('display:flex;align-items:center;gap:10px;margin-bottom:18px')}>
