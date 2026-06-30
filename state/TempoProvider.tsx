@@ -1716,16 +1716,84 @@ export function TempoProvider({ children }: { children: React.ReactNode }) {
       consumedKcal: consumed,
       burnedKcal: burned,
       remainingKcal: s.targets.kcal - (consumed - burned),
+      habitNames: s.habits.map((h) => h.name),
       memory,
     };
   };
 
-  const executeIntent = (intent: AssistantReply['intent']) => {
-    if (intent.type === 'setTheme') setTheme(intent.themeKey);
-    else if (intent.type === 'navigate') set({ page: intent.page });
-    else if (intent.type === 'addTask') {
-      const task = makeTask(intent.text, true);
-      set((s) => ({ tasks: [task, ...s.tasks] }));
+  // Apply every action Nateman returned. One message can log several things at
+  // once ("ate eggs and ran 5k" → a meal + a workout), so we loop. A unique id
+  // suffix avoids collisions when multiple entries land in the same millisecond.
+  const uid = (p: string) => p + Date.now().toString(36) + Math.round(Math.random() * 1e6).toString(36);
+  const executeIntents = (intents: AssistantReply['intents']) => {
+    let celebrated = false;
+    for (const intent of intents) {
+      if (intent.type === 'setTheme') setTheme(intent.themeKey);
+      else if (intent.type === 'navigate') set({ page: intent.page });
+      else if (intent.type === 'addTask') {
+        const task = makeTask(intent.text, true);
+        set((s) => ({ tasks: [task, ...s.tasks] }));
+      } else if (intent.type === 'logMeal') {
+        const meal = {
+          id: uid('m'),
+          time: nowTime(),
+          name: cap(intent.name),
+          kcal: intent.kcal,
+          p: intent.p,
+          c: intent.c,
+          f: intent.f,
+        };
+        set((s) => ({ meals: [...s.meals, meal] }));
+      } else if (intent.type === 'logWorkout') {
+        const w = {
+          id: uid('w'),
+          time: nowTime(),
+          name: cap(intent.name),
+          minutes: intent.minutes,
+          kcal: intent.kcal,
+        };
+        set((s) => ({ workouts: [...s.workouts, w] }));
+      } else if (intent.type === 'completeHabit') {
+        const ti = todayIndex();
+        const want = intent.name.toLowerCase().trim();
+        let hit = false;
+        const habits = ref.current.habits.map((h) => {
+          const hn = h.name.toLowerCase();
+          const match = hn === want || hn.includes(want) || want.includes(hn);
+          if (!match || h.week[ti]) return h;
+          hit = true;
+          return {
+            ...h,
+            week: h.week.map((v, i) => (i === ti ? true : v)),
+            subs: h.subs.map((x) => ({ ...x, done: true })),
+          };
+        });
+        if (hit) {
+          set({ habits });
+          if (!celebrated) {
+            chime();
+            confettiBurst();
+            celebrated = true;
+          }
+        }
+      } else if (intent.type === 'logTrade') {
+        const pnl = intent.pnl;
+        const sym = intent.sym;
+        set((s) => {
+          const fin = JSON.parse(JSON.stringify(s.fin));
+          fin.trades = [
+            { id: uid('tr'), sym, date: 'Today · ' + nowTime(), pnl },
+            ...fin.trades,
+          ];
+          fin.pnlToday += pnl;
+          fin.pnlMonth += pnl;
+          fin.pnlTotal += pnl;
+          if (fin.assets[0]) fin.assets[0].val += pnl;
+          fin.history = fin.history.slice();
+          fin.history[fin.history.length - 1] = fin.pnlToday;
+          return { fin };
+        });
+      }
     }
   };
 
@@ -1738,7 +1806,7 @@ export function TempoProvider({ children }: { children: React.ReactNode }) {
       );
       beep([659, 880]);
       set({ naPhase: 'answer', naAnswer: r.answer, naActionLabel: r.actionLabel || '' });
-      executeIntent(r.intent);
+      executeIntents(r.intents);
       speak(r.answer);
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
