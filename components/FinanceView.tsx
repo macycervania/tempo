@@ -95,58 +95,6 @@ export default function FinanceView({ vm }: { vm: VM }) {
         )}
       </section>
 
-      {/* CRYPTO WALLETS */}
-      <section style={css('grid-column:1 / -1;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:20px 22px')}>
-        <div style={css('display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap')}>
-          <span style={css(mono + 'font-size:11px;font-weight:600;letter-spacing:1px;color:#9b7fb4;border:1px solid var(--line2);border-radius:5px;padding:2px 7px')}>◎</span>
-          <span style={css(mono + 'font-size:11px;letter-spacing:2.5px;color:var(--text-faint)')}>{'// SOLANA WALLETS'}</span>
-          <div style={{ flex: 1 }} />
-          {fin.wallets.hasAny && (
-            <>
-              <span style={css(mono + 'font-size:10.5px;color:var(--text-faint2)')}>{fin.wallets.total} TRACKED</span>
-              <Hov as="button" onClick={fin.wallets.onRefresh} styleStr={mono + 'font-size:10px;letter-spacing:1px;background:transparent;border:1px solid var(--line2);border-radius:7px;padding:5px 10px;color:var(--text-faint);cursor:pointer'} hover="border-color:var(--line2);color:var(--text)">
-                ↻ REFRESH
-              </Hov>
-            </>
-          )}
-        </div>
-
-        {fin.wallets.rows.length > 0 && (
-          <div style={css('display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:8px;margin-bottom:14px')}>
-            {fin.wallets.rows.map((w) => (
-              <div key={w.id} style={css('display:flex;align-items:center;gap:11px;padding:12px 14px;background:var(--inset);border:1px solid var(--line);border-radius:11px')}>
-                <span style={css(`width:8px;height:8px;flex:0 0 auto;border-radius:50%;background:${w.dotColor}`)} />
-                <div style={css('min-width:0;flex:1')}>
-                  <div style={css('font-size:13px;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap')}>{w.label}</div>
-                  <div style={css(mono + 'font-size:10px;color:var(--text-faint2)')}>{w.addrShort} · {w.sol}</div>
-                </div>
-                {w.val && <span style={css(mono + 'font-size:13px;font-weight:600;color:var(--text-dim)')}>{w.val}</span>}
-                <Hov as="button" onClick={w.onRemove} styleStr="background:none;border:none;color:var(--text-faint2);cursor:pointer;font-size:14px;line-height:1" hover="color:#c77b6b">×</Hov>
-              </div>
-            ))}
-          </div>
-        )}
-
-        <div style={css('display:flex;flex-wrap:wrap;align-items:center;gap:8px')}>
-          <input
-            value={fin.wallets.labelDraft}
-            onChange={fin.wallets.onLabelInput}
-            placeholder="Label (e.g. Phantom)"
-            style={css('width:150px;background:var(--inset);border:1px solid var(--line2);border-radius:9px;padding:9px 12px;color:var(--text);font-size:13px')}
-          />
-          <input
-            value={fin.wallets.addrDraft}
-            onChange={fin.wallets.onAddrInput}
-            placeholder="Public Solana address"
-            style={css("flex:1;min-width:200px;background:var(--inset);border:1px solid var(--line2);border-radius:9px;padding:9px 12px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:12.5px")}
-          />
-          <Hov as="button" onClick={fin.wallets.onAdd} styleStr="background:var(--accent);color:var(--bg);border:none;border-radius:9px;padding:9px 16px;font-size:12.5px;font-weight:600;cursor:pointer" hover="opacity:.9">
-            Track
-          </Hov>
-        </div>
-        <div style={css('font-size:11px;color:var(--text-faint2);margin-top:9px')}>Read-only — your public address only, never a private key. Balance &amp; SOL price refresh live and fold into net worth.</div>
-      </section>
-
       {/* 03 P&L */}
       <section style={css('grid-column:1 / -1;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:22px 24px;display:flex;flex-direction:column')}>
         <div style={css('display:flex;align-items:center;gap:10px;margin-bottom:18px')}>

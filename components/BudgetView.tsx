@@ -90,7 +90,7 @@ export default function BudgetView({ vm }: { vm: VM }) {
             <span style={css(mono + 'font-size:11px;font-weight:600;letter-spacing:1px;color:var(--text-dim);border:1px solid var(--line2);border-radius:5px;padding:2px 7px')}>−</span>
             <span style={css(mono + 'font-size:11px;letter-spacing:2.5px;color:var(--text-faint)')}>{'// EXPENSES'}</span>
             <div style={{ flex: 1 }} />
-            <div style={css(mono + 'display:grid;grid-template-columns:92px 92px 88px;gap:0;font-size:9.5px;letter-spacing:1px;color:var(--text-faint2);text-align:right')}>
+            <div className="bHeadRow" style={css(mono + 'display:grid;grid-template-columns:92px 92px 88px;gap:0;font-size:9.5px;letter-spacing:1px;color:var(--text-faint2);text-align:right')}>
               <span>BUDGET</span>
               <span>SPENT</span>
               <span>LEFT</span>
@@ -100,7 +100,7 @@ export default function BudgetView({ vm }: { vm: VM }) {
           {budget.groups.map((g, gi) => (
             <div key={gi} style={css('margin-bottom:14px')}>
               {/* group header */}
-              <div style={css('display:grid;grid-template-columns:1fr 92px 92px 88px 104px;align-items:center;gap:8px;padding:8px 0 9px;border-bottom:1px solid var(--line)')}>
+              <div className="bGroupRow" style={css('display:grid;grid-template-columns:1fr 92px 92px 88px 104px;align-items:center;gap:8px;padding:8px 0 9px;border-bottom:1px solid var(--line)')}>
                 <div style={css('display:flex;align-items:center;gap:8px;min-width:0')}>
                   {vm.budgetManaging && (
                     <Hov as="button" onClick={g.onRemove} styleStr="background:none;border:none;color:var(--text-faint2);cursor:pointer;font-size:13px;line-height:1" hover="color:#c77b6b">×</Hov>
@@ -121,7 +121,7 @@ export default function BudgetView({ vm }: { vm: VM }) {
               </div>
               {/* sub rows */}
               {g.subs.map((sub, si) => (
-                <Hov key={si} styleStr="display:grid;grid-template-columns:1fr 92px 92px 88px 104px;align-items:center;gap:8px;padding:7px 0" hover="background:var(--inset)">
+                <Hov key={si} className="bSubRow" styleStr="display:grid;grid-template-columns:1fr 92px 92px 88px 104px;align-items:center;gap:8px;padding:7px 0" hover="background:var(--inset)">
                   <div style={css('display:flex;align-items:center;gap:7px;min-width:0;padding-left:6px')}>
                     {vm.budgetManaging && (
                       <Hov as="button" onClick={sub.onRemove} styleStr="background:none;border:none;color:var(--text-faint2);cursor:pointer;font-size:12px;line-height:1" hover="color:#c77b6b">×</Hov>
@@ -169,7 +169,7 @@ export default function BudgetView({ vm }: { vm: VM }) {
             </Hov>
           )}
 
-          <div style={css('display:grid;grid-template-columns:1fr 92px 92px 88px 104px;align-items:center;gap:8px;margin-top:8px;padding-top:14px;border-top:1px solid var(--line2)')}>
+          <div className="bTotalRow" style={css('display:grid;grid-template-columns:1fr 92px 92px 88px 104px;align-items:center;gap:8px;margin-top:8px;padding-top:14px;border-top:1px solid var(--line2)')}>
             <span style={css(mono + 'font-size:10px;letter-spacing:1.5px;color:var(--text-dim);font-weight:600')}>TOTAL EXPENSES</span>
             <span style={css(mono + 'text-align:right;font-size:13px;font-weight:600;color:var(--text-muted)')}>{budget.budgetTotal}</span>
             <span style={css(mono + 'text-align:right;font-size:13px;font-weight:600;color:var(--text)')}>{budget.spentTotal}</span>

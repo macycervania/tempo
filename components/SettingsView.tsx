@@ -7,6 +7,7 @@ import { css } from './css';
 export default function SettingsView({ vm }: { vm: VM }) {
   const mono = "font-family:'JetBrains Mono',monospace;";
   const st = vm.settings;
+  const wal = vm.fin.wallets;
   return (
     <div style={css('max-width:840px;margin:0 auto;display:flex;flex-direction:column;gap:16px')}>
       <div style={css('display:flex;align-items:center;gap:10px;margin-bottom:2px')}>
@@ -126,6 +127,41 @@ export default function SettingsView({ vm }: { vm: VM }) {
           </div>
         </div>
         <div style={css('font-size:12px;color:var(--text-faint);margin-top:12px')}>Your goal weight lives on the Health page · powers the weight forecast</div>
+      </section>
+
+      {/* CRYPTO WALLETS */}
+      <section style={css('background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:20px 22px')}>
+        <div style={css('display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap')}>
+          <span style={css(mono + 'font-size:10px;letter-spacing:2px;color:var(--text-faint)')}>CRYPTO WALLETS · SOLANA</span>
+          <div style={{ flex: 1 }} />
+          {wal.hasAny && (
+            <>
+              <span style={css(mono + 'font-size:10.5px;color:var(--text-faint2)')}>{wal.total} TRACKED</span>
+              <button onClick={wal.onRefresh} style={css(mono + 'font-size:10px;letter-spacing:1px;background:transparent;border:1px solid var(--line2);border-radius:7px;padding:5px 10px;color:var(--text-faint);cursor:pointer')}>↻ REFRESH</button>
+            </>
+          )}
+        </div>
+        {wal.rows.length > 0 && (
+          <div style={css('display:flex;flex-direction:column;gap:8px;margin-bottom:14px')}>
+            {wal.rows.map((w) => (
+              <div key={w.id} style={css('display:flex;align-items:center;gap:11px;padding:12px 14px;background:var(--inset);border:1px solid var(--line);border-radius:11px')}>
+                <span style={css(`width:8px;height:8px;flex:0 0 auto;border-radius:50%;background:${w.dotColor}`)} />
+                <div style={css('min-width:0;flex:1')}>
+                  <div style={css('font-size:13px;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap')}>{w.label}</div>
+                  <div style={css(mono + 'font-size:10px;color:var(--text-faint2)')}>{w.addrShort} · {w.sol}</div>
+                </div>
+                {w.val && <span style={css(mono + 'font-size:13px;font-weight:600;color:var(--text-dim)')}>{w.val}</span>}
+                <button onClick={w.onRemove} style={css('background:none;border:none;color:var(--text-faint2);cursor:pointer;font-size:14px;line-height:1')}>×</button>
+              </div>
+            ))}
+          </div>
+        )}
+        <div style={css('display:flex;flex-wrap:wrap;align-items:center;gap:8px')}>
+          <input value={wal.labelDraft} onChange={wal.onLabelInput} placeholder="Label (e.g. Phantom)" style={css('flex:1;min-width:120px;background:var(--inset);border:1px solid var(--line2);border-radius:9px;padding:9px 12px;color:var(--text);font-size:13px')} />
+          <input value={wal.addrDraft} onChange={wal.onAddrInput} placeholder="Public Solana address" style={css("flex:2;min-width:170px;background:var(--inset);border:1px solid var(--line2);border-radius:9px;padding:9px 12px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:12.5px")} />
+          <button onClick={wal.onAdd} style={css('background:var(--accent);color:var(--bg);border:none;border-radius:9px;padding:9px 16px;font-size:12.5px;font-weight:600;cursor:pointer')}>Track</button>
+        </div>
+        <div style={css('font-size:12px;color:var(--text-faint);margin-top:10px')}>Read-only — your public address only, never a private key. Balance &amp; SOL price refresh live and fold into your Finance net worth.</div>
       </section>
 
       {/* NOTIFICATIONS */}

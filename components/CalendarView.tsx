@@ -8,7 +8,7 @@ export default function CalendarView({ vm }: { vm: VM }) {
   const mono = "font-family:'JetBrains Mono',monospace;";
   const cal = vm.calendar;
   return (
-    <div style={css('display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:16px;align-items:start')}>
+    <div className="calgrid">
       <section style={css('background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:20px 22px')}>
         <div style={css('display:flex;align-items:center;gap:12px;margin-bottom:16px')}>
           <span style={css(mono + 'font-size:11px;font-weight:600;letter-spacing:1px;color:var(--bg);background:var(--accent);border-radius:5px;padding:2px 7px')}>◷</span>

@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import type { VM } from '@/state/useViewModel';
 import { css, Hov } from './css';
 import { EditInput } from './Overview';
@@ -8,12 +8,18 @@ import { EditInput } from './Overview';
 export default function TasksView({ vm }: { vm: VM }) {
   const mono = "font-family:'JetBrains Mono',monospace;";
   const tv = vm.tasksView;
+  const [addOpen, setAddOpen] = useState(false);
   const selStyle =
     "background:var(--inset);border:1px solid var(--line2);border-radius:9px;padding:0 10px;height:44px;color:var(--text);font-size:12.5px;font-family:'JetBrains Mono',monospace;cursor:pointer";
+  const submitPhone = () => {
+    tv.add.onAdd();
+    setAddOpen(false);
+  };
   return (
-    <div style={css('display:flex;flex-direction:column;gap:14px')}>
+    <div className="tasksWrap" style={css('display:flex;flex-direction:column;gap:14px')}>
       {/* CATEGORY BAR (editable) */}
       <div
+        className="tasksCats"
         style={css(
           'display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 14px;background:var(--panel);border:1px solid var(--line);border-radius:12px',
         )}
@@ -80,20 +86,21 @@ export default function TasksView({ vm }: { vm: VM }) {
 
       {/* MATRIX */}
       <section
+        className="matrixSection"
         style={css('background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px 20px')}
       >
-        <div style={css('display:flex;align-items:center;gap:10px;margin-bottom:4px')}>
+        <div className="matrixHead" style={css('display:flex;align-items:center;gap:10px;margin-bottom:4px')}>
           <span style={css(mono + 'font-size:11px;font-weight:600;letter-spacing:1px;color:var(--text-dim);border:1px solid var(--line2);border-radius:5px;padding:2px 7px')}>02</span>
           <span style={css(mono + 'font-size:11px;letter-spacing:2.5px;color:var(--text-faint)')}>{'// TASKS'}</span>
           <div style={{ flex: 1 }} />
           <span style={css(mono + 'font-size:10.5px;letter-spacing:1px;color:var(--text-faint2)')}>EISENHOWER MATRIX</span>
         </div>
-        <p style={css('font-size:12.5px;color:var(--text-faint);margin-bottom:14px')}>
+        <p className="matrixHead" style={css('font-size:12.5px;color:var(--text-faint);margin-bottom:14px')}>
           Add a task, pick its category and quadrant, and it files itself. Tap a quadrant title to rename it.
         </p>
 
-        {/* ADD FORM — text + category + quadrant */}
-        <div style={css('display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px')}>
+        {/* ADD FORM — text + category + quadrant (desktop; phone uses the + FAB) */}
+        <div className="matrixAdd" style={css('display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px')}>
           <input
             value={vm.capture}
             onChange={vm.onCaptureInput}
@@ -131,7 +138,7 @@ export default function TasksView({ vm }: { vm: VM }) {
                     </Hov>
                   )}
                   {q.titleEditing && <EditInput vm={vm} style={q.editStyle} />}
-                  <div style={css(mono + 'font-size:9px;letter-spacing:.5px;color:var(--text-faint2);margin-top:2px')}>{q.sub}</div>
+                  <div className="taskAreaLabel" style={css(mono + 'font-size:9px;letter-spacing:.5px;color:var(--text-faint2);margin-top:2px')}>{q.sub}</div>
                 </div>
                 {q.count > 0 && (
                   <span style={css(mono + 'font-size:11px;color:var(--text-faint);flex:0 0 auto')}>{q.count}</span>
@@ -152,7 +159,7 @@ export default function TasksView({ vm }: { vm: VM }) {
                       <button onClick={t.onToggle} style={css(t.boxStyle)} />
                       <div style={css('flex:1;min-width:0')}>
                         <div style={css(t.titleStyle)}>{t.title}</div>
-                        <div style={css('display:inline-flex;align-items:center;gap:6px;margin-top:4px')}>
+                        <div className="taskAreaLabel" style={css('display:inline-flex;align-items:center;gap:6px;margin-top:4px')}>
                           <span style={css(`width:6px;height:6px;border-radius:2px;background:${t.tint}`)} />
                           <span style={css(mono + 'font-size:9.5px;letter-spacing:.5px;color:var(--text-faint)')}>
                             {t.areaLabel}
@@ -186,7 +193,7 @@ export default function TasksView({ vm }: { vm: VM }) {
         </div>
 
         {/* SHOW / HIDE COMPLETED (per quadrant) */}
-        <div style={css('margin-top:16px')}>
+        <div className="matrixDone" style={css('margin-top:16px')}>
           <Hov
             as="button"
             onClick={tv.onToggleShowDone}
@@ -200,6 +207,52 @@ export default function TasksView({ vm }: { vm: VM }) {
           )}
         </div>
       </section>
+
+      {/* PHONE: floating + to add a task */}
+      <button
+        className="matrixFab"
+        onClick={() => setAddOpen(true)}
+        title="Add a task"
+        aria-label="Add a task"
+      >
+        +
+      </button>
+
+      {/* PHONE: add sheet opened by the FAB */}
+      {addOpen && (
+        <>
+          <div className="sheetBackdrop" onClick={() => setAddOpen(false)} />
+          <div className="addSheet">
+            <div style={css('display:flex;align-items:center;margin-bottom:12px')}>
+              <span style={css(mono + 'font-size:11px;letter-spacing:1.5px;color:var(--text-faint)')}>NEW TASK</span>
+              <div style={{ flex: 1 }} />
+              <button onClick={() => setAddOpen(false)} style={css('background:none;border:none;color:var(--text-faint);font-size:20px;line-height:1;cursor:pointer')}>×</button>
+            </div>
+            <input
+              value={vm.capture}
+              onChange={vm.onCaptureInput}
+              onKeyDown={(e) => { if (e.key === 'Enter') submitPhone(); }}
+              placeholder="What needs doing?"
+              autoFocus
+              style={css('width:100%;background:var(--inset);border:1px solid var(--line2);border-radius:11px;padding:0 14px;height:50px;color:var(--text);font-size:15px;margin-bottom:10px')}
+            />
+            <div style={css('display:flex;gap:8px;margin-bottom:14px')}>
+              <select value={tv.add.areaVal} onChange={tv.add.onAreaChange} style={css(selStyle + ';flex:1')} title="Category">
+                {tv.add.areas.map((a) => (<option key={a.key} value={a.key}>{a.label}</option>))}
+              </select>
+              <select value={tv.add.quadVal} onChange={tv.add.onQuadChange} style={css(selStyle + ';flex:1')} title="Quadrant">
+                {tv.add.quads.map((q) => (<option key={q.i} value={q.i}>{q.label}</option>))}
+              </select>
+            </div>
+            <button
+              onClick={submitPhone}
+              style={css('width:100%;background:var(--accent);color:var(--bg);border:none;border-radius:11px;height:50px;font-size:15px;font-weight:700;cursor:pointer')}
+            >
+              Add task
+            </button>
+          </div>
+        </>
+      )}
     </div>
   );
 }

@@ -229,13 +229,150 @@ input:focus {
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 12px;
 }
+/* Phone Eisenhower view: a 2×2 board that fills the screen (no page scroll),
+   each quadrant scrolls internally, and a floating + opens the add sheet —
+   the in-page category bar, header, inline form and completed toggle hide. */
+.matrixFab {
+  display: none;
+}
 @media (max-width: 720px) {
+  .tasksWrap {
+    gap: 0 !important;
+  }
+  .tasksCats,
+  .matrixHead,
+  .matrixAdd,
+  .matrixDone,
+  .taskAreaLabel {
+    display: none !important;
+  }
+  .matrixSection {
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+  }
   .eisengrid {
     gap: 8px;
+    grid-template-rows: 1fr 1fr;
+    height: calc(100dvh - 142px - env(safe-area-inset-bottom));
   }
   .eisengrid > div {
-    min-height: 150px !important;
-    padding: 12px 12px !important;
+    min-height: 0 !important;
+    padding: 13px 13px !important;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .matrixFab {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: fixed;
+    right: max(18px, env(safe-area-inset-right));
+    bottom: calc(86px + env(safe-area-inset-bottom));
+    z-index: 46;
+    width: 58px;
+    height: 58px;
+    border-radius: 50%;
+    border: none;
+    background: var(--accent);
+    color: var(--bg);
+    font-size: 30px;
+    font-weight: 300;
+    line-height: 1;
+    cursor: pointer;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.45);
+  }
+}
+
+/* Bottom sheet (phone add-task) — backdrop + panel above the bottom bar. */
+.sheetBackdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 49;
+  background: color-mix(in srgb, var(--bg) 55%, transparent);
+  backdrop-filter: blur(3px);
+}
+.addSheet {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 50;
+  background: var(--panel);
+  border-top: 1px solid var(--line2);
+  border-radius: 18px 18px 0 0;
+  padding: 18px 18px calc(20px + env(safe-area-inset-bottom));
+  box-shadow: 0 -8px 30px rgba(0, 0, 0, 0.5);
+  animation: fadeUp 0.2s ease;
+}
+
+/* Calendar: month + day panel stack on phones. */
+.calgrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  gap: 16px;
+  align-items: start;
+}
+@media (max-width: 720px) {
+  .calgrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Budget table reflows on phones: each row shows label + spent + a bar, with
+   the budget/left columns dropped so nothing overlaps. */
+@media (max-width: 720px) {
+  .bHeadRow {
+    display: none !important;
+  }
+  .bGroupRow {
+    grid-template-columns: 1fr auto !important;
+    grid-template-areas: 'name spent' 'bar bar' !important;
+    row-gap: 7px !important;
+  }
+  .bGroupRow > :nth-child(1) {
+    grid-area: name;
+  }
+  .bGroupRow > :nth-child(2) {
+    display: none !important;
+  }
+  .bGroupRow > :nth-child(3) {
+    grid-area: spent;
+  }
+  .bGroupRow > :nth-child(4) {
+    display: none !important;
+  }
+  .bGroupRow > :nth-child(5) {
+    grid-area: bar;
+  }
+  .bSubRow {
+    grid-template-columns: 1fr auto !important;
+    grid-template-areas: 'label spent' 'bar bar' !important;
+    row-gap: 6px !important;
+    padding: 10px 0 !important;
+  }
+  .bSubRow > :nth-child(1) {
+    grid-area: label;
+  }
+  .bSubRow > :nth-child(2) {
+    display: none !important;
+  }
+  .bSubRow > :nth-child(3) {
+    grid-area: spent;
+  }
+  .bSubRow > :nth-child(4) {
+    display: none !important;
+  }
+  .bSubRow > :nth-child(5) {
+    grid-area: bar;
+  }
+  .bTotalRow {
+    grid-template-columns: 1fr auto !important;
+  }
+  .bTotalRow > :nth-child(2),
+  .bTotalRow > :nth-child(4),
+  .bTotalRow > :nth-child(5) {
+    display: none !important;
   }
 }
 
