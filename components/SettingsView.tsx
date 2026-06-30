@@ -45,6 +45,33 @@ export default function SettingsView({ vm }: { vm: VM }) {
         </div>
       </section>
 
+      {/* ACCOUNT (Google login — shared leaderboard) */}
+      <section style={css('background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:20px 22px')}>
+        <div style={css(mono + 'font-size:10px;letter-spacing:2px;color:var(--text-faint);margin-bottom:14px')}>ACCOUNT</div>
+        {vm.account ? (
+          <div style={css('display:flex;align-items:center;gap:14px')}>
+            {vm.account.avatar ? (
+              <img src={vm.account.avatar} alt="" width={42} height={42} style={{ width: 42, height: 42, borderRadius: '50%', objectFit: 'cover' }} />
+            ) : (
+              <span style={css('width:42px;height:42px;border-radius:50%;background:var(--inset);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:var(--text-dim)')}>{(vm.account.name || '?').slice(0, 1).toUpperCase()}</span>
+            )}
+            <div style={{ minWidth: 0, flex: 1 }}>
+              <div style={css('font-size:15px;font-weight:600;color:var(--text)')}>{vm.account.name}</div>
+              <div style={css('font-size:12.5px;color:var(--text-faint);overflow:hidden;text-overflow:ellipsis;white-space:nowrap')}>{vm.account.email} · on the leaderboard</div>
+            </div>
+            <button onClick={vm.onSignOut} style={css('background:var(--inset);border:1px solid var(--line2);border-radius:8px;padding:8px 14px;font-size:12.5px;font-weight:600;color:var(--text-dim);cursor:pointer;white-space:nowrap')}>Sign out</button>
+          </div>
+        ) : (
+          <div style={css('display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap')}>
+            <div style={{ minWidth: 0 }}>
+              <div style={css('font-size:13.5px;color:var(--text-dim)')}>Sign in with Google</div>
+              <div style={css('font-size:12px;color:var(--text-faint)')}>{vm.authConfigured ? 'Join the shared leaderboard with your friends' : 'Available on the deployed app (see SETUP.md)'}</div>
+            </div>
+            <button onClick={vm.onSignIn} style={css('background:var(--accent);color:var(--bg);border:none;border-radius:9px;padding:9px 16px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap')}>Continue with Google</button>
+          </div>
+        )}
+      </section>
+
       {/* THEME */}
       <section style={css('background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:20px 22px')}>
         <div style={css(mono + 'font-size:10px;letter-spacing:2px;color:var(--text-faint);margin-bottom:14px')}>THEME</div>

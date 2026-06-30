@@ -207,17 +207,62 @@ export type Page =
   | 'health'
   | 'budget'
   | 'finance'
+  | 'memecoins'
+  | 'leaderboard'
   | 'calendar'
   | 'journal'
   | 'settings';
 
 export type NaPhase = 'idle' | 'listening' | 'thinking' | 'answer';
 
+/** Signed-in account (Supabase Google auth). Null when logged out / no backend. */
+export interface Account {
+  id: string;
+  name: string;
+  email: string;
+  avatar: string;
+}
+
+/** One row of the shared progress leaderboard. */
+export interface LeaderRow {
+  id: string;
+  name: string;
+  avatar: string;
+  score: number;
+  tasksDone: number;
+  habitPct: number;
+  pnl: number;
+  updatedAt: string;
+  isMe: boolean;
+}
+
+/** A live memecoin position derived from a tracked wallet's holdings. */
+export interface TokenPosition {
+  mint: string;
+  symbol: string;
+  name: string;
+  amount: number;
+  priceUsd: number;
+  valueUsd: number;
+  change24h: number; // percent
+  dayPnlUsd: number;
+  icon: string;
+}
+
 /** The full mutable application state — the single source of truth. */
 export interface TempoState {
   page: Page;
   userName: string;
   pfp: string;
+  /** Signed-in account, or null. */
+  account: Account | null;
+  /** True once the initial auth check has resolved. */
+  authReady: boolean;
+  /** Live leaderboard rows (empty until synced). */
+  leaderboard: LeaderRow[];
+  /** Live memecoin positions for tracked wallets. */
+  positions: TokenPosition[];
+  positionsLoading: boolean;
   goals: Goals;
   selectedDate: string;
   calOffset: number;

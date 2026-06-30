@@ -177,6 +177,8 @@ export function useViewModel() {
       { key: 'health', label: 'Health', glyph: '♥' },
       { key: 'budget', label: 'Budget', glyph: '▤' },
       { key: 'finance', label: 'Finance', glyph: '◈' },
+      { key: 'memecoins', label: 'Memecoins', glyph: '◉' },
+      { key: 'leaderboard', label: 'Leaders', glyph: '♛' },
       { key: 'calendar', label: 'Calendar', glyph: '▣' },
       { key: 'journal', label: 'Journal', glyph: '✎' },
     ] as const
@@ -1308,10 +1310,87 @@ export function useViewModel() {
     ],
   };
 
+  // ── memecoins (live wallet positions) ──
+  const usd = (n: number) =>
+    '$' +
+    Math.abs(n).toLocaleString(undefined, {
+      minimumFractionDigits: n !== 0 && Math.abs(n) < 1 ? 2 : 0,
+      maximumFractionDigits: 2,
+    });
+  const usdSig = (n: number) => (n >= 0 ? '+' : '−') + usd(n);
+  const tinyPrice = (n: number) =>
+    '$' +
+    (n >= 1
+      ? n.toLocaleString(undefined, { maximumFractionDigits: 2 })
+      : n.toPrecision(2).replace(/0+$/, ''));
+  const posValue = s.positions.reduce((a, p) => a + p.valueUsd, 0);
+  const posDayPnl = s.positions.reduce((a, p) => a + p.dayPnlUsd, 0);
+  const memecoins = {
+    hasWallets: s.wallets.length > 0,
+    walletCount: s.wallets.length,
+    loading: s.positionsLoading,
+    onRefresh: api.refreshPositions,
+    totalValue: usd(posValue),
+    dayPnl: usdSig(posDayPnl),
+    dayPnlColor: posDayPnl >= 0 ? '#74ad84' : '#c77b6b',
+    count: s.positions.length,
+    empty: s.positions.length === 0,
+    rows: s.positions.map((p) => ({
+      symbol: p.symbol,
+      name: p.name,
+      icon: p.icon,
+      amount:
+        p.amount.toLocaleString(undefined, { maximumFractionDigits: 2 }) +
+        ' ' +
+        p.symbol,
+      price: tinyPrice(p.priceUsd),
+      value: usd(p.valueUsd),
+      change: (p.change24h >= 0 ? '+' : '') + p.change24h.toFixed(1) + '%',
+      changeColor: p.change24h >= 0 ? '#74ad84' : '#c77b6b',
+      pnl: usdSig(p.dayPnlUsd),
+      pnlColor: p.dayPnlUsd >= 0 ? '#74ad84' : '#c77b6b',
+    })),
+  };
+
+  // ── leaderboard ──
+  const leaderboard = {
+    configured: api.authConfigured,
+    signedIn: !!s.account,
+    empty: s.leaderboard.length === 0,
+    onRefresh: api.refreshLeaderboard,
+    rows: s.leaderboard.map((r, i) => ({
+      rank: i + 1,
+      medal: i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : '',
+      name: r.name,
+      avatar: r.avatar,
+      initials: (r.name || '?').slice(0, 1).toUpperCase(),
+      score: r.score.toLocaleString(),
+      tasks: String(r.tasksDone),
+      habit: r.habitPct + '%',
+      pnl: fmtSig(r.pnl),
+      pnlColor: pnlColor(r.pnl),
+      isMe: r.isMe,
+      rowStyle: `display:flex;align-items:center;gap:12px;padding:13px 15px;border-radius:12px;border:1px solid ${
+        r.isMe ? 'color-mix(in srgb, var(--accent) 45%, transparent)' : 'var(--line)'
+      };background:${
+        r.isMe ? 'color-mix(in srgb, var(--accent) 9%, var(--panel))' : 'var(--inset)'
+      }`,
+    })),
+  };
+
   return {
     pageTabs,
     weeklyReview,
     dailyBrief,
+    memecoins,
+    leaderboard,
+    account: s.account,
+    authReady: s.authReady,
+    authConfigured: api.authConfigured,
+    onSignIn: api.signInGoogle,
+    onSignOut: api.signOut,
+    isMemecoins: s.page === 'memecoins',
+    isLeaderboard: s.page === 'leaderboard',
     isOverview: s.page === 'overview',
     isFinance: s.page === 'finance',
     isHealth: s.page === 'health',

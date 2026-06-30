@@ -221,6 +221,11 @@ export function makeInitialState(): TempoState {
     page: 'overview',
     userName: '',
     pfp: '',
+    account: null,
+    authReady: false,
+    leaderboard: [],
+    positions: [],
+    positionsLoading: false,
     goals: {
       weekly: {
         title: 'Ship the OS project & stay green on trades',

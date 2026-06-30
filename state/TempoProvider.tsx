@@ -44,7 +44,9 @@ import { clearSettings, loadSettings, savePfp, saveSettings } from '@/lib/storag
 import { fetchSolWallet, isSolAddress } from '@/lib/solana';
 import { searchFoods, localFoods } from '@/lib/foods';
 import type { FoodHit } from '@/lib/foods';
-import type { Task } from '@/lib/types';
+import { getSupabase, supabaseConfigured } from '@/lib/supabase';
+import { loadPositions } from '@/lib/positions';
+import type { Task, Account, LeaderRow } from '@/lib/types';
 
 // ── Context shape ───────────────────────────────────────────────────────────────
 export interface TempoApi {
@@ -159,6 +161,12 @@ export interface TempoApi {
   setJournalMood: (m: import('@/lib/types').Mood) => void;
   removeJournalEntry: (id: string) => void;
   summariseToday: () => void;
+  // account / leaderboard / memecoins
+  authConfigured: boolean;
+  signInGoogle: () => void;
+  signOut: () => void;
+  refreshLeaderboard: () => void;
+  refreshPositions: () => void;
 }
 
 const Ctx = createContext<TempoApi | null>(null);
@@ -1424,6 +1432,164 @@ export function TempoProvider({ children }: { children: React.ReactNode }) {
   const testVoice = () =>
     speak('Hi, I’m Nateman, your assistant. This is how I sound.');
 
+  // ── account / leaderboard (optional Supabase backend) ───────────────────────
+  const authConfigured = supabaseConfigured();
+  const applySession = useCallback(
+    (session: Record<string, unknown> | null) => {
+      const u = (session?.user || null) as Record<string, unknown> | null;
+      if (!u) {
+        set({ account: null });
+        return;
+      }
+      const m = (u.user_metadata || {}) as Record<string, unknown>;
+      const email = String(u.email || '');
+      const account: Account = {
+        id: String(u.id || ''),
+        name: String(m.full_name || m.name || email.split('@')[0] || 'Me'),
+        email,
+        avatar: String(m.avatar_url || m.picture || ''),
+      };
+      set({ account });
+    },
+    [set],
+  );
+  const computeScore = () => {
+    const s = ref.current;
+    const tasksDone = s.tasks.filter((t) => t.done).length;
+    const ticks = s.habits.reduce((a, h) => a + h.week.filter(Boolean).length, 0);
+    const max = s.habits.length * 7;
+    const habitPct = max ? Math.round((ticks / max) * 100) : 0;
+    const pnl = s.fin.pnlMonth;
+    const score = tasksDone * 10 + habitPct + Math.round(pnl / 100);
+    return { tasksDone, habitPct, pnl, score };
+  };
+  const refreshLeaderboard = useCallback(async () => {
+    const sb = getSupabase();
+    if (!sb) return;
+    try {
+      const { data, error } = await sb
+        .from('progress')
+        .select('*')
+        .order('score', { ascending: false })
+        .limit(50);
+      if (error || !data) return;
+      const meId = ref.current.account?.id;
+      const rows: LeaderRow[] = (data as Record<string, unknown>[]).map((r) => ({
+        id: String(r.user_id || ''),
+        name: String(r.name || 'Anon'),
+        avatar: String(r.avatar || ''),
+        score: Number(r.score) || 0,
+        tasksDone: Number(r.tasks_done) || 0,
+        habitPct: Number(r.habit_pct) || 0,
+        pnl: Number(r.pnl) || 0,
+        updatedAt: String(r.updated_at || ''),
+        isMe: String(r.user_id || '') === meId,
+      }));
+      set({ leaderboard: rows });
+    } catch {
+      /* offline — keep whatever we have */
+    }
+  }, [set]);
+  const syncProgress = useCallback(async () => {
+    const sb = getSupabase();
+    const acc = ref.current.account;
+    if (!sb || !acc) return;
+    const m = computeScore();
+    try {
+      await sb.from('progress').upsert({
+        user_id: acc.id,
+        name: acc.name,
+        avatar: acc.avatar,
+        score: m.score,
+        tasks_done: m.tasksDone,
+        habit_pct: m.habitPct,
+        pnl: m.pnl,
+        updated_at: new Date().toISOString(),
+      });
+    } catch {
+      /* ignore */
+    }
+    await refreshLeaderboard();
+  }, [refreshLeaderboard]);
+  const signInGoogle = useCallback(async () => {
+    const sb = getSupabase();
+    if (!sb) {
+      flashToast('Sign-in needs the deployed app (see SETUP.md)');
+      return;
+    }
+    try {
+      await sb.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo:
+            typeof window !== 'undefined' ? window.location.origin : undefined,
+        },
+      });
+    } catch {
+      flashToast('Sign-in failed');
+    }
+  }, [flashToast]);
+  const signOut = useCallback(async () => {
+    const sb = getSupabase();
+    if (sb) {
+      try {
+        await sb.auth.signOut();
+      } catch {
+        /* ignore */
+      }
+    }
+    set({ account: null, leaderboard: [] });
+  }, [set]);
+  // Resolve the session on mount and keep it in sync.
+  useEffect(() => {
+    const sb = getSupabase();
+    if (!sb) {
+      set({ authReady: true });
+      return;
+    }
+    let unsub = () => {};
+    (async () => {
+      try {
+        const { data } = await sb.auth.getSession();
+        applySession(data.session as unknown as Record<string, unknown> | null);
+      } catch {
+        /* ignore */
+      }
+      set({ authReady: true });
+      const { data: sub } = sb.auth.onAuthStateChange((_e, session) =>
+        applySession(session as unknown as Record<string, unknown> | null),
+      );
+      unsub = () => sub.subscription.unsubscribe();
+    })();
+    return () => unsub();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  // Push our progress to the board whenever we sign in.
+  useEffect(() => {
+    if (state.account?.id) syncProgress();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.account?.id]);
+
+  // ── memecoin positions (live wallet holdings) ───────────────────────────────
+  const positionsAbort = useRef<AbortController | null>(null);
+  const refreshPositions = useCallback(async () => {
+    const addrs = ref.current.wallets.map((w) => w.address).filter(Boolean);
+    if (!addrs.length) {
+      set({ positions: [], positionsLoading: false });
+      return;
+    }
+    if (positionsAbort.current) positionsAbort.current.abort();
+    const ctrl = new AbortController();
+    positionsAbort.current = ctrl;
+    set({ positionsLoading: true });
+    try {
+      const pos = await loadPositions(addrs, ctrl.signal);
+      if (!ctrl.signal.aborted) set({ positions: pos, positionsLoading: false });
+    } catch {
+      if (!ctrl.signal.aborted) set({ positionsLoading: false });
+    }
+  }, [set]);
+
   // ── nateman ─────────────────────────────────────────────────────────────────
   const snapshot = (): AssistantSnapshot => {
     const s = ref.current;
@@ -1823,6 +1989,11 @@ export function TempoProvider({ children }: { children: React.ReactNode }) {
       setJournalMood,
       removeJournalEntry,
       summariseToday,
+      authConfigured,
+      signInGoogle,
+      signOut,
+      refreshLeaderboard,
+      refreshPositions,
     }),
     // state is the only value that needs to retrigger consumers; handlers are stable enough
     // eslint-disable-next-line react-hooks/exhaustive-deps
