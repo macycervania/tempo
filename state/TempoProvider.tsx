@@ -41,6 +41,7 @@ import {
   todayIndex,
 } from '@/lib/format';
 import { clearSettings, loadSettings, savePfp, saveSettings } from '@/lib/storage';
+import { fetchSolWallet, isSolAddress } from '@/lib/solana';
 import type { Task } from '@/lib/types';
 
 // ── Context shape ───────────────────────────────────────────────────────────────
@@ -101,6 +102,15 @@ export interface TempoApi {
   onExpenseInput: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onExpenseKey: (e: React.KeyboardEvent) => void;
   onExpenseSubmit: () => void;
+  // finance
+  onToggleFinManage: () => void;
+  addAsset: () => void;
+  removeAsset: (i: number) => void;
+  onWalletAddrInput: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onWalletLabelInput: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  addWallet: () => void;
+  removeWallet: (id: string) => void;
+  refreshWallets: () => void;
   // inline editing
   startEdit: (key: string, val: string | number) => void;
   onEditInput: (e: React.ChangeEvent<HTMLInputElement>) => void;
@@ -242,6 +252,7 @@ export function TempoProvider({ children }: { children: React.ReactNode }) {
     state.userName,
     state.sound,
     state.voiceURI,
+    state.wallets,
   ]);
 
   // ── small helpers ───────────────────────────────────────────────────────────
@@ -299,26 +310,41 @@ export function TempoProvider({ children }: { children: React.ReactNode }) {
     try {
       const syn = window.speechSynthesis;
       if (!syn) return;
-      syn.cancel();
-      const u = new SpeechSynthesisUtterance(
-        String(text).replace(/[“”—]/g, ' '),
-      );
-      const voices = syn.getVoices() || [];
-      let v = voices.find((x) => x.voiceURI === ref.current.voiceURI);
-      if (!v)
-        v =
-          voices.find(
-            (x) =>
-              /en/i.test(x.lang) &&
-              /(daniel|fred|aaron|arthur|male|google us)/i.test(x.name),
-          ) ||
-          voices.find((x) => /en/i.test(x.lang)) ||
-          voices[0];
-      if (v) u.voice = v;
-      u.rate = 0.9;
-      u.pitch = 0.55;
-      u.volume = 1;
-      syn.speak(u);
+      let fired = false;
+      const utter = () => {
+        if (fired) return;
+        fired = true;
+        const u = new SpeechSynthesisUtterance(String(text).replace(/[“”—]/g, ' '));
+        const voices = syn.getVoices() || [];
+        let v = voices.find((x) => x.voiceURI === ref.current.voiceURI);
+        if (!v)
+          v =
+            voices.find(
+              (x) =>
+                /en/i.test(x.lang) &&
+                /(google|natural|samantha|daniel|aaron|arthur|alex)/i.test(x.name),
+            ) ||
+            voices.find((x) => /en/i.test(x.lang)) ||
+            voices[0];
+        if (v) u.voice = v;
+        u.rate = 0.98;
+        u.pitch = 0.92;
+        u.volume = 1;
+        try {
+          syn.cancel();
+        } catch {
+          /* ignore */
+        }
+        syn.resume(); // some engines pause themselves after a while
+        syn.speak(u);
+      };
+      // Voices can load asynchronously — speak as soon as they're ready.
+      if ((syn.getVoices() || []).length > 0) {
+        utter();
+      } else {
+        syn.onvoiceschanged = () => utter();
+        setTimeout(utter, 300);
+      }
     } catch {
       /* ignore */
     }
@@ -898,6 +924,103 @@ export function TempoProvider({ children }: { children: React.ReactNode }) {
     if (e.key === 'Enter') onExpenseSubmit();
   };
 
+  // ── finance ─────────────────────────────────────────────────────────────────
+  const cloneFin = () => JSON.parse(JSON.stringify(ref.current.fin));
+  const onToggleFinManage = useCallback(
+    () => set((s) => ({ finManaging: !s.finManaging, edit: null })),
+    [set],
+  );
+  const addAsset = useCallback(() => {
+    const fin = cloneFin();
+    const colors = ['#74ad84', '#6f90b4', 'var(--accent)', '#9b7fb4', '#b46f8a', '#7fb4a8'];
+    fin.assets.push({
+      label: 'New holding',
+      val: 0,
+      color: colors[fin.assets.length % colors.length],
+    });
+    set({ fin, edit: 'fal.' + (fin.assets.length - 1), editVal: 'New holding' });
+  }, [set]);
+  const removeAsset = useCallback(
+    (i: number) => {
+      const fin = cloneFin();
+      fin.assets.splice(i, 1);
+      set({ fin });
+    },
+    [set],
+  );
+
+  // Solana wallets (read-only, public addresses only) ──────────────────────────
+  const fetchOneWallet = useCallback(
+    async (id: string) => {
+      const w = ref.current.wallets.find((x) => x.id === id);
+      if (!w) return;
+      set((s) => ({
+        wallets: s.wallets.map((x) =>
+          x.id === id ? { ...x, status: 'loading' } : x,
+        ),
+      }));
+      try {
+        const bal = await fetchSolWallet(w.address, ref.current.currency.code);
+        set((s) => ({
+          wallets: s.wallets.map((x) =>
+            x.id === id
+              ? { ...x, sol: bal.sol, valLocal: bal.valLocal, status: 'ok' }
+              : x,
+          ),
+        }));
+      } catch {
+        set((s) => ({
+          wallets: s.wallets.map((x) =>
+            x.id === id ? { ...x, status: 'error' } : x,
+          ),
+        }));
+      }
+    },
+    [set],
+  );
+  const refreshWallets = useCallback(() => {
+    ref.current.wallets.forEach((w) => fetchOneWallet(w.id));
+  }, [fetchOneWallet]);
+  const onWalletAddrInput = (e: React.ChangeEvent<HTMLInputElement>) =>
+    set({ walletAddrDraft: e.target.value });
+  const onWalletLabelInput = (e: React.ChangeEvent<HTMLInputElement>) =>
+    set({ walletLabelDraft: e.target.value });
+  const addWallet = useCallback(() => {
+    const addr = ref.current.walletAddrDraft.trim();
+    if (!isSolAddress(addr)) {
+      flashToast('That doesn’t look like a Solana address');
+      return;
+    }
+    if (ref.current.wallets.some((w) => w.address === addr)) {
+      flashToast('Wallet already tracked');
+      return;
+    }
+    const id = 'sol' + Date.now();
+    const label = ref.current.walletLabelDraft.trim() || 'Solana wallet';
+    set((s) => ({
+      wallets: [
+        ...s.wallets,
+        { id, label, address: addr, sol: 0, valLocal: 0, status: 'idle' },
+      ],
+      walletAddrDraft: '',
+      walletLabelDraft: '',
+    }));
+    fetchOneWallet(id);
+    flashToast('Tracking ' + label);
+  }, [set, flashToast, fetchOneWallet]);
+  const removeWallet = useCallback(
+    (id: string) =>
+      set((s) => ({ wallets: s.wallets.filter((w) => w.id !== id) })),
+    [set],
+  );
+  // Refresh live balances after hydration adds wallets, and when the currency
+  // changes (so the local-currency value re-prices). Keyed on count, not the
+  // array, so per-wallet status updates don't loop.
+  useEffect(() => {
+    if (ref.current.wallets.length) refreshWallets();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.wallets.length, state.currency.code]);
+
   // ── inline editing ──────────────────────────────────────────────────────────
   const startEdit = useCallback(
     (key: string, val: string | number) =>
@@ -957,6 +1080,15 @@ export function TempoProvider({ children }: { children: React.ReactNode }) {
         edit: null,
         editVal: '',
       }));
+      return;
+    }
+    if (p[0] === 'fsav' || p[0] === 'fewa' || p[0] === 'fav' || p[0] === 'fal') {
+      const fin = cloneFin();
+      if (p[0] === 'fsav') fin.savings = num;
+      else if (p[0] === 'fewa') fin.ewallet = num;
+      else if (p[0] === 'fav') fin.assets[+p[1]].val = num;
+      else if (p[0] === 'fal') fin.assets[+p[1]].label = txt;
+      set({ fin, edit: null, editVal: '' });
       return;
     }
     const b = cloneBudget();
@@ -1519,6 +1651,14 @@ export function TempoProvider({ children }: { children: React.ReactNode }) {
       onExpenseInput,
       onExpenseKey,
       onExpenseSubmit,
+      onToggleFinManage,
+      addAsset,
+      removeAsset,
+      onWalletAddrInput,
+      onWalletLabelInput,
+      addWallet,
+      removeWallet,
+      refreshWallets,
       startEdit,
       onEditInput,
       onEditKey,

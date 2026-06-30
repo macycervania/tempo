@@ -18,6 +18,7 @@ export type PersistedSettings = Pick<
   | 'userName'
   | 'sound'
   | 'voiceURI'
+  | 'wallets'
 >;
 
 export function loadSettings(): {
@@ -59,6 +60,13 @@ export function saveSettings(state: TempoState): void {
       userName: state.userName,
       sound: state.sound,
       voiceURI: state.voiceURI,
+      // Persist only the public address + label; balances refresh live on load.
+      wallets: state.wallets.map((w) => ({
+        ...w,
+        sol: 0,
+        valLocal: 0,
+        status: 'idle' as const,
+      })),
     };
     localStorage.setItem(SETTINGS_KEY, JSON.stringify(payload));
   } catch {

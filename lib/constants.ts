@@ -280,12 +280,17 @@ export function makeInitialState(): TempoState {
     editVal: '',
     expenseDraft: '',
     budgetManaging: false,
+    finManaging: false,
+    wallets: [],
+    walletAddrDraft: '',
+    walletLabelDraft: '',
     calHistory: [2650, 2900, 2400, 3050, 2750, 2500],
     budget: {
       income: [
-        { label: 'Allowance', amt: 8000 },
+        { label: 'Allowance (parents)', amt: 8000 },
         { label: 'Internship stipend', amt: 18000 },
-        { label: 'Trading profit', amt: 6000 },
+        { label: 'Rent collected (housemates)', amt: 9000 },
+        { label: 'Trading / crypto profit', amt: 6000 },
         { label: 'Freelance / other', amt: 3000 },
       ],
       groups: [

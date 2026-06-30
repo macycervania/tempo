@@ -478,17 +478,38 @@ export function useViewModel() {
     0,
   );
   const cashVal = fd.cashOpening + incomeTotalF - spentTotalF;
-  const liquidAccts = [
+  const managingFin = s.finManaging;
+  // Live read-only crypto from tracked Solana wallets, folded into net worth.
+  const walletsTotal = s.wallets.reduce(
+    (a, w) => a + (w.status === 'ok' ? w.valLocal : 0),
+    0,
+  );
+  const liquidAccts: {
+    label: string;
+    val: number;
+    color: string;
+    editKey?: string;
+  }[] = [
     { label: 'CASH · FROM BUDGET', val: cashVal, color: 'var(--accent)' },
-    { label: 'SAVINGS', val: fd.savings, color: '#6f90b4' },
-    { label: 'E-WALLET', val: fd.ewallet, color: '#74ad84' },
+    { label: 'SAVINGS', val: fd.savings, color: '#6f90b4', editKey: 'fsav' },
+    { label: 'E-WALLET', val: fd.ewallet, color: '#74ad84', editKey: 'fewa' },
   ];
+  if (s.wallets.length)
+    liquidAccts.push({ label: 'CRYPTO · SOLANA', val: walletsTotal, color: '#9b7fb4' });
   const liquidTotal = liquidAccts.reduce((a, b) => a + b.val, 0);
   const assetsTotal = fd.assets.reduce((a, b) => a + b.val, 0);
   const netWorth = liquidTotal + assetsTotal;
   const fin = {
     liquid: fmtPeso(liquidTotal),
     netWorth: fmtPeso(netWorth),
+    managing: managingFin,
+    onToggleManage: api.onToggleFinManage,
+    manageLabel: managingFin ? 'DONE' : '+ EDIT',
+    manageBtnStyle: `font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1px;background:${
+      managingFin ? 'var(--inset)' : 'transparent'
+    };border:1px solid var(--line2);border-radius:7px;padding:5px 11px;cursor:pointer;transition:all .12s;color:${
+      managingFin ? 'var(--text)' : 'var(--text-faint)'
+    }`,
     netDelta:
       '+' +
       Math.round((fd.pnlMonth / Math.max(liquidTotal, 1)) * 1000) / 10 +
@@ -498,18 +519,63 @@ export function useViewModel() {
       color: b.color,
       val: fmtPeso(b.val),
       pct: Math.round((b.val / Math.max(liquidTotal, 1)) * 100) + '%',
+      editable: !!b.editKey && managingFin,
+      editing: !!b.editKey && s.edit === b.editKey,
+      show: !(!!b.editKey && s.edit === b.editKey),
+      onEdit: b.editKey ? () => api.startEdit(b.editKey as string, b.val) : undefined,
     })),
-    assets: fd.assets.map((a) => ({
+    assets: fd.assets.map((a, i) => ({
       label: a.label,
       color: a.color,
       val: fmtPeso(a.val),
       pct: Math.round((a.val / Math.max(assetsTotal, 1)) * 100) + '%',
+      managing: managingFin,
+      labelEditing: s.edit === 'fal.' + i,
+      labelShow: s.edit !== 'fal.' + i,
+      onEditLabel: () => api.startEdit('fal.' + i, a.label),
+      valEditing: s.edit === 'fav.' + i,
+      valShow: s.edit !== 'fav.' + i,
+      onEditVal: () => api.startEdit('fav.' + i, a.val),
+      onRemove: () => api.removeAsset(i),
     })),
+    onAddAsset: api.addAsset,
     assetsTotal: fmtPeso(assetsTotal),
+    wallets: {
+      hasAny: s.wallets.length > 0,
+      total: fmtPeso(walletsTotal),
+      addrDraft: s.walletAddrDraft,
+      labelDraft: s.walletLabelDraft,
+      onAddrInput: api.onWalletAddrInput,
+      onLabelInput: api.onWalletLabelInput,
+      onAdd: api.addWallet,
+      onRefresh: api.refreshWallets,
+      rows: s.wallets.map((w) => ({
+        id: w.id,
+        label: w.label,
+        addrShort: w.address.slice(0, 4) + '…' + w.address.slice(-4),
+        sol:
+          w.status === 'ok'
+            ? w.sol.toLocaleString(undefined, { maximumFractionDigits: 3 }) + ' SOL'
+            : w.status === 'loading'
+              ? 'loading…'
+              : w.status === 'error'
+                ? 'unavailable'
+                : '—',
+        val: w.status === 'ok' ? fmtPeso(w.valLocal) : '',
+        dotColor:
+          w.status === 'ok'
+            ? '#74ad84'
+            : w.status === 'error'
+              ? '#c77b6b'
+              : 'var(--text-faint2)',
+        onRemove: () => api.removeWallet(w.id),
+      })),
+    },
     cashNote:
       incomeTotalF >= spentTotalF
         ? `${fmtPeso(incomeTotalF - spentTotalF)} surplus this month`
         : `${fmtPeso(spentTotalF - incomeTotalF)} drawn down this month`,
+    incomeNote: `${fmtPeso(incomeTotalF)}/mo income · incl. allowance & rent`,
     pnlStats: [
       { label: 'TODAY', val: fmtSig(fd.pnlToday), color: pnlColor(fd.pnlToday) },
       { label: 'THIS MONTH', val: fmtSig(fd.pnlMonth), color: pnlColor(fd.pnlMonth) },

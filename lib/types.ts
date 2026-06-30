@@ -130,6 +130,25 @@ export interface Finance {
   trades: Trade[];
 }
 
+/** Live read-only state of a public Solana wallet's balance. */
+export type WalletStatus = 'idle' | 'loading' | 'ok' | 'error';
+
+/**
+ * A tracked Solana wallet. Only the public address + label are persisted; the
+ * balance is read-only and refreshed live from the chain (never a private key).
+ */
+export interface SolWallet {
+  id: string;
+  label: string;
+  /** Public base58 address. */
+  address: string;
+  /** Last fetched SOL balance. */
+  sol: number;
+  /** Last fetched value in the user's currency. */
+  valLocal: number;
+  status: WalletStatus;
+}
+
 export interface Currency {
   code: string;
   symbol: string;
@@ -246,6 +265,12 @@ export interface TempoState {
   editVal: string;
   expenseDraft: string;
   budgetManaging: boolean;
+  /** Finance page edit mode (savings, e-wallet, assets). */
+  finManaging: boolean;
+  /** Read-only Solana wallets tracked in net worth. */
+  wallets: SolWallet[];
+  walletAddrDraft: string;
+  walletLabelDraft: string;
   calHistory: number[];
   budget: Budget;
   areas: Area[];
