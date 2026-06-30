@@ -1067,7 +1067,7 @@ export function useViewModel() {
   // nateman
   const na = {
     open: s.naOpen,
-    showFab: s.page === 'overview' && !s.naOpen,
+    showFab: !s.naOpen,
     listening: s.naPhase === 'listening',
     answer: s.naPhase === 'answer',
     query: s.naQuery,

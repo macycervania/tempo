@@ -216,10 +216,16 @@ export function TempoProvider({ children }: { children: React.ReactNode }) {
     } catch {
       /* ignore */
     }
+    // Keep the audio output unlocked on every tap so the tick chime plays on iOS.
+    const onPointer = () => unlockAudio();
+    window.addEventListener('pointerdown', onPointer, { passive: true });
+    window.addEventListener('touchend', onPointer, { passive: true });
     return () => {
       clearInterval(clk);
       Object.values(timers.current).forEach((t) => t && clearTimeout(t));
       stopWake();
+      window.removeEventListener('pointerdown', onPointer);
+      window.removeEventListener('touchend', onPointer);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -310,6 +316,27 @@ export function TempoProvider({ children }: { children: React.ReactNode }) {
 
   // A short, bright two-note chime played when something is checked off.
   const chime = useCallback(() => beep([784, 1175]), [beep]);
+
+  // iOS (and in-app webviews) start the AudioContext "suspended" and only let
+  // it resume inside a user gesture. We resume it on every pointer-down and
+  // play a one-frame silent buffer the first time to fully unlock output, so
+  // the tick chime actually sounds.
+  const unlockAudio = useCallback(() => {
+    try {
+      const Ctor = window.AudioContext || (window as any).webkitAudioContext;
+      if (!Ctor) return;
+      if (!actx.current) actx.current = new Ctor();
+      const ctx = actx.current!;
+      if (ctx.state === 'suspended') ctx.resume();
+      const buf = ctx.createBuffer(1, 1, 22050);
+      const src = ctx.createBufferSource();
+      src.buffer = buf;
+      src.connect(ctx.destination);
+      src.start(0);
+    } catch {
+      /* ignore */
+    }
+  }, []);
 
   const speak = useCallback((text: string) => {
     if (!ref.current.sound) return;

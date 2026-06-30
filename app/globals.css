@@ -267,7 +267,8 @@ input:focus {
     align-items: center;
     justify-content: center;
     position: fixed;
-    right: max(18px, env(safe-area-inset-right));
+    /* Left side so it doesn't collide with the Nateman orb (bottom-right). */
+    left: max(18px, env(safe-area-inset-left));
     bottom: calc(86px + env(safe-area-inset-bottom));
     z-index: 46;
     width: 58px;

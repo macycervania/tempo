@@ -29,48 +29,102 @@ type Generic = {
 };
 
 // Approximate macros per the listed serving — enough to log realistically.
+// Works fully offline (the standalone HTML can't reach external APIs), so this
+// covers the everyday foods you'd actually log; the online sources add the
+// long tail when the app is served over https.
 const COMMON: Generic[] = [
+  // canned / processed
+  { kw: ['spam', 'luncheon meat'], name: 'Spam (Luncheon Meat)', serving: '2 oz (56g)', kcal: 175, p: 7, c: 2, f: 15 },
+  { kw: ['corned beef'], name: 'Corned Beef', serving: '1 serving', kcal: 250, p: 18, c: 2, f: 18 },
+  { kw: ['vienna sausage'], name: 'Vienna Sausage', serving: '3 links', kcal: 150, p: 6, c: 1, f: 13 },
+  { kw: ['tuna', 'canned tuna'], name: 'Tuna (canned in water)', serving: '1 can', kcal: 191, p: 42, c: 0, f: 1 },
+  { kw: ['sardines'], name: 'Sardines', serving: '1 can', kcal: 191, p: 23, c: 0, f: 11 },
+  { kw: ['ham'], name: 'Ham', serving: '1 slice', kcal: 46, p: 5, c: 1, f: 2 },
+  { kw: ['hotdog', 'hot dog'], name: 'Hotdog', serving: '1 link', kcal: 150, p: 5, c: 2, f: 13 },
+  { kw: ['sausage', 'longganisa'], name: 'Sausage', serving: '1 link', kcal: 170, p: 9, c: 1, f: 14 },
+  { kw: ['bacon'], name: 'Bacon', serving: '2 strips', kcal: 90, p: 6, c: 0, f: 7 },
+  // proteins
+  { kw: ['chicken breast', 'grilled chicken'], name: 'Chicken Breast', serving: '100 g', kcal: 165, p: 31, c: 0, f: 4 },
+  { kw: ['chicken thigh'], name: 'Chicken Thigh', serving: '100 g', kcal: 209, p: 26, c: 0, f: 11 },
+  { kw: ['fried chicken'], name: 'Fried Chicken', serving: '1 piece', kcal: 320, p: 22, c: 11, f: 21 },
+  { kw: ['pork chop', 'pork'], name: 'Pork Chop', serving: '100 g', kcal: 231, p: 26, c: 0, f: 14 },
+  { kw: ['ground beef', 'giniling'], name: 'Ground Beef', serving: '100 g', kcal: 250, p: 26, c: 0, f: 15 },
+  { kw: ['steak', 'beef steak'], name: 'Beef Steak', serving: '100 g', kcal: 271, p: 25, c: 0, f: 19 },
+  { kw: ['salmon'], name: 'Salmon', serving: '100 g', kcal: 208, p: 20, c: 0, f: 13 },
+  { kw: ['shrimp', 'prawn', 'hipon'], name: 'Shrimp', serving: '100 g', kcal: 99, p: 24, c: 0, f: 1 },
+  { kw: ['egg', 'eggs', 'fried egg', 'boiled egg', 'itlog'], name: 'Egg', serving: '1 large', kcal: 70, p: 6, c: 0, f: 5 },
+  { kw: ['tofu', 'tokwa'], name: 'Tofu', serving: '100 g', kcal: 76, p: 8, c: 2, f: 5 },
+  // grains / carbs
+  { kw: ['white rice', 'rice', 'steamed rice', 'kanin'], name: 'White Rice', serving: '1 cup', kcal: 205, p: 4, c: 45, f: 0 },
+  { kw: ['brown rice'], name: 'Brown Rice', serving: '1 cup', kcal: 216, p: 5, c: 45, f: 2 },
+  { kw: ['garlic rice', 'sinangag'], name: 'Garlic Rice', serving: '1 cup', kcal: 280, p: 5, c: 50, f: 7 },
+  { kw: ['fried rice'], name: 'Fried Rice', serving: '1 cup', kcal: 350, p: 8, c: 55, f: 12 },
+  { kw: ['bread', 'toast'], name: 'Bread', serving: '1 slice', kcal: 80, p: 3, c: 15, f: 1 },
+  { kw: ['pandesal'], name: 'Pandesal', serving: '1 pc', kcal: 110, p: 3, c: 21, f: 2 },
+  { kw: ['oatmeal', 'oats', 'porridge'], name: 'Oatmeal', serving: '1 cup', kcal: 150, p: 5, c: 27, f: 3 },
+  { kw: ['cereal'], name: 'Cereal', serving: '1 cup', kcal: 150, p: 3, c: 33, f: 2 },
+  { kw: ['spaghetti', 'pasta'], name: 'Spaghetti', serving: '1 plate', kcal: 400, p: 14, c: 60, f: 12 },
+  { kw: ['noodles', 'pancit', 'bihon'], name: 'Noodles', serving: '1 cup', kcal: 220, p: 7, c: 40, f: 4 },
+  { kw: ['ramen', 'instant noodles'], name: 'Ramen', serving: '1 bowl', kcal: 450, p: 15, c: 65, f: 16 },
+  { kw: ['potato'], name: 'Potato', serving: '1 medium', kcal: 160, p: 4, c: 37, f: 0 },
+  { kw: ['fries', 'french fries'], name: 'French Fries', serving: '1 medium', kcal: 365, p: 4, c: 48, f: 17 },
+  // dishes
   { kw: ['pho', 'beef pho'], name: 'Beef Pho', serving: '1 bowl', kcal: 350, p: 30, c: 45, f: 5 },
   { kw: ['chicken pho'], name: 'Chicken Pho', serving: '1 bowl', kcal: 320, p: 28, c: 44, f: 4 },
-  { kw: ['chicken rice', 'hainanese'], name: 'Chicken & Rice', serving: '1 plate', kcal: 600, p: 35, c: 70, f: 18 },
-  { kw: ['adobo'], name: 'Chicken Adobo', serving: '1 serving', kcal: 450, p: 30, c: 10, f: 30 },
+  { kw: ['adobo', 'chicken adobo'], name: 'Chicken Adobo', serving: '1 serving', kcal: 450, p: 30, c: 10, f: 30 },
+  { kw: ['pork adobo'], name: 'Pork Adobo', serving: '1 serving', kcal: 500, p: 28, c: 10, f: 38 },
   { kw: ['sinigang'], name: 'Sinigang', serving: '1 bowl', kcal: 250, p: 25, c: 15, f: 10 },
+  { kw: ['tinola'], name: 'Tinola', serving: '1 bowl', kcal: 220, p: 24, c: 8, f: 9 },
+  { kw: ['sisig'], name: 'Sisig', serving: '1 serving', kcal: 400, p: 25, c: 5, f: 30 },
   { kw: ['tapsilog'], name: 'Tapsilog', serving: '1 plate', kcal: 700, p: 35, c: 70, f: 30 },
+  { kw: ['longsilog', 'longganisa'], name: 'Longsilog', serving: '1 plate', kcal: 750, p: 28, c: 72, f: 38 },
   { kw: ['lumpia', 'spring roll'], name: 'Lumpia (3 pcs)', serving: '3 pcs', kcal: 250, p: 8, c: 22, f: 14 },
-  { kw: ['fried rice'], name: 'Fried Rice', serving: '1 cup', kcal: 350, p: 8, c: 55, f: 12 },
-  { kw: ['white rice', 'rice', 'steamed rice'], name: 'White Rice', serving: '1 cup', kcal: 205, p: 4, c: 45, f: 0 },
-  { kw: ['egg', 'eggs', 'fried egg', 'boiled egg'], name: 'Egg', serving: '1 large', kcal: 70, p: 6, c: 0, f: 5 },
-  { kw: ['banana'], name: 'Banana', serving: '1 medium', kcal: 105, p: 1, c: 27, f: 0 },
-  { kw: ['apple'], name: 'Apple', serving: '1 medium', kcal: 95, p: 0, c: 25, f: 0 },
-  { kw: ['chicken breast', 'grilled chicken'], name: 'Chicken Breast', serving: '100 g', kcal: 165, p: 31, c: 0, f: 4 },
-  { kw: ['oatmeal', 'oats', 'porridge'], name: 'Oatmeal', serving: '1 cup', kcal: 150, p: 5, c: 27, f: 3 },
-  { kw: ['coffee', 'black coffee', 'americano'], name: 'Black Coffee', serving: '1 cup', kcal: 5, p: 0, c: 0, f: 0 },
-  { kw: ['latte'], name: 'Caffè Latte', serving: '1 grande', kcal: 190, p: 13, c: 19, f: 7 },
-  { kw: ['protein shake', 'whey', 'protein'], name: 'Protein Shake', serving: '1 scoop', kcal: 160, p: 30, c: 5, f: 2 },
-  { kw: ['pizza'], name: 'Pizza', serving: '1 slice', kcal: 285, p: 12, c: 36, f: 10 },
-  { kw: ['burger', 'hamburger', 'cheeseburger'], name: 'Burger', serving: '1 burger', kcal: 350, p: 20, c: 30, f: 18 },
-  { kw: ['spaghetti', 'pasta'], name: 'Spaghetti', serving: '1 plate', kcal: 400, p: 14, c: 60, f: 12 },
-  { kw: ['ramen'], name: 'Ramen', serving: '1 bowl', kcal: 450, p: 15, c: 65, f: 16 },
-  { kw: ['sushi', 'maki', 'roll'], name: 'Sushi Roll', serving: '6 pcs', kcal: 250, p: 9, c: 40, f: 5 },
-  { kw: ['salad'], name: 'Chicken Salad', serving: '1 bowl', kcal: 300, p: 25, c: 15, f: 15 },
-  { kw: ['milk'], name: 'Milk', serving: '1 cup', kcal: 120, p: 8, c: 12, f: 5 },
-  { kw: ['greek yogurt', 'yogurt'], name: 'Greek Yogurt', serving: '1 cup', kcal: 100, p: 17, c: 6, f: 0 },
-  { kw: ['bread', 'toast'], name: 'Bread', serving: '1 slice', kcal: 80, p: 3, c: 15, f: 1 },
-  { kw: ['peanut butter'], name: 'Peanut Butter', serving: '2 tbsp', kcal: 190, p: 8, c: 7, f: 16 },
-  { kw: ['bacon'], name: 'Bacon', serving: '2 strips', kcal: 90, p: 6, c: 0, f: 7 },
-  { kw: ['salmon'], name: 'Salmon', serving: '100 g', kcal: 208, p: 20, c: 0, f: 13 },
-  { kw: ['tofu'], name: 'Tofu', serving: '100 g', kcal: 76, p: 8, c: 2, f: 5 },
-  { kw: ['fries', 'french fries'], name: 'French Fries', serving: '1 medium', kcal: 365, p: 4, c: 48, f: 17 },
-  { kw: ['ice cream'], name: 'Ice Cream', serving: '1 scoop', kcal: 270, p: 5, c: 31, f: 14 },
-  { kw: ['chocolate'], name: 'Chocolate Bar', serving: '1 bar', kcal: 230, p: 3, c: 26, f: 13 },
-  { kw: ['steak', 'beef'], name: 'Beef Steak', serving: '100 g', kcal: 271, p: 25, c: 0, f: 19 },
-  { kw: ['shrimp', 'prawn'], name: 'Shrimp', serving: '100 g', kcal: 99, p: 24, c: 0, f: 1 },
-  { kw: ['noodles', 'pancit'], name: 'Noodles', serving: '1 cup', kcal: 220, p: 7, c: 40, f: 4 },
-  { kw: ['dumpling', 'siomai', 'gyoza'], name: 'Dumplings (6 pcs)', serving: '6 pcs', kcal: 300, p: 12, c: 35, f: 12 },
-  { kw: ['pancake'], name: 'Pancakes', serving: '3 pcs', kcal: 350, p: 8, c: 50, f: 12 },
-  { kw: ['smoothie'], name: 'Fruit Smoothie', serving: '1 cup', kcal: 200, p: 5, c: 40, f: 3 },
+  { kw: ['chicken rice', 'hainanese'], name: 'Chicken & Rice', serving: '1 plate', kcal: 600, p: 35, c: 70, f: 18 },
   { kw: ['curry'], name: 'Chicken Curry', serving: '1 bowl', kcal: 400, p: 28, c: 20, f: 22 },
   { kw: ['pad thai'], name: 'Pad Thai', serving: '1 plate', kcal: 450, p: 20, c: 55, f: 16 },
+  { kw: ['sushi', 'maki', 'roll'], name: 'Sushi Roll', serving: '6 pcs', kcal: 250, p: 9, c: 40, f: 5 },
+  { kw: ['dumpling', 'siomai', 'gyoza', 'dimsum'], name: 'Dumplings (6 pcs)', serving: '6 pcs', kcal: 300, p: 12, c: 35, f: 12 },
+  // fast food
+  { kw: ['burger', 'hamburger'], name: 'Burger', serving: '1 burger', kcal: 350, p: 20, c: 30, f: 18 },
+  { kw: ['cheeseburger'], name: 'Cheeseburger', serving: '1 burger', kcal: 400, p: 22, c: 32, f: 20 },
+  { kw: ['pizza'], name: 'Pizza', serving: '1 slice', kcal: 285, p: 12, c: 36, f: 10 },
+  { kw: ['nachos'], name: 'Nachos', serving: '1 serving', kcal: 350, p: 8, c: 36, f: 19 },
+  { kw: ['sandwich'], name: 'Sandwich (Ham & Cheese)', serving: '1', kcal: 350, p: 18, c: 33, f: 16 },
+  { kw: ['salad', 'chicken salad'], name: 'Chicken Salad', serving: '1 bowl', kcal: 300, p: 25, c: 15, f: 15 },
+  // fruit & veg
+  { kw: ['banana', 'saging'], name: 'Banana', serving: '1 medium', kcal: 105, p: 1, c: 27, f: 0 },
+  { kw: ['apple'], name: 'Apple', serving: '1 medium', kcal: 95, p: 0, c: 25, f: 0 },
+  { kw: ['orange'], name: 'Orange', serving: '1 medium', kcal: 62, p: 1, c: 15, f: 0 },
+  { kw: ['mango', 'mangga'], name: 'Mango', serving: '1 medium', kcal: 200, p: 3, c: 50, f: 1 },
+  { kw: ['avocado'], name: 'Avocado', serving: '1/2', kcal: 160, p: 2, c: 9, f: 15 },
+  { kw: ['broccoli'], name: 'Broccoli', serving: '1 cup', kcal: 55, p: 4, c: 11, f: 1 },
+  // dairy
+  { kw: ['milk', 'gatas'], name: 'Milk', serving: '1 cup', kcal: 120, p: 8, c: 12, f: 5 },
+  { kw: ['greek yogurt', 'yogurt'], name: 'Greek Yogurt', serving: '1 cup', kcal: 100, p: 17, c: 6, f: 0 },
+  { kw: ['cheese', 'keso'], name: 'Cheese', serving: '1 slice', kcal: 80, p: 5, c: 1, f: 6 },
+  { kw: ['ice cream', 'sorbetes'], name: 'Ice Cream', serving: '1 scoop', kcal: 270, p: 5, c: 31, f: 14 },
+  // snacks & sweets
+  { kw: ['chocolate', 'choco'], name: 'Chocolate Bar', serving: '1 bar', kcal: 230, p: 3, c: 26, f: 13 },
+  { kw: ['cookies', 'biscuit'], name: 'Cookies', serving: '2 pcs', kcal: 160, p: 2, c: 22, f: 8 },
+  { kw: ['chips', 'crisps'], name: 'Potato Chips', serving: '1 bag', kcal: 150, p: 2, c: 15, f: 10 },
+  { kw: ['donut', 'doughnut'], name: 'Donut', serving: '1', kcal: 250, p: 3, c: 31, f: 14 },
+  { kw: ['cake'], name: 'Cake', serving: '1 slice', kcal: 350, p: 4, c: 50, f: 15 },
+  { kw: ['peanut butter'], name: 'Peanut Butter', serving: '2 tbsp', kcal: 190, p: 8, c: 7, f: 16 },
+  { kw: ['protein bar'], name: 'Protein Bar', serving: '1 bar', kcal: 200, p: 20, c: 22, f: 7 },
+  { kw: ['almonds', 'nuts'], name: 'Almonds', serving: '1 oz', kcal: 165, p: 6, c: 6, f: 14 },
+  // drinks
+  { kw: ['coffee', 'black coffee', 'americano'], name: 'Black Coffee', serving: '1 cup', kcal: 5, p: 0, c: 0, f: 0 },
+  { kw: ['latte'], name: 'Caffè Latte', serving: '1 grande', kcal: 190, p: 13, c: 19, f: 7 },
+  { kw: ['milk tea', 'milktea', 'boba'], name: 'Milk Tea', serving: '1 cup', kcal: 280, p: 3, c: 55, f: 5 },
+  { kw: ['orange juice', 'juice'], name: 'Orange Juice', serving: '1 cup', kcal: 110, p: 2, c: 26, f: 0 },
+  { kw: ['soda', 'coke', 'softdrink', 'pepsi'], name: 'Soda (Cola)', serving: '1 can', kcal: 140, p: 0, c: 39, f: 0 },
+  { kw: ['beer'], name: 'Beer', serving: '1 can', kcal: 154, p: 2, c: 13, f: 0 },
+  { kw: ['protein shake', 'whey', 'protein'], name: 'Protein Shake', serving: '1 scoop', kcal: 160, p: 30, c: 5, f: 2 },
+  { kw: ['smoothie'], name: 'Fruit Smoothie', serving: '1 cup', kcal: 200, p: 5, c: 40, f: 3 },
+  { kw: ['energy drink'], name: 'Energy Drink', serving: '1 can', kcal: 110, p: 0, c: 28, f: 0 },
+  // breakfast
+  { kw: ['pancake'], name: 'Pancakes', serving: '3 pcs', kcal: 350, p: 8, c: 50, f: 12 },
+  { kw: ['waffle'], name: 'Waffle', serving: '1', kcal: 220, p: 5, c: 25, f: 11 },
 ];
 
 function num(v: unknown): number {
@@ -107,7 +161,7 @@ export async function offSearch(
   const url =
     'https://world.openfoodfacts.org/cgi/search.pl?search_terms=' +
     encodeURIComponent(query) +
-    '&search_simple=1&action=process&json=1&page_size=20' +
+    '&search_simple=1&action=process&json=1&page_size=20&sort_by=unique_scans_n' +
     '&fields=code,product_name,brands,serving_size,nutriments';
   const res = await fetch(url, { signal });
   if (!res.ok) throw new Error('OFF ' + res.status);
