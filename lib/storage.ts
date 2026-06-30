@@ -12,10 +12,15 @@ export type PersistedSettings = Pick<
   | 'currency'
   | 'reduceMotion'
   | 'targets'
+  | 'body'
+  | 'matrixTitles'
   | 'notifs'
   | 'userName'
   | 'sound'
   | 'voiceURI'
+  | 'wallets'
+  | 'budget'
+  | 'fin'
 >;
 
 export function loadSettings(): {
@@ -51,10 +56,22 @@ export function saveSettings(state: TempoState): void {
       currency: state.currency,
       reduceMotion: state.reduceMotion,
       targets: state.targets,
+      body: state.body,
+      matrixTitles: state.matrixTitles,
       notifs: state.notifs,
       userName: state.userName,
       sound: state.sound,
       voiceURI: state.voiceURI,
+      // Persist only the public address + label; balances refresh live on load.
+      wallets: state.wallets.map((w) => ({
+        ...w,
+        sol: 0,
+        valLocal: 0,
+        status: 'idle' as const,
+      })),
+      // Your money is your data — keep budget + finance edits across reloads.
+      budget: state.budget,
+      fin: state.fin,
     };
     localStorage.setItem(SETTINGS_KEY, JSON.stringify(payload));
   } catch {

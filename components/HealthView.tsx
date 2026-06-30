@@ -8,7 +8,7 @@ export default function HealthView({ vm }: { vm: VM }) {
   const mono = "font-family:'JetBrains Mono',monospace;";
   const health = vm.health;
   return (
-    <div style={css('display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px')}>
+    <div className="grid2">
       {/* 01 TODAY */}
       <section style={css('grid-column:1 / -1;background:linear-gradient(150deg,var(--panel),var(--panel));border:1px solid var(--line2);border-radius:16px;padding:22px 24px')}>
         <div style={css('display:flex;align-items:center;gap:10px;margin-bottom:20px')}>
@@ -55,31 +55,10 @@ export default function HealthView({ vm }: { vm: VM }) {
         </div>
       </section>
 
-      {/* 02 7-DAY INTAKE */}
-      <section style={css('grid-column:1 / -1;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:20px 22px')}>
-        <div style={css('display:flex;align-items:center;gap:10px;margin-bottom:18px')}>
-          <span style={css(mono + 'font-size:11px;font-weight:600;letter-spacing:1px;color:var(--text-dim);border:1px solid var(--line2);border-radius:5px;padding:2px 7px')}>02</span>
-          <span style={css(mono + 'font-size:11px;letter-spacing:2.5px;color:var(--text-faint)')}>{'// 7-DAY INTAKE'}</span>
-          <div style={{ flex: 1 }} />
-          <span style={css(mono + 'font-size:10.5px;color:var(--text-faint2)')}>AVG {health.trendAvg} KCAL · TARGET {health.target}</span>
-        </div>
-        <div style={css('display:flex;align-items:flex-end;gap:10px;height:140px')}>
-          {health.trend.map((day, i) => (
-            <div key={i} style={css('flex:1;display:flex;flex-direction:column;align-items:center;gap:8px;height:100%')}>
-              <div style={css('position:relative;flex:1;width:100%')}>
-                <div style={css(health.targetLineStyle)} />
-                <div style={css(day.barStyle)} />
-              </div>
-              <span style={css(mono + `font-size:10px;color:${day.labelColor}`)}>{day.label}</span>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* 03 MEALS */}
+      {/* 02 MEALS */}
       <section style={css('background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:20px 22px;display:flex;flex-direction:column')}>
         <div style={css('display:flex;align-items:center;gap:10px;margin-bottom:16px')}>
-          <span style={css(mono + 'font-size:11px;font-weight:600;letter-spacing:1px;color:var(--text-dim);border:1px solid var(--line2);border-radius:5px;padding:2px 7px')}>03</span>
+          <span style={css(mono + 'font-size:11px;font-weight:600;letter-spacing:1px;color:var(--text-dim);border:1px solid var(--line2);border-radius:5px;padding:2px 7px')}>02</span>
           <span style={css(mono + 'font-size:11px;letter-spacing:2.5px;color:var(--text-faint)')}>{'// MEALS'}</span>
         </div>
         <div style={css('display:flex;flex-direction:column;gap:6px;margin-bottom:14px;flex:1')}>
@@ -94,22 +73,40 @@ export default function HealthView({ vm }: { vm: VM }) {
           ))}
         </div>
         <div style={css('margin-top:auto;display:flex;align-items:center;gap:9px;background:var(--inset);border:1px solid var(--line2);border-radius:10px;padding:0 12px;height:42px')}>
-          <span style={css(mono + 'font-size:14px;color:var(--accent)')}>+</span>
-          <input value={vm.foodDraft} onChange={vm.onFoodInput} onKeyDown={vm.onFoodKey} placeholder="What did you eat? (“3 eggs, oatmeal, coffee”)" style={css('flex:1;background:none;border:none;color:var(--text);font-size:13px')} />
+          <span style={css(mono + 'font-size:14px;color:var(--accent)')}>⌕</span>
+          <input value={vm.foodDraft} onChange={vm.onFoodInput} onKeyDown={vm.onFoodKey} placeholder="Search a food (“pho”, “chicken rice”)…" style={css('flex:1;background:none;border:none;color:var(--text);font-size:13px')} />
           <Hov as="button" onClick={vm.onFoodSubmit} styleStr="background:var(--inset);border:1px solid var(--line2);border-radius:7px;padding:5px 11px;font-size:12px;font-weight:600;color:var(--text-dim);cursor:pointer" hover="border-color:var(--line2)">Log</Hov>
         </div>
-        {vm.foodHint && (
+
+        {/* MyFitnessPal-style search results */}
+        {(vm.foodResults.length > 0 || vm.foodSearching) && (
+          <div style={css('margin-top:8px;display:flex;flex-direction:column;gap:6px;max-height:300px;overflow-y:auto')}>
+            {vm.foodSearching && vm.foodResults.length === 0 && (
+              <div style={css('padding:10px 4px;font-size:12px;color:var(--text-faint2)')}>Searching…</div>
+            )}
+            {vm.foodResults.map((r) => (
+              <div key={r.id} style={css('display:flex;align-items:center;gap:10px;padding:9px 12px;background:var(--inset);border:1px solid var(--line);border-radius:10px')}>
+                <div style={css('flex:1;min-width:0')}>
+                  <div style={css('font-size:13px;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap')}>{r.name}</div>
+                  <div style={css(mono + 'font-size:10px;color:var(--text-faint2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap')}>{r.meta} · {r.macros}</div>
+                </div>
+                <Hov as="button" onClick={r.onPick} styleStr="flex:0 0 auto;width:30px;height:30px;border-radius:50%;background:var(--accent);color:var(--bg);border:none;font-size:18px;font-weight:600;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center" hover="opacity:.9" title="Log this food">+</Hov>
+              </div>
+            ))}
+          </div>
+        )}
+        {vm.foodHint && vm.foodResults.length === 0 && !vm.foodSearching && (
           <div style={css('margin-top:8px;font-size:11.5px;color:var(--text-faint)')}>
             <span style={css(mono + 'font-size:10px;color:var(--accent)')}>EST </span>
-            {vm.foodHint}
+            {vm.foodHint} · tap Log to add as typed
           </div>
         )}
       </section>
 
-      {/* 04 TRAINING */}
+      {/* 03 TRAINING */}
       <section style={css('background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:20px 22px;display:flex;flex-direction:column')}>
         <div style={css('display:flex;align-items:center;gap:10px;margin-bottom:16px')}>
-          <span style={css(mono + 'font-size:11px;font-weight:600;letter-spacing:1px;color:var(--text-dim);border:1px solid var(--line2);border-radius:5px;padding:2px 7px')}>04</span>
+          <span style={css(mono + 'font-size:11px;font-weight:600;letter-spacing:1px;color:var(--text-dim);border:1px solid var(--line2);border-radius:5px;padding:2px 7px')}>03</span>
           <span style={css(mono + 'font-size:11px;letter-spacing:2.5px;color:var(--text-faint)')}>{'// TRAINING'}</span>
         </div>
         <div style={css('display:flex;flex-direction:column;gap:6px;margin-bottom:14px;flex:1')}>
@@ -139,6 +136,81 @@ export default function HealthView({ vm }: { vm: VM }) {
             {vm.exHint}
           </div>
         )}
+      </section>
+
+      {/* BODY — goal + MyFitnessPal-style projection */}
+      <section style={css('grid-column:1 / -1;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:20px 22px')}>
+        <div style={css('display:flex;align-items:center;gap:10px;margin-bottom:16px')}>
+          <span style={css(mono + 'font-size:11px;font-weight:600;letter-spacing:1px;color:var(--text-dim);border:1px solid var(--line2);border-radius:5px;padding:2px 7px')}>BS</span>
+          <span style={css(mono + 'font-size:11px;letter-spacing:2.5px;color:var(--text-faint)')}>{'// BODY'}</span>
+          <div style={{ flex: 1 }} />
+          <span style={css(mono + `font-size:11px;color:${health.body.toGoColor}`)}>{health.body.toGoLabel}</span>
+        </div>
+        <div style={css('display:flex;gap:14px;flex-wrap:wrap;margin-bottom:18px')}>
+          <div style={css('flex:1;min-width:120px;background:var(--inset);border:1px solid var(--line);border-radius:12px;padding:14px 16px')}>
+            <div style={css(mono + 'font-size:10px;letter-spacing:1.5px;color:var(--text-faint);margin-bottom:8px')}>WEIGHT</div>
+            <div style={css('display:flex;align-items:flex-end;gap:6px')}>
+              <span style={css('font-size:26px;font-weight:700;letter-spacing:-1px;line-height:1')}>{health.body.weight}</span>
+              <span style={css('font-size:12px;color:var(--text-faint);margin-bottom:4px')}>kg</span>
+            </div>
+            <div style={css(mono + 'font-size:9px;color:var(--text-faint2);margin-top:6px')}>edit in Settings</div>
+          </div>
+          <div style={css('flex:1;min-width:120px;background:var(--inset);border:1px solid var(--line);border-radius:12px;padding:14px 16px')}>
+            <div style={css(mono + 'font-size:10px;letter-spacing:1.5px;color:var(--text-faint);margin-bottom:8px')}>GOAL WEIGHT</div>
+            <div style={css('display:flex;align-items:flex-end;gap:6px')}>
+              <input
+                type="number"
+                value={health.body.goalWeight}
+                onChange={health.body.onGoalChange}
+                style={css('width:74px;background:none;border:none;color:var(--text);font-size:26px;font-weight:700;letter-spacing:-1px;line-height:1')}
+              />
+              <span style={css('font-size:12px;color:var(--text-faint);margin-bottom:4px')}>kg</span>
+            </div>
+          </div>
+          <div style={css('flex:1.4;min-width:170px;background:var(--inset);border:1px solid var(--line);border-radius:12px;padding:14px 16px')}>
+            <div style={css(mono + 'font-size:10px;letter-spacing:1.5px;color:var(--text-faint);margin-bottom:8px')}>5-WEEK FORECAST</div>
+            <div style={css('display:flex;align-items:flex-end;gap:6px')}>
+              <span style={css(`font-size:26px;font-weight:700;letter-spacing:-1px;line-height:1;color:${health.body.balanceColor}`)}>{health.body.projWeight}</span>
+              <span style={css('font-size:12px;color:var(--text-faint);margin-bottom:4px')}>kg</span>
+            </div>
+            <div style={css(`font-size:11px;color:${health.body.balanceColor};margin-top:6px`)}>{health.body.balanceLabel}</div>
+          </div>
+        </div>
+        <div style={css('display:flex;align-items:baseline;justify-content:space-between;margin-bottom:7px')}>
+          <span style={css(mono + 'font-size:10px;letter-spacing:1.5px;color:var(--text-faint)')}>TO GOAL WEIGHT</span>
+          <span style={css('font-size:12.5px;font-weight:600;color:var(--text-dim)')}>{health.body.weight} → {health.body.goalWeight} kg</span>
+        </div>
+        <div style={css('height:7px;border-radius:5px;background:var(--line);overflow:hidden')}>
+          <div style={css(`height:100%;border-radius:5px;background:linear-gradient(90deg,#74ad84,#9bbf7a);width:${health.body.pct};transition:width .4s ease`)} />
+        </div>
+        <p style={css('font-size:12.5px;color:var(--text-muted);margin-top:14px;line-height:1.5')}>
+          <span style={css(mono + 'font-size:10px;color:var(--accent);letter-spacing:.5px;margin-right:6px')}>FORECAST</span>
+          {health.body.projLine}
+        </p>
+        <p style={css('font-size:13px;font-style:italic;color:var(--text-dim);margin-top:10px;line-height:1.5')}>
+          “{health.body.quote}”
+        </p>
+      </section>
+
+      {/* 04 7-DAY INTAKE */}
+      <section style={css('grid-column:1 / -1;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:20px 22px')}>
+        <div style={css('display:flex;align-items:center;gap:10px;margin-bottom:18px')}>
+          <span style={css(mono + 'font-size:11px;font-weight:600;letter-spacing:1px;color:var(--text-dim);border:1px solid var(--line2);border-radius:5px;padding:2px 7px')}>04</span>
+          <span style={css(mono + 'font-size:11px;letter-spacing:2.5px;color:var(--text-faint)')}>{'// 7-DAY INTAKE'}</span>
+          <div style={{ flex: 1 }} />
+          <span style={css(mono + 'font-size:10.5px;color:var(--text-faint2)')}>AVG {health.trendAvg} KCAL · TARGET {health.target}</span>
+        </div>
+        <div style={css('display:flex;align-items:flex-end;gap:10px;height:140px')}>
+          {health.trend.map((day, i) => (
+            <div key={i} style={css('flex:1;display:flex;flex-direction:column;align-items:center;gap:8px;height:100%')}>
+              <div style={css('position:relative;flex:1;width:100%')}>
+                <div style={css(health.targetLineStyle)} />
+                <div style={css(day.barStyle)} />
+              </div>
+              <span style={css(mono + `font-size:10px;color:${day.labelColor}`)}>{day.label}</span>
+            </div>
+          ))}
+        </div>
       </section>
     </div>
   );

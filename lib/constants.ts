@@ -31,112 +31,42 @@ export const NA_DEMOS = [
 
 export const THEMES: Theme[] = [
   {
-    key: 'ember',
-    name: 'Ember',
-    dot: '#e8a44c',
-    accent: '#e8a44c',
+    // Neutral, warm-charcoal dark — styled after Claude's interface. Default.
+    key: 'dark',
+    name: 'Dark mode',
+    dot: '#d97757',
+    accent: '#d97757',
     pal: {
-      bg: '#0c0b0a',
-      panel: '#13110d',
-      inset: '#1c1711',
-      line: '#2a231a',
-      line2: '#3c3122',
-      text: '#ececea',
-      dim: '#cfc8bf',
-      muted: '#a79c8c',
-      faint: '#7d7262',
-      faint2: '#5e5647',
+      bg: '#1a1916',
+      panel: '#262521',
+      inset: '#302e2a',
+      line: '#3a3833',
+      line2: '#4b4943',
+      text: '#f3f1ec',
+      dim: '#d6d2c9',
+      muted: '#a8a399',
+      faint: '#7e7a70',
+      faint2: '#5c584f',
     },
   },
   {
-    key: 'midnight',
-    name: 'Midnight',
-    dot: '#7c6cf0',
-    accent: '#7c6cf0',
-    pal: {
-      bg: '#0a0c18',
-      panel: '#14172e',
-      inset: '#1d2245',
-      line: '#2b3158',
-      line2: '#3c447a',
-      text: '#e9eaf6',
-      dim: '#c3c6e0',
-      muted: '#9499bd',
-      faint: '#6f75a4',
-      faint2: '#555b88',
-    },
-  },
-  {
-    key: 'trench',
-    name: 'Trench',
-    dot: '#2bbfa6',
-    accent: '#2bbfa6',
-    pal: {
-      bg: '#07130f',
-      panel: '#0f211c',
-      inset: '#16312a',
-      line: '#21433a',
-      line2: '#2e5d50',
-      text: '#e3efec',
-      dim: '#bbd2cc',
-      muted: '#86a69d',
-      faint: '#638078',
-      faint2: '#4c655b',
-    },
-  },
-  {
-    key: 'matrix',
-    name: 'Matrix',
-    dot: '#54d65a',
-    accent: '#54d65a',
-    pal: {
-      bg: '#07110a',
-      panel: '#0f1e13',
-      inset: '#162c1c',
-      line: '#213e2a',
-      line2: '#2e573a',
-      text: '#e6f0e9',
-      dim: '#bfd4c6',
-      muted: '#8caa96',
-      faint: '#698672',
-      faint2: '#516857',
-    },
-  },
-  {
-    key: 'crimson',
-    name: 'Crimson',
-    dot: '#e0566f',
-    accent: '#e0566f',
-    pal: {
-      bg: '#110909',
-      panel: '#201012',
-      inset: '#2c171a',
-      line: '#3e2429',
-      line2: '#58333a',
-      text: '#f1e8e9',
-      dim: '#dac0c4',
-      muted: '#b58d93',
-      faint: '#956c72',
-      faint2: '#755559',
-    },
-  },
-  {
+    // Clean light — Claude-style warm paper with the same coral accent.
     key: 'light',
-    name: 'Light',
-    dot: '#7c6cf0',
-    accent: '#7c6cf0',
+    name: 'Light mode',
+    dot: '#c2603f',
+    accent: '#c2603f',
     light: true,
     pal: {
-      bg: '#f4f5f7',
+      bg: '#f4f2ee',
       panel: '#ffffff',
-      inset: '#eef0f3',
-      line: '#e4e6ea',
-      line2: '#d3d7df',
-      text: '#1b1e26',
-      dim: '#474c57',
-      muted: '#697084',
-      faint: '#8b919e',
-      faint2: '#aab0bb',
+      inset: '#efece6',
+      line: '#e4e0d8',
+      line2: '#d6d1c7',
+      text: '#1f1d1a',
+      dim: '#4a4740',
+      muted: '#726e64',
+      faint: '#928d81',
+      faint2: '#b3aea2',
     },
   },
 ];
@@ -167,9 +97,52 @@ export const MOTIVATE = [
   'Future you says thanks.',
 ];
 
+/** A daily word — motivational lines and Bible verses, shown on the Overview. */
+export const VERSES: { text: string; ref: string }[] = [
+  { text: 'I can do all things through Christ who strengthens me.', ref: 'Philippians 4:13' },
+  { text: 'Commit your work to the Lord, and your plans will be established.', ref: 'Proverbs 16:3' },
+  { text: 'Whatever you do, work heartily, as for the Lord and not for men.', ref: 'Colossians 3:23' },
+  { text: 'She is clothed with strength and dignity, and laughs without fear of the future.', ref: 'Proverbs 31:25' },
+  { text: 'Be strong and courageous. Do not be afraid; the Lord your God is with you.', ref: 'Joshua 1:9' },
+  { text: 'Trust in the Lord with all your heart, and lean not on your own understanding.', ref: 'Proverbs 3:5' },
+  { text: 'The plans of the diligent lead surely to abundance.', ref: 'Proverbs 21:5' },
+  { text: 'Discipline is choosing between what you want now and what you want most.', ref: '' },
+  { text: 'Small steps every day add up to big distances.', ref: '' },
+  { text: 'You don’t have to be extreme, just consistent.', ref: '' },
+  { text: 'Do the hard thing first — the rest of the day bends to it.', ref: '' },
+  { text: 'Let us not grow weary of doing good, for in due season we will reap.', ref: 'Galatians 6:9' },
+  { text: 'Motivation gets you started; habit keeps you going.', ref: '' },
+  { text: 'Today’s effort is tomorrow’s edge.', ref: '' },
+];
+
+/** Default Eisenhower quadrant titles (user-editable, persisted). */
+export const DEFAULT_MATRIX_TITLES = [
+  'Urgent & Important',
+  'Important, Not Urgent',
+  'Urgent, Not Important',
+  'Not Urgent & Unimportant',
+];
+
+/** Health-focused motivational lines, shown on the Health page. */
+export const HEALTH_QUOTES = [
+  'Take care of your body — it’s the only place you have to live.',
+  'A little progress each day adds up to big results.',
+  'Discipline is choosing between what you want now and what you want most.',
+  'You don’t have to be extreme, just consistent.',
+  'Sweat now, shine later.',
+  'Your body hears everything your mind says — stay positive.',
+  'Small habits, big change. One meal, one workout at a time.',
+  'Strong is the new goal. Show up for yourself today.',
+];
+
 /** Today as an en-CA ISO date string (YYYY-MM-DD) in local time. */
 export function todayISO(): string {
   return new Date().toLocaleDateString('en-CA');
+}
+
+/** An en-CA ISO date string `n` days before today, in local time. */
+export function daysAgoISO(n: number): string {
+  return new Date(Date.now() - n * 86400000).toLocaleDateString('en-CA');
 }
 
 /** The initial application state — the prototype's seed data. */
@@ -178,6 +151,11 @@ export function makeInitialState(): TempoState {
     page: 'overview',
     userName: '',
     pfp: '',
+    account: null,
+    authReady: false,
+    leaderboard: [],
+    positions: [],
+    positionsLoading: false,
     goals: {
       weekly: {
         title: 'Ship the OS project & stay green on trades',
@@ -201,10 +179,11 @@ export function makeInitialState(): TempoState {
     selectedDate: todayISO(),
     calOffset: 0,
     calDraft: '',
-    theme: 'ember',
+    theme: 'dark',
     currency: { code: 'PHP', symbol: '₱' },
     reduceMotion: false,
     targets: { ...DEFAULT_TARGETS },
+    body: { weight: 68, height: 170, goalWeight: 64 },
     notifs: { ...DEFAULT_NOTIFS },
     naOpen: false,
     naPhase: 'idle',
@@ -218,8 +197,14 @@ export function makeInitialState(): TempoState {
     voiceURI: '',
     managing: false,
     catDraft: '',
+    showDone: false,
+    matrixTitles: [...DEFAULT_MATRIX_TITLES],
+    newTaskArea: '',
+    newTaskQuad: 0,
     capture: '',
     foodDraft: '',
+    foodResults: [],
+    foodSearching: false,
     exDraft: '',
     tradeDraft: '',
     recording: false,
@@ -231,13 +216,18 @@ export function makeInitialState(): TempoState {
     edit: null,
     editVal: '',
     expenseDraft: '',
-    budgetManaging: false,
+    budgetEdit: [],
+    finEdit: [],
+    wallets: [],
+    walletAddrDraft: '',
+    walletLabelDraft: '',
     calHistory: [2650, 2900, 2400, 3050, 2750, 2500],
     budget: {
       income: [
-        { label: 'Allowance', amt: 8000 },
+        { label: 'Allowance (parents)', amt: 8000 },
         { label: 'Internship stipend', amt: 18000 },
-        { label: 'Trading profit', amt: 6000 },
+        { label: 'Rent collected (housemates)', amt: 9000 },
+        { label: 'Trading / crypto profit', amt: 6000 },
         { label: 'Freelance / other', amt: 3000 },
       ],
       groups: [
@@ -359,5 +349,24 @@ export function makeInitialState(): TempoState {
         { id: 't4', sym: 'AAPL', date: 'Mon', pnl: 520 },
       ],
     },
+    journal: [
+      {
+        id: 'j1',
+        date: daysAgoISO(1),
+        time: '22:10',
+        text: 'Closed a green trading day and finally merged the rate-limit PR. Felt scattered in the afternoon — too many context switches. Tomorrow: one deep-work block before standup.',
+        mood: 'good',
+      },
+      {
+        id: 'j2',
+        date: daysAgoISO(2),
+        time: '21:30',
+        text: 'Skipped the gym, regret it. Studied OS chapter 6 instead. Need to protect the morning workout slot.',
+        mood: 'okay',
+      },
+    ],
+    journalDraft: '',
+    journalMood: 'good',
+    summarizing: false,
   };
 }

@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { useTempo } from './TempoProvider';
-import { THEMES, CURRENCIES } from '@/lib/constants';
+import { THEMES, CURRENCIES, VERSES, HEALTH_QUOTES } from '@/lib/constants';
 import {
   estimateExercise,
   estimateFood,
@@ -17,7 +17,15 @@ import {
   taskDate,
   todayIndex,
 } from '@/lib/format';
-import type { Area, Priority, Task } from '@/lib/types';
+import type { Area, Mood, Priority, Task } from '@/lib/types';
+
+const MOODS: { key: Mood; label: string; glyph: string; color: string }[] = [
+  { key: 'great', label: 'Great', glyph: '◉', color: '#74ad84' },
+  { key: 'good', label: 'Good', glyph: '◍', color: '#9bbf7a' },
+  { key: 'okay', label: 'Okay', glyph: '◑', color: 'var(--accent)' },
+  { key: 'low', label: 'Low', glyph: '◌', color: '#bd9166' },
+  { key: 'rough', label: 'Rough', glyph: '○', color: '#c77b6b' },
+];
 
 const rank: Record<Priority, number> = { high: 0, med: 1, low: 2 };
 
@@ -113,10 +121,10 @@ export function useViewModel() {
     onTestVoice: api.testVoice,
     notifs: (
       [
-        { key: 'dailySummary', label: 'Daily summary', desc: 'A morning brief of your day' },
-        { key: 'habitReminders', label: 'Habit reminders', desc: 'Nudge me to keep streaks alive' },
-        { key: 'deadlineAlerts', label: 'Deadline alerts', desc: 'Warn me before tasks are due' },
-        { key: 'weeklyReview', label: 'Weekly review', desc: 'Sunday recap of goals & spending' },
+        { key: 'dailySummary', label: 'Daily summary', desc: 'Show a morning brief card on your Overview (tasks, habits, calories, P&L)' },
+        { key: 'habitReminders', label: 'Habit reminders', desc: 'Evening device notification if habits are unfinished (allow notifications)' },
+        { key: 'deadlineAlerts', label: 'Deadline alerts', desc: 'Device notification when tasks are due today (allow notifications)' },
+        { key: 'weeklyReview', label: 'Weekly review', desc: 'Show a recap card on your Overview (goals, calories, spending, P&L)' },
       ] as const
     ).map((n) => ({
       label: n.label,
@@ -139,20 +147,45 @@ export function useViewModel() {
       onChange: (e: React.ChangeEvent<HTMLInputElement>) =>
         api.onTargetChange(t.field, e.target.value),
     })),
+    body: {
+      fields: (
+        [
+          { field: 'weight', label: 'Weight', val: s.body.weight, unit: 'kg' },
+          { field: 'height', label: 'Height', val: s.body.height, unit: 'cm' },
+        ] as const
+      ).map((f) => ({
+        label: f.label,
+        val: f.val,
+        unit: f.unit,
+        onChange: (e: React.ChangeEvent<HTMLInputElement>) =>
+          api.onBodyChange(f.field, e.target.value),
+      })),
+      bmi:
+        s.body.height > 0
+          ? (s.body.weight / Math.pow(s.body.height / 100, 2)).toFixed(1)
+          : '—',
+    },
     currencyNote: `All amounts shown in ${s.currency.code} (${s.currency.symbol})`,
     onReset: api.resetSettings,
   };
 
   const pageTabs = (
     [
-      { key: 'overview', label: 'Overview' },
-      { key: 'health', label: 'Health' },
-      { key: 'budget', label: 'Budget' },
-      { key: 'finance', label: 'Finance' },
-      { key: 'calendar', label: 'Calendar' },
+      { key: 'overview', label: 'Overview', glyph: '◎' },
+      { key: 'tasks', label: 'Tasks', glyph: '▦' },
+      { key: 'habits', label: 'Habits', glyph: '◴' },
+      { key: 'health', label: 'Health', glyph: '♥' },
+      { key: 'budget', label: 'Budget', glyph: '▤' },
+      { key: 'finance', label: 'Finance', glyph: '◈' },
+      { key: 'leaderboard', label: 'Leaders', glyph: '♛' },
+      { key: 'calendar', label: 'Calendar', glyph: '▣' },
+      { key: 'journal', label: 'Journal', glyph: '✎' },
     ] as const
   ).map((t) => ({
+    key: t.key as string,
     label: t.label,
+    glyph: t.glyph,
+    active: s.page === t.key,
     onClick: () => api.setPage(t.key),
     style: `background:${
       s.page === t.key ? 'var(--inset)' : 'transparent'
@@ -215,6 +248,91 @@ export function useViewModel() {
         onToggle: () => api.toggleTask(t.id),
       };
     });
+
+  // Eisenhower matrix — tasks split by urgency × importance (editable titles,
+  // open + completed rows per quadrant).
+  const tomorrowISO = isoLocal(new Date(now.getTime() + 86400000));
+  const isUrgent = (t: Task) => taskDate(t) <= tomorrowISO;
+  const matrixRow = (t: Task) => {
+    const m = metaOf(t.area);
+    return {
+      id: t.id,
+      title: t.title,
+      tint: m.tint,
+      areaLabel: m.label,
+      onToggle: () => api.toggleTask(t.id),
+      boxStyle:
+        'width:19px;height:19px;flex:0 0 19px;margin-top:1px;border-radius:6px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .15s;border:1.5px solid var(--line2);background:transparent',
+      titleStyle: 'font-size:13.5px;font-weight:500;line-height:1.35;color:var(--text-dim)',
+      done: false,
+    };
+  };
+  const matrixDoneRow = (t: Task) => {
+    const m = metaOf(t.area);
+    return {
+      id: t.id,
+      title: t.title,
+      tint: m.tint,
+      areaLabel: m.label,
+      onToggle: () => api.toggleTask(t.id),
+      boxStyle:
+        'width:19px;height:19px;flex:0 0 19px;margin-top:1px;border-radius:6px;display:flex;align-items:center;justify-content:center;cursor:pointer;border:1.5px solid var(--accent);background:var(--accent)',
+      titleStyle: 'font-size:13px;font-weight:500;line-height:1.35;color:var(--text-faint2);text-decoration:line-through',
+      done: true,
+    };
+  };
+  const eisenMeta = [
+    { roman: 'I', sub: 'Do first', color: '#e0566f', f: (t: Task) => t.priority === 'high' && isUrgent(t) },
+    { roman: 'II', sub: 'Schedule', color: 'var(--accent)', f: (t: Task) => t.priority === 'high' && !isUrgent(t) },
+    { roman: 'III', sub: 'Delegate', color: '#6f90b4', f: (t: Task) => t.priority !== 'high' && isUrgent(t) },
+    { roman: 'IV', sub: 'Later', color: '#74ad84', f: (t: Task) => t.priority !== 'high' && !isUrgent(t) },
+  ] as const;
+  const eisenhower = eisenMeta.map((q, i) => {
+    const rows = s.tasks.filter((t) => !t.done && q.f(t)).map(matrixRow);
+    const doneRows = s.tasks.filter((t) => t.done && q.f(t)).map(matrixDoneRow);
+    return {
+      roman: q.roman,
+      title: s.matrixTitles[i] || '',
+      sub: q.sub,
+      color: q.color,
+      count: rows.length,
+      doneCount: doneRows.length,
+      titleEditing: s.edit === 'mt.' + i,
+      titleShow: s.edit !== 'mt.' + i,
+      onEditTitle: () => api.startEdit('mt.' + i, s.matrixTitles[i] || ''),
+      badgeStyle: `width:22px;height:22px;flex:0 0 22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:9.5px;font-weight:700;color:var(--bg);background:${q.color}`,
+      titleStyle: `font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:1px;font-weight:600;color:${q.color};cursor:text`,
+      editStyle: `flex:1;background:var(--inset);border:1px solid var(--line2);border-radius:6px;padding:3px 7px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600`,
+      cardStyle:
+        'background:var(--inset);border:1px solid var(--line);border-radius:14px;padding:15px 16px;min-height:200px;display:flex;flex-direction:column',
+      rows,
+      doneRows,
+      empty: rows.length === 0,
+    };
+  });
+  const tasksDoneCount = s.tasks.filter((t) => t.done).length;
+  const tasksView = {
+    matrix: eisenhower,
+    showDone: s.showDone,
+    onToggleShowDone: api.toggleShowDone,
+    doneCount: tasksDoneCount,
+    doneLabel: s.showDone
+      ? `Hide completed (${tasksDoneCount})`
+      : `Show completed (${tasksDoneCount})`,
+    add: {
+      areas: s.areas.map((a) => ({ key: a.key, label: a.label })),
+      areaVal: s.newTaskArea || (s.areas[0] ? s.areas[0].key : ''),
+      onAreaChange: api.setNewTaskArea,
+      quads: s.matrixTitles.map((t, i) => ({ i, label: t })),
+      quadVal: s.newTaskQuad,
+      onQuadChange: api.setNewTaskQuad,
+      onAdd: api.onTaskAdd,
+      onKey: api.onTaskAddKey,
+    },
+  };
+
+  // A daily word — rotates once per day across motivational lines + verses.
+  const verse = VERSES[Math.floor(now.getTime() / 86400000) % VERSES.length];
 
   const hr = now.getHours();
   const todayISO = isoLocal(now);
@@ -353,7 +471,7 @@ export function useViewModel() {
   };
 
   const fe = estimateFood(s.foodDraft);
-  const ee = estimateExercise(s.exDraft);
+  const ee = estimateExercise(s.exDraft, s.body.weight);
 
   // finance (pesos, linked to budget)
   const fd = s.fin;
@@ -364,17 +482,55 @@ export function useViewModel() {
     0,
   );
   const cashVal = fd.cashOpening + incomeTotalF - spentTotalF;
-  const liquidAccts = [
+  // Per-section edit toggles — each Finance card flips on its own.
+  const finBtn = (section: string) => {
+    const on = s.finEdit.includes(section);
+    return {
+      managing: on,
+      onToggle: () => api.onToggleFinEdit(section),
+      label: on ? 'DONE' : '+ EDIT',
+      btnStyle: `font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1px;background:${
+        on ? 'var(--inset)' : 'transparent'
+      };border:1px solid var(--line2);border-radius:7px;padding:4px 10px;cursor:pointer;transition:all .12s;color:${
+        on ? 'var(--text)' : 'var(--text-faint)'
+      }`,
+    };
+  };
+  const liquidEdit = finBtn('liquid');
+  const assetsEdit = finBtn('assets');
+  const pnlEdit = finBtn('pnl');
+  const journalEdit = finBtn('journal');
+  const managingLiquid = liquidEdit.managing;
+  const managingAssets = assetsEdit.managing;
+  const managingPnl = pnlEdit.managing;
+  const managingJournal = journalEdit.managing;
+  // Live read-only crypto from tracked Solana wallets, folded into net worth.
+  const walletsTotal = s.wallets.reduce(
+    (a, w) => a + (w.status === 'ok' ? w.valLocal : 0),
+    0,
+  );
+  const liquidAccts: {
+    label: string;
+    val: number;
+    color: string;
+    editKey?: string;
+  }[] = [
     { label: 'CASH · FROM BUDGET', val: cashVal, color: 'var(--accent)' },
-    { label: 'SAVINGS', val: fd.savings, color: '#6f90b4' },
-    { label: 'E-WALLET', val: fd.ewallet, color: '#74ad84' },
+    { label: 'SAVINGS', val: fd.savings, color: '#6f90b4', editKey: 'fsav' },
+    { label: 'E-WALLET', val: fd.ewallet, color: '#74ad84', editKey: 'fewa' },
   ];
+  if (s.wallets.length)
+    liquidAccts.push({ label: 'CRYPTO · SOLANA', val: walletsTotal, color: '#9b7fb4' });
   const liquidTotal = liquidAccts.reduce((a, b) => a + b.val, 0);
   const assetsTotal = fd.assets.reduce((a, b) => a + b.val, 0);
   const netWorth = liquidTotal + assetsTotal;
   const fin = {
     liquid: fmtPeso(liquidTotal),
     netWorth: fmtPeso(netWorth),
+    liquidEdit,
+    assetsEdit,
+    pnlEdit,
+    journalEdit,
     netDelta:
       '+' +
       Math.round((fd.pnlMonth / Math.max(liquidTotal, 1)) * 1000) / 10 +
@@ -384,23 +540,76 @@ export function useViewModel() {
       color: b.color,
       val: fmtPeso(b.val),
       pct: Math.round((b.val / Math.max(liquidTotal, 1)) * 100) + '%',
+      editable: !!b.editKey && managingLiquid,
+      editing: !!b.editKey && s.edit === b.editKey,
+      show: !(!!b.editKey && s.edit === b.editKey),
+      onEdit: b.editKey ? () => api.startEdit(b.editKey as string, b.val) : undefined,
     })),
-    assets: fd.assets.map((a) => ({
+    assets: fd.assets.map((a, i) => ({
       label: a.label,
       color: a.color,
       val: fmtPeso(a.val),
       pct: Math.round((a.val / Math.max(assetsTotal, 1)) * 100) + '%',
+      managing: managingAssets,
+      labelEditing: s.edit === 'fal.' + i,
+      labelShow: s.edit !== 'fal.' + i,
+      onEditLabel: () => api.startEdit('fal.' + i, a.label),
+      valEditing: s.edit === 'fav.' + i,
+      valShow: s.edit !== 'fav.' + i,
+      onEditVal: () => api.startEdit('fav.' + i, a.val),
+      onRemove: () => api.removeAsset(i),
     })),
+    onAddAsset: api.addAsset,
     assetsTotal: fmtPeso(assetsTotal),
+    wallets: {
+      hasAny: s.wallets.length > 0,
+      total: fmtPeso(walletsTotal),
+      addrDraft: s.walletAddrDraft,
+      labelDraft: s.walletLabelDraft,
+      onAddrInput: api.onWalletAddrInput,
+      onLabelInput: api.onWalletLabelInput,
+      onAdd: api.addWallet,
+      onRefresh: api.refreshWallets,
+      rows: s.wallets.map((w) => ({
+        id: w.id,
+        label: w.label,
+        addrShort: w.address.slice(0, 4) + '…' + w.address.slice(-4),
+        sol:
+          w.status === 'ok'
+            ? w.sol.toLocaleString(undefined, { maximumFractionDigits: 3 }) + ' SOL'
+            : w.status === 'loading'
+              ? 'loading…'
+              : w.status === 'error'
+                ? 'unavailable'
+                : '—',
+        val: w.status === 'ok' ? fmtPeso(w.valLocal) : '',
+        dotColor:
+          w.status === 'ok'
+            ? '#74ad84'
+            : w.status === 'error'
+              ? '#c77b6b'
+              : 'var(--text-faint2)',
+        onRemove: () => api.removeWallet(w.id),
+      })),
+    },
     cashNote:
       incomeTotalF >= spentTotalF
         ? `${fmtPeso(incomeTotalF - spentTotalF)} surplus this month`
         : `${fmtPeso(spentTotalF - incomeTotalF)} drawn down this month`,
+    incomeNote: `${fmtPeso(incomeTotalF)}/mo income · incl. allowance & rent`,
     pnlStats: [
-      { label: 'TODAY', val: fmtSig(fd.pnlToday), color: pnlColor(fd.pnlToday) },
-      { label: 'THIS MONTH', val: fmtSig(fd.pnlMonth), color: pnlColor(fd.pnlMonth) },
-      { label: 'ALL-TIME', val: fmtSig(fd.pnlTotal), color: pnlColor(fd.pnlTotal) },
-    ],
+      { label: 'TODAY', key: 'fpt', raw: fd.pnlToday, val: fmtSig(fd.pnlToday), color: pnlColor(fd.pnlToday) },
+      { label: 'THIS MONTH', key: 'fpm', raw: fd.pnlMonth, val: fmtSig(fd.pnlMonth), color: pnlColor(fd.pnlMonth) },
+      { label: 'ALL-TIME', key: 'fptot', raw: fd.pnlTotal, val: fmtSig(fd.pnlTotal), color: pnlColor(fd.pnlTotal) },
+    ].map((p) => ({
+      label: p.label,
+      val: p.val,
+      color: p.color,
+      managing: managingPnl,
+      editing: s.edit === p.key,
+      show: s.edit !== p.key,
+      onEdit: () => api.startEdit(p.key, p.raw),
+    })),
     history: (() => {
       const max = Math.max(...fd.history.map((v) => Math.abs(v)), 1);
       return fd.history.map((v) => {
@@ -415,13 +624,22 @@ export function useViewModel() {
         };
       });
     })(),
-    trades: fd.trades.map((t) => ({
+    trades: fd.trades.map((t, i) => ({
+      id: t.id,
       sym: t.sym,
       date: t.date,
       pnl: fmtSig(t.pnl),
       pnlStyle: `font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600;flex:0 0 auto;color:${pnlColor(
         t.pnl,
       )}`,
+      managing: managingJournal,
+      symEditing: s.edit === 'tsym.' + i,
+      symShow: s.edit !== 'tsym.' + i,
+      onEditSym: () => api.startEdit('tsym.' + i, t.sym),
+      pnlEditing: s.edit === 'tpnl.' + i,
+      pnlShow: s.edit !== 'tpnl.' + i,
+      onEditPnl: () => api.startEdit('tpnl.' + i, t.pnl),
+      onRemove: () => api.removeTrade(t.id),
     })),
     tradeCount: fd.trades.length,
   };
@@ -429,6 +647,32 @@ export function useViewModel() {
 
   // budget
   const editKey = s.edit;
+  // Per-section edit toggles (like Finance): Income and each expense category
+  // flip independently.
+  const budgetBtn = (section: string) => {
+    const on = s.budgetEdit.includes(section);
+    return {
+      managing: on,
+      onToggle: () => api.onToggleBudgetEdit(section),
+      label: on ? 'DONE' : '+ EDIT',
+      btnStyle: `font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1px;background:${
+        on ? 'var(--inset)' : 'transparent'
+      };border:1px solid var(--line2);border-radius:7px;padding:4px 9px;cursor:pointer;transition:all .12s;color:${
+        on ? 'var(--text)' : 'var(--text-faint)'
+      }`,
+    };
+  };
+  const incomeEdit = budgetBtn('income');
+  const expensesEdit = budgetBtn('expenses');
+  // Badge that doubles as the section's edit toggle (the + / − glyph).
+  const editBadge = (on: boolean, color: string, glyph: string, onToggle: () => void) => ({
+    glyph,
+    onToggle,
+    managing: on,
+    style: `font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;letter-spacing:1px;border-radius:5px;padding:2px 8px;cursor:pointer;transition:all .12s;border:1px solid ${
+      on ? color : 'var(--line2)'
+    };background:${on ? color : 'transparent'};color:${on ? 'var(--bg)' : color}`,
+  });
   const numCell = (
     val: number,
     key: string,
@@ -496,6 +740,7 @@ export function useViewModel() {
     const gpct = gb > 0 ? Math.min(100, Math.round((gs / gb) * 100)) : 0;
     return {
       name: g.name,
+      managing: expensesEdit.managing,
       nameEditing: editKey === 'gn.' + gi,
       nameShow: editKey !== 'gn.' + gi,
       onEditName: () => api.startEdit('gn.' + gi, g.name),
@@ -516,6 +761,10 @@ export function useViewModel() {
       .toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
       .toUpperCase(),
     incomeLines,
+    incomeManaging: incomeEdit.managing,
+    incomeBadge: editBadge(incomeEdit.managing, '#74ad84', '+', incomeEdit.onToggle),
+    expensesManaging: expensesEdit.managing,
+    expensesBadge: editBadge(expensesEdit.managing, 'var(--accent)', '−', expensesEdit.onToggle),
     incomeTotal: fmtPeso(incomeTotal),
     groups: bGroups,
     budgetTotal: fmtPeso(budgetTotal),
@@ -594,6 +843,47 @@ export function useViewModel() {
     targetLineStyle: `position:absolute;left:0;right:0;top:${targetTop}%;height:0;border-top:1px dashed var(--line2);z-index:2`,
     trendAvg,
     empty: s.workouts.length === 0,
+    body: (() => {
+      const b = s.body;
+      const losing = b.weight >= b.goalWeight;
+      const toGo = Math.abs(b.weight - b.goalWeight);
+      const reached = toGo < 0.05;
+      const bmi = b.height > 0 ? b.weight / Math.pow(b.height / 100, 2) : 0;
+      // ── MyFitnessPal-style projection ──────────────────────────────────────
+      // Daily balance vs your calorie goal (food − exercise − goal). A deficit
+      // (negative) projects weight loss. 1 kg of body fat ≈ 7700 kcal.
+      const calorieGoal = TG.kcal;
+      const netEaten = consumed - burned;
+      const balance = netEaten - calorieGoal;
+      const projChangeKg = (balance * 35) / 7700;
+      const projWeight = Math.max(0, b.weight + projChangeKg);
+      const deficit = balance <= 0;
+      // Progress along the line from current weight toward the goal, nudged by
+      // today's projected change.
+      const span = Math.max(toGo, 0.0001);
+      const movedToward = deficit === losing ? Math.min(Math.abs(projChangeKg), span) : 0;
+      const pct = reached ? 100 : Math.max(6, Math.min(100, Math.round((movedToward / span) * 100)));
+      return {
+        weight: b.weight,
+        height: b.height,
+        goalWeight: b.goalWeight,
+        bmi: bmi ? bmi.toFixed(1) : '—',
+        onGoalChange: (e: React.ChangeEvent<HTMLInputElement>) =>
+          api.onBodyChange('goalWeight', e.target.value),
+        toGoLabel: reached
+          ? 'Goal reached — nice.'
+          : `${toGo.toFixed(1)} kg to ${losing ? 'lose' : 'gain'}`,
+        toGoColor: reached ? '#74ad84' : 'var(--text-dim)',
+        pct: pct + '%',
+        // MFP-style projection
+        netToday: netEaten,
+        balanceLabel: `${Math.abs(Math.round(balance))} kcal ${deficit ? 'under' : 'over'} goal today`,
+        balanceColor: deficit ? '#74ad84' : '#c77b6b',
+        projWeight: projWeight.toFixed(1),
+        projLine: `If every day were like today, you'd weigh ${projWeight.toFixed(1)} kg in 5 weeks.`,
+        quote: HEALTH_QUOTES[Math.floor(now.getTime() / 86400000) % HEALTH_QUOTES.length],
+      };
+    })(),
   };
 
   // goals
@@ -628,6 +918,58 @@ export function useViewModel() {
     };
   };
   const goals = { weekly: goalCard('weekly', 'w'), monthly: goalCard('monthly', 'm') };
+
+  // journal
+  const moodMeta = (m?: Mood) => MOODS.find((x) => x.key === m) || MOODS[1];
+  const journalDateLabel = (iso: string) =>
+    iso === todayISO
+      ? 'Today'
+      : new Date(iso + 'T00:00:00').toLocaleDateString('en-US', {
+          weekday: 'short',
+          month: 'short',
+          day: 'numeric',
+        });
+  const journal = {
+    draft: s.journalDraft,
+    onInput: api.onJournalInput,
+    onKey: api.onJournalKey,
+    onSubmit: api.onJournalSubmit,
+    onSummarise: api.summariseToday,
+    summarizing: s.summarizing,
+    canSave: !!s.journalDraft.trim(),
+    count: s.journal.length,
+    moodPicker: MOODS.map((m) => ({
+      key: m.key,
+      label: m.label,
+      glyph: m.glyph,
+      onClick: () => api.setJournalMood(m.key),
+      style: `display:flex;align-items:center;gap:6px;padding:6px 11px;border-radius:9px;cursor:pointer;font-size:12px;font-weight:600;transition:all .12s;border:1px solid ${
+        s.journalMood === m.key ? m.color : 'var(--line2)'
+      };color:${
+        s.journalMood === m.key ? 'var(--text)' : 'var(--text-faint)'
+      };background:${
+        s.journalMood === m.key
+          ? `color-mix(in srgb, ${m.color} 14%, transparent)`
+          : 'transparent'
+      }`,
+      dotStyle: `color:${m.color};font-size:13px`,
+    })),
+    empty: s.journal.length === 0,
+    entries: s.journal.map((j) => {
+      const mm = moodMeta(j.mood);
+      return {
+        id: j.id,
+        text: j.text,
+        time: j.time,
+        dateLabel: journalDateLabel(j.date),
+        moodLabel: mm.label,
+        moodGlyph: mm.glyph,
+        moodColor: mm.color,
+        isSummary: !!j.summary,
+        onRemove: () => api.removeJournalEntry(j.id),
+      };
+    }),
+  };
 
   // calendar (linked to tasks)
   const monthBase = new Date(now.getFullYear(), now.getMonth() + s.calOffset, 1);
@@ -757,7 +1099,7 @@ export function useViewModel() {
   // nateman
   const na = {
     open: s.naOpen,
-    showFab: s.page === 'overview' && !s.naOpen,
+    showFab: !s.naOpen,
     listening: s.naPhase === 'listening',
     answer: s.naPhase === 'answer',
     query: s.naQuery,
@@ -786,6 +1128,7 @@ export function useViewModel() {
     onNaSend: api.onNaSend,
     chips: [
       { label: 'My day', q: 'what’s on my plate today' },
+      { label: 'Recall', q: 'what did I journal about trades' },
       { label: 'Net liquid', q: 'what’s my net liquid' },
       { label: 'Add a task', q: 'add review my trades tonight' },
       { label: 'Midnight theme', q: 'switch to midnight theme' },
@@ -796,20 +1139,265 @@ export function useViewModel() {
   const kpis = [
     { label: 'OPEN TODAY', val: String(todayOpen.length), color: 'var(--text)' },
     { label: 'FOCUS', val: `${doneToday}/${totalToday}`, color: 'var(--text)' },
-    { label: 'NET KCAL', val: String(net), color: 'var(--text)' },
-    { label: 'BURNED', val: String(burned), color: '#74ad84' },
     { label: 'HABITS', val: `${habitsDone}/${s.habits.length}`, color: 'var(--text)' },
     { label: 'NET LIQUID', val: fin.liquid, color: 'var(--text)' },
     { label: 'P&L TODAY', val: fmtSig(fd.pnlToday), color: pnlColor(fd.pnlToday) },
   ];
 
+  // Overview: tasks-done summary + compact habits/priorities progress.
+  const prioDone = s.tasks.filter((t) => t.done).length;
+  const prioTotal = s.tasks.length;
+  const taskSummary = {
+    doneToday,
+    totalToday,
+    label: `${doneToday} of ${totalToday} done today`,
+    pct: (totalToday ? Math.round((doneToday / totalToday) * 100) : 0) + '%',
+  };
+  const progress = {
+    priorities: {
+      label: `${prioDone}/${prioTotal}`,
+      pct: (prioTotal ? Math.round((prioDone / prioTotal) * 100) : 0) + '%',
+      topOpen: todayOpen[0] ? todayOpen[0].title : 'All clear',
+      onOpen: () => api.setPage('tasks'),
+    },
+    habits: {
+      label: `${habitsDone}/${s.habits.length}`,
+      ringStyle: hb.ringStyle,
+      score: habitsDone,
+      hint: hb.hint,
+      onOpen: () => api.setPage('habits'),
+    },
+  };
+
+  // Morning briefing — a compact, glanceable summary line for the session card.
+  const briefing = [
+    {
+      label: 'FIRST UP',
+      val: todayOpen[0] ? todayOpen[0].title : 'All clear',
+      color: 'var(--text-dim)',
+    },
+    {
+      label: 'HABITS',
+      val: `${habitsDone}/${s.habits.length}`,
+      color: habitsDone === s.habits.length && s.habits.length ? '#74ad84' : 'var(--text-dim)',
+    },
+    {
+      label: 'WEEKLY GOAL',
+      val: goals.weekly.progressLabel,
+      color: 'var(--text-dim)',
+    },
+    {
+      label: 'P&L',
+      val: fmtSig(fd.pnlToday),
+      color: pnlColor(fd.pnlToday),
+    },
+  ];
+
+  // Weekly review — a Sunday-style recap card (shown on Overview when the
+  // "Weekly review" notification toggle is on). Built live from your data.
+  const weeklyReview = (() => {
+    const wk = s.goals.weekly.krs;
+    const mo = s.goals.monthly.krs;
+    const krDone = wk.filter((k) => k.done).length;
+    const moDone = mo.filter((k) => k.done).length;
+    const habitTicks = s.habits.reduce(
+      (a, h) => a + h.week.filter(Boolean).length,
+      0,
+    );
+    const habitMax = s.habits.length * 7;
+    const habitPct = habitMax ? Math.round((habitTicks / habitMax) * 100) : 0;
+    const hist = s.calHistory || [];
+    const avgIntake = hist.length
+      ? Math.round(hist.reduce((a, b) => a + b, 0) / hist.length)
+      : 0;
+    const calDelta = s.targets.kcal - avgIntake; // + = under target
+    const income = s.budget.income.reduce((a, i) => a + i.amt, 0);
+    const spent = s.budget.groups.reduce(
+      (a, g) => a + g.subs.reduce((x, su) => x + su.spent, 0),
+      0,
+    );
+    const net = income - spent;
+    let worst: { name: string; over: number } | null = null;
+    s.budget.groups.forEach((g) => {
+      const gb = g.subs.reduce((a, su) => a + su.budget, 0);
+      const gs = g.subs.reduce((a, su) => a + su.spent, 0);
+      const over = gs - gb;
+      if (over > 0 && (!worst || over > worst.over)) worst = { name: g.name, over };
+    });
+    return {
+      show: !!s.notifs.weeklyReview,
+      lines: [
+        {
+          label: 'GOALS',
+          val: `${krDone}/${wk.length} weekly · ${moDone}/${mo.length} monthly`,
+          color: 'var(--accent)',
+        },
+        {
+          label: 'HABITS',
+          val: `${habitPct}% of the week hit`,
+          color: '#9b7fb4',
+        },
+        {
+          label: 'CALORIES',
+          val: avgIntake
+            ? `${avgIntake} kcal/day · ${
+                calDelta >= 0
+                  ? `${calDelta} under`
+                  : `${Math.abs(calDelta)} over`
+              } target`
+            : 'No intake logged',
+          color: calDelta >= 0 ? '#74ad84' : '#c77b6b',
+        },
+        {
+          label: 'BUDGET',
+          val:
+            net >= 0
+              ? `${fmtPeso(net)} surplus this month`
+              : `${fmtPeso(-net)} drawn down`,
+          color: net >= 0 ? '#74ad84' : '#c77b6b',
+        },
+        {
+          label: 'TRADING',
+          val: `${fmtSig(fd.pnlMonth)} realized`,
+          color: pnlColor(fd.pnlMonth),
+        },
+      ],
+      note: worst
+        ? `Watch ${(worst as { name: string }).name} — ${fmtPeso((worst as { over: number }).over)} over budget.`
+        : 'Every category is within budget — nicely done.',
+    };
+  })();
+
+  // Daily summary — a morning brief card (shown on Overview when the "Daily
+  // summary" notification toggle is on).
+  const dailyBrief = {
+    show: !!s.notifs.dailySummary,
+    lines: [
+      {
+        label: 'FIRST UP',
+        val: todayOpen[0] ? todayOpen[0].title : 'All clear — plan your day',
+        color: 'var(--text)',
+      },
+      {
+        label: 'TASKS',
+        val: `${prioDone}/${prioTotal} done`,
+        color: 'var(--text-dim)',
+      },
+      {
+        label: 'HABITS',
+        val: `${habitsDone}/${s.habits.length} today`,
+        color:
+          habitsDone === s.habits.length && s.habits.length
+            ? '#74ad84'
+            : 'var(--text-dim)',
+      },
+      {
+        label: 'CALORIES',
+        val: `${Math.max(0, s.targets.kcal - net)} kcal left of ${s.targets.kcal}`,
+        color: '#74ad84',
+      },
+      {
+        label: 'WEEKLY GOAL',
+        val: goals.weekly.progressLabel,
+        color: 'var(--accent)',
+      },
+      {
+        label: "TODAY'S P&L",
+        val: fmtSig(fd.pnlToday),
+        color: pnlColor(fd.pnlToday),
+      },
+    ],
+  };
+
+  // ── memecoins (live wallet positions) ──
+  const usd = (n: number) =>
+    '$' +
+    Math.abs(n).toLocaleString(undefined, {
+      minimumFractionDigits: n !== 0 && Math.abs(n) < 1 ? 2 : 0,
+      maximumFractionDigits: 2,
+    });
+  const usdSig = (n: number) => (n >= 0 ? '+' : '−') + usd(n);
+  const tinyPrice = (n: number) =>
+    '$' +
+    (n >= 1
+      ? n.toLocaleString(undefined, { maximumFractionDigits: 2 })
+      : n.toPrecision(2).replace(/0+$/, ''));
+  const posValue = s.positions.reduce((a, p) => a + p.valueUsd, 0);
+  const posDayPnl = s.positions.reduce((a, p) => a + p.dayPnlUsd, 0);
+  const memecoins = {
+    hasWallets: s.wallets.length > 0,
+    walletCount: s.wallets.length,
+    loading: s.positionsLoading,
+    onRefresh: api.refreshPositions,
+    totalValue: usd(posValue),
+    dayPnl: usdSig(posDayPnl),
+    dayPnlColor: posDayPnl >= 0 ? '#74ad84' : '#c77b6b',
+    count: s.positions.length,
+    empty: s.positions.length === 0,
+    rows: s.positions.map((p) => ({
+      symbol: p.symbol,
+      name: p.name,
+      icon: p.icon,
+      amount:
+        p.amount.toLocaleString(undefined, { maximumFractionDigits: 2 }) +
+        ' ' +
+        p.symbol,
+      price: tinyPrice(p.priceUsd),
+      value: usd(p.valueUsd),
+      change: (p.change24h >= 0 ? '+' : '') + p.change24h.toFixed(1) + '%',
+      changeColor: p.change24h >= 0 ? '#74ad84' : '#c77b6b',
+      pnl: usdSig(p.dayPnlUsd),
+      pnlColor: p.dayPnlUsd >= 0 ? '#74ad84' : '#c77b6b',
+    })),
+  };
+
+  // ── leaderboard ──
+  const leaderboard = {
+    configured: api.authConfigured,
+    signedIn: !!s.account,
+    empty: s.leaderboard.length === 0,
+    onRefresh: api.refreshLeaderboard,
+    rows: s.leaderboard.map((r, i) => ({
+      rank: i + 1,
+      medal: i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : '',
+      name: r.name,
+      avatar: r.avatar,
+      initials: (r.name || '?').slice(0, 1).toUpperCase(),
+      score: r.score.toLocaleString(),
+      tasks: String(r.tasksDone),
+      habit: r.habitPct + '%',
+      pnl: fmtSig(r.pnl),
+      pnlColor: pnlColor(r.pnl),
+      isMe: r.isMe,
+      rowStyle: `display:flex;align-items:center;gap:12px;padding:13px 15px;border-radius:12px;border:1px solid ${
+        r.isMe ? 'color-mix(in srgb, var(--accent) 45%, transparent)' : 'var(--line)'
+      };background:${
+        r.isMe ? 'color-mix(in srgb, var(--accent) 9%, var(--panel))' : 'var(--inset)'
+      }`,
+    })),
+  };
+
   return {
     pageTabs,
+    weeklyReview,
+    dailyBrief,
+    memecoins,
+    leaderboard,
+    account: s.account,
+    authReady: s.authReady,
+    authConfigured: api.authConfigured,
+    onSignIn: api.signInGoogle,
+    onSignOut: api.signOut,
+    isMemecoins: s.page === 'memecoins',
+    isLeaderboard: s.page === 'leaderboard',
     isOverview: s.page === 'overview',
     isFinance: s.page === 'finance',
     isHealth: s.page === 'health',
+    isTasks: s.page === 'tasks',
+    isHabits: s.page === 'habits',
     isBudget: s.page === 'budget',
     isCalendar: s.page === 'calendar',
+    isJournal: s.page === 'journal',
     isSettings: s.page === 'settings',
     rootStyle,
     rootClass,
@@ -835,6 +1423,12 @@ export function useViewModel() {
       s.managing ? 'var(--text)' : 'var(--text-faint)'
     }`,
     kpis,
+    briefing,
+    verse,
+    taskSummary,
+    progress,
+    eisenhower,
+    tasksView,
     greeting,
     aiSummary,
     tasks,
@@ -865,6 +1459,15 @@ export function useViewModel() {
     onFoodKey: api.onFoodKey,
     onFoodSubmit: api.onFoodSubmit,
     foodHint: fe ? `~${fe.kcal} kcal · ${fe.p}p / ${fe.c}c / ${fe.f}f` : '',
+    foodSearching: s.foodSearching,
+    foodResults: s.foodResults.map((h) => ({
+      id: h.id,
+      name: h.name,
+      meta:
+        `${h.kcal} cal · ${h.serving}` + (h.brand ? ` · ${h.brand}` : ''),
+      macros: `${h.p}p · ${h.c}c · ${h.f}f`,
+      onPick: () => api.onPickFood(h),
+    })),
     train,
     exDraft: s.exDraft,
     onExInput: api.onExInput,
@@ -872,6 +1475,7 @@ export function useViewModel() {
     onExSubmit: api.onExSubmit,
     exHint: ee ? `~${ee.kcal} kcal burned · ${ee.minutes} min` : '',
     hb,
+    journal,
     fin,
     tradeDraft: s.tradeDraft,
     onTradeInput: api.onTradeInput,
@@ -898,14 +1502,6 @@ export function useViewModel() {
     onEditKey: api.onEditKey,
     commitEdit: api.commitEdit,
     focusRef: api.focusRef,
-    budgetManaging: s.budgetManaging,
-    onToggleBudgetManage: api.onToggleBudgetManage,
-    budgetManageLabel: s.budgetManaging ? 'DONE' : '+ EDIT LINES',
-    budgetManageBtnStyle: `font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1px;background:${
-      s.budgetManaging ? 'var(--inset)' : 'transparent'
-    };border:1px solid var(--line2);border-radius:7px;padding:5px 11px;cursor:pointer;transition:all .12s;color:${
-      s.budgetManaging ? 'var(--text)' : 'var(--text-faint)'
-    }`,
     onAddGroup: api.addGroup,
     onAddIncome: api.addIncome,
     expenseDraft: s.expenseDraft,

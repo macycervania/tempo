@@ -8,7 +8,7 @@ export default function TopBar({ vm }: { vm: VM }) {
   return (
     <header
       style={css(
-        'position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:20px;height:46px;padding:0 22px;background:var(--panel);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)',
+        'position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:16px;min-height:46px;padding-top:env(safe-area-inset-top);padding-bottom:0;padding-left:max(16px,env(safe-area-inset-left));padding-right:max(16px,env(safe-area-inset-right));background:var(--panel);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)',
       )}
     >
       <div style={css('display:flex;align-items:center;gap:9px')}>
@@ -32,7 +32,7 @@ export default function TopBar({ vm }: { vm: VM }) {
           {'// OS'}
         </span>
       </div>
-      <nav style={css('display:flex;align-items:center;gap:4px')}>
+      <nav className="tb-nav" style={css('display:flex;align-items:center;gap:4px;min-width:0')}>
         {vm.pageTabs.map((tab, i) => (
           <Hov
             key={i}
@@ -47,8 +47,9 @@ export default function TopBar({ vm }: { vm: VM }) {
       </nav>
       <div style={{ flex: 1 }} />
       <div
+        className="tb-clock"
         style={css(
-          "font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:1px;color:var(--text-faint)",
+          "font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:1px;color:var(--text-faint);flex:0 0 auto",
         )}
       >
         {vm.clock}
