@@ -75,7 +75,7 @@ export default function SettingsView({ vm }: { vm: VM }) {
       {/* THEME */}
       <section style={css('background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:20px 22px')}>
         <div style={css(mono + 'font-size:10px;letter-spacing:2px;color:var(--text-faint);margin-bottom:14px')}>THEME</div>
-        <div className="setGrid3" style={css('display:grid;gap:10px;padding:0 0 14px;border-bottom:1px solid var(--line)')}>
+        <div className="setGrid2" style={css('display:grid;gap:10px;padding:0 0 14px;border-bottom:1px solid var(--line)')}>
           {st.themes.map((th, i) => (
             <button key={i} onClick={th.onClick} style={css(th.style)}>
               <span style={css(th.dotStyle)} />

@@ -215,6 +215,9 @@ export function TempoProvider({ children }: { children: React.ReactNode }) {
     if (settings) Object.assign(patch, settings);
     if (pfp) patch.pfp = pfp;
     if (name && !(settings && settings.userName)) patch.userName = name;
+    // Migrate any retired theme (ember/midnight/…) to the new default.
+    if (patch.theme && !THEMES.some((t) => t.key === patch.theme))
+      patch.theme = 'dark';
     if (Object.keys(patch).length) set(patch);
     try {
       if (typeof window !== 'undefined' && window.speechSynthesis) {
