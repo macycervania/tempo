@@ -46,6 +46,13 @@ import { searchFoods, localFoods } from '@/lib/foods';
 import type { FoodHit } from '@/lib/foods';
 import { getSupabase, supabaseConfigured } from '@/lib/supabase';
 import { loadPositions } from '@/lib/positions';
+import {
+  notifyPermission,
+  requestNotifyPermission,
+  showNotification,
+  firedToday,
+  markFiredToday,
+} from '@/lib/notify';
 import type { Task, Account, LeaderRow } from '@/lib/types';
 
 // ── Context shape ───────────────────────────────────────────────────────────────
@@ -1382,10 +1389,61 @@ export function TempoProvider({ children }: { children: React.ReactNode }) {
     [set],
   );
   const toggleNotif = useCallback(
-    (k: keyof TempoState['notifs']) =>
-      set((s) => ({ notifs: { ...s.notifs, [k]: !s.notifs[k] } })),
+    (k: keyof TempoState['notifs']) => {
+      // `ref.current` still holds the pre-toggle value, so !notifs[k] means we
+      // are switching this toggle ON — ask for notification permission (the
+      // request must run inside the tap for the browser to show the prompt).
+      const switchingOn = !ref.current.notifs[k];
+      set((s) => ({ notifs: { ...s.notifs, [k]: !s.notifs[k] } }));
+      if (
+        switchingOn &&
+        (k === 'habitReminders' || k === 'deadlineAlerts')
+      ) {
+        requestNotifyPermission().then(() => maybeNotify());
+      }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [set],
   );
+  // Fire device notifications when the app is open and a condition is met,
+  // deduped to once per day per type. Real scheduled/background push would need
+  // a service worker + server (Web Push) — this covers app-open / installed.
+  const maybeNotify = useCallback(() => {
+    if (notifyPermission() !== 'granted') return;
+    const s = ref.current;
+    const today = isoLocal(new Date());
+    if (s.notifs.deadlineAlerts && !firedToday('deadline')) {
+      const due = s.tasks.filter((t) => !t.done && taskDate(t) <= today);
+      if (due.length) {
+        showNotification(
+          'Tempo · deadlines',
+          `${due.length} task${due.length > 1 ? 's' : ''} due today — ${due[0].title}`,
+          'tempo-deadline',
+        );
+        markFiredToday('deadline');
+      }
+    }
+    if (s.notifs.habitReminders && !firedToday('habit')) {
+      const hour = new Date().getHours();
+      if (hour >= 18) {
+        const ti = todayIndex();
+        const left = s.habits.filter((h) => !h.week[ti]).length;
+        if (left) {
+          showNotification(
+            'Tempo · habits',
+            `${left} habit${left > 1 ? 's' : ''} left today — keep your streak alive 🔥`,
+            'tempo-habit',
+          );
+          markFiredToday('habit');
+        }
+      }
+    }
+  }, []);
+  // Re-check on each clock tick (every 30s) and on mount; dedup keeps it to once
+  // a day per type.
+  useEffect(() => {
+    maybeNotify();
+  }, [state.tick, maybeNotify]);
   const onTargetChange = useCallback(
     (field: keyof TempoState['targets'], val: string) => {
       const n = Math.max(0, parseInt(val, 10) || 0);

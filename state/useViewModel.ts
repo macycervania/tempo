@@ -122,8 +122,8 @@ export function useViewModel() {
     notifs: (
       [
         { key: 'dailySummary', label: 'Daily summary', desc: 'Show a morning brief card on your Overview (tasks, habits, calories, P&L)' },
-        { key: 'habitReminders', label: 'Habit reminders', desc: 'Nudge me to keep streaks alive' },
-        { key: 'deadlineAlerts', label: 'Deadline alerts', desc: 'Warn me before tasks are due' },
+        { key: 'habitReminders', label: 'Habit reminders', desc: 'Evening device notification if habits are unfinished (allow notifications)' },
+        { key: 'deadlineAlerts', label: 'Deadline alerts', desc: 'Device notification when tasks are due today (allow notifications)' },
         { key: 'weeklyReview', label: 'Weekly review', desc: 'Show a recap card on your Overview (goals, calories, spending, P&L)' },
       ] as const
     ).map((n) => ({
