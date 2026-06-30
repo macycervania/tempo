@@ -7,8 +7,8 @@ It's a single-page, **phone-friendly** dashboard with seven views, a warm-black 
 ## Features
 
 - **Overview** — a calm home screen: greeting, a **daily word** (a motivational line or Bible verse), a tasks-done-today bar, the **voice button** + **Nateman**, compact **Habits & Priorities progress** (tap to open their pages), and your weekly/monthly **Goals**.
-- **Tasks** — your tasks as an **Eisenhower matrix** (urgent × important, four quadrants). Add a task with a chosen **category and quadrant**, **rename any quadrant** inline (e.g. "Urgent" → "Remember"), and reveal **completed tasks within each quadrant** via *Show completed* (tap to restore). Ticking a task off plays a chime.
-- **Habits** — the full habits board: daily-score ring, fire streaks, sub-tasks, add/edit/remove (with a completion chime).
+- **Tasks** — your tasks as an **Eisenhower matrix** (urgent × important, four quadrants). Add a task with a chosen **category and quadrant**, **rename any quadrant** inline (e.g. "Urgent" → "Remember"), and reveal **completed tasks within each quadrant** via *Show completed* (tap to restore). Ticking anything off plays a chime and a confetti burst.
+- **Habits** — the full habits board: daily-score ring, fire streaks, sub-tasks, add/edit/remove. Every tick-off (tasks, habits, sub-tasks, goals) fires a chime + confetti (both respect the Sound effects / Reduce motion settings).
 - **Health** — today's intake / burned / net with macros, a 7-day intake trend, full meal & training logs, and a **Body** card: editable **goal weight**, a **MyFitnessPal-style 5-week weight forecast** from today's net calories ("if every day were like today…"), and a health quote. Body weight & height live in **Settings**. Meal logging and **body-aware training calories** run through the **AI seams** (see below).
 - **Budget** — a zero-based monthly budget in pesos: income + eight expense groups with subcategories, inline editing, and a smart expense logger. Drives the Finance page's cash.
 - **Finance** — net liquid (linked live to the budget), assets/portfolio, realized P&L with a last-10-sessions chart, and a trade journal you can log into.

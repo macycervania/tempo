@@ -661,9 +661,10 @@ export function TempoProvider({ children }: { children: React.ReactNode }) {
       if (nd) {
         flashToast(cheer());
         chime();
+        confettiBurst();
       }
     },
-    [set, flashToast, chime],
+    [set, flashToast, chime, confettiBurst],
   );
 
   // ── habits ──────────────────────────────────────────────────────────────────
@@ -685,10 +686,8 @@ export function TempoProvider({ children }: { children: React.ReactNode }) {
       if (nd) {
         flashToast(cheer());
         chime();
-        if (allHabitsDone(habits)) {
-          flashToast('Perfect day — every habit done.');
-          confettiBurst();
-        }
+        confettiBurst();
+        if (allHabitsDone(habits)) flashToast('Perfect day — every habit done.');
       }
     },
     [set, flashToast, confettiBurst, chime],
@@ -710,10 +709,8 @@ export function TempoProvider({ children }: { children: React.ReactNode }) {
       if (jd) {
         flashToast(cheer());
         chime();
-        if (allHabitsDone(habits)) {
-          flashToast('Perfect day — every habit done.');
-          confettiBurst();
-        }
+        confettiBurst();
+        if (allHabitsDone(habits)) flashToast('Perfect day — every habit done.');
       }
     },
     [set, flashToast, confettiBurst, chime],
@@ -774,9 +771,10 @@ export function TempoProvider({ children }: { children: React.ReactNode }) {
       if (nd) {
         flashToast(cheer());
         chime();
+        confettiBurst();
       }
     },
-    [set, flashToast, chime],
+    [set, flashToast, chime, confettiBurst],
   );
   const addKR = useCallback(
     (period: 'weekly' | 'monthly') => {
