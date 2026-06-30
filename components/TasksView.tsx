@@ -3,10 +3,13 @@
 import React from 'react';
 import type { VM } from '@/state/useViewModel';
 import { css, Hov } from './css';
+import { EditInput } from './Overview';
 
 export default function TasksView({ vm }: { vm: VM }) {
   const mono = "font-family:'JetBrains Mono',monospace;";
   const tv = vm.tasksView;
+  const selStyle =
+    "background:var(--inset);border:1px solid var(--line2);border-radius:9px;padding:0 10px;height:44px;color:var(--text);font-size:12.5px;font-family:'JetBrains Mono',monospace;cursor:pointer";
   return (
     <div style={css('display:flex;flex-direction:column;gap:14px')}>
       {/* CATEGORY BAR (editable) */}
@@ -86,27 +89,34 @@ export default function TasksView({ vm }: { vm: VM }) {
           <span style={css(mono + 'font-size:10.5px;letter-spacing:1px;color:var(--text-faint2)')}>EISENHOWER MATRIX</span>
         </div>
         <p style={css('font-size:12.5px;color:var(--text-faint);margin-bottom:14px')}>
-          Sorted by urgency &amp; importance — add a task and Tempo files it into the right quadrant.
+          Add a task, pick its category and quadrant, and it files itself. Tap a quadrant title to rename it.
         </p>
 
-        {/* CAPTURE */}
-        <div style={css('display:flex;align-items:center;gap:10px;margin-bottom:16px;background:var(--inset);border:1px solid var(--line2);border-radius:10px;padding:0 12px;height:44px')}>
-          <span style={css(mono + 'font-size:12px;color:var(--accent)')}>+</span>
+        {/* ADD FORM — text + category + quadrant */}
+        <div style={css('display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px')}>
           <input
             value={vm.capture}
             onChange={vm.onCaptureInput}
-            onKeyDown={vm.onCaptureKey}
-            placeholder="Add a task (“finish the deck before Friday !”)"
-            style={css('flex:1;background:none;border:none;color:var(--text);font-size:13.5px')}
+            onKeyDown={tv.add.onKey}
+            placeholder="Add a task…"
+            style={css('flex:2;min-width:200px;background:var(--inset);border:1px solid var(--line2);border-radius:9px;padding:0 12px;height:44px;color:var(--text);font-size:13.5px')}
           />
-          <Hov
-            as="button"
-            onClick={vm.onCaptureSubmit}
-            styleStr="background:var(--inset);border:1px solid var(--line2);border-radius:7px;padding:6px 13px;font-size:12px;font-weight:600;color:var(--text-dim);cursor:pointer"
-            hover="border-color:var(--line2)"
+          <select value={tv.add.areaVal} onChange={tv.add.onAreaChange} style={css(selStyle)} title="Category">
+            {tv.add.areas.map((a) => (
+              <option key={a.key} value={a.key}>{a.label}</option>
+            ))}
+          </select>
+          <select value={tv.add.quadVal} onChange={tv.add.onQuadChange} style={css(selStyle)} title="Quadrant">
+            {tv.add.quads.map((q) => (
+              <option key={q.i} value={q.i}>{q.label}</option>
+            ))}
+          </select>
+          <button
+            onClick={tv.add.onAdd}
+            style={css('background:var(--accent);color:var(--bg);border:none;border-radius:9px;padding:0 18px;height:44px;font-size:13px;font-weight:600;cursor:pointer')}
           >
             Add
-          </Hov>
+          </button>
         </div>
 
         <div className="eisengrid">
@@ -114,16 +124,20 @@ export default function TasksView({ vm }: { vm: VM }) {
             <div key={i} style={css(q.cardStyle)}>
               <div style={css('display:flex;align-items:center;gap:9px;margin-bottom:13px')}>
                 <span style={css(q.badgeStyle)}>{q.roman}</span>
-                <div>
-                  <div style={css(q.titleStyle)}>{q.title}</div>
+                <div style={css('flex:1;min-width:0')}>
+                  {q.titleShow && (
+                    <Hov onClick={q.onEditTitle} styleStr={q.titleStyle} hover="opacity:.8">
+                      {q.title}
+                    </Hov>
+                  )}
+                  {q.titleEditing && <EditInput vm={vm} style={q.editStyle} />}
                   <div style={css(mono + 'font-size:9px;letter-spacing:.5px;color:var(--text-faint2);margin-top:2px')}>{q.sub}</div>
                 </div>
-                <div style={{ flex: 1 }} />
                 {q.count > 0 && (
-                  <span style={css(mono + 'font-size:11px;color:var(--text-faint)')}>{q.count}</span>
+                  <span style={css(mono + 'font-size:11px;color:var(--text-faint);flex:0 0 auto')}>{q.count}</span>
                 )}
               </div>
-              {q.empty ? (
+              {q.empty && !(tv.showDone && q.doneRows.length) ? (
                 <div style={css('flex:1;display:flex;align-items:center;justify-content:center;color:var(--text-faint2);font-size:12.5px')}>
                   No tasks
                 </div>
@@ -137,9 +151,7 @@ export default function TasksView({ vm }: { vm: VM }) {
                     >
                       <button onClick={t.onToggle} style={css(t.boxStyle)} />
                       <div style={css('flex:1;min-width:0')}>
-                        <div style={css('font-size:13.5px;font-weight:500;line-height:1.35;color:var(--text-dim)')}>
-                          {t.title}
-                        </div>
+                        <div style={css(t.titleStyle)}>{t.title}</div>
                         <div style={css('display:inline-flex;align-items:center;gap:6px;margin-top:4px')}>
                           <span style={css(`width:6px;height:6px;border-radius:2px;background:${t.tint}`)} />
                           <span style={css(mono + 'font-size:9.5px;letter-spacing:.5px;color:var(--text-faint)')}>
@@ -149,14 +161,32 @@ export default function TasksView({ vm }: { vm: VM }) {
                       </div>
                     </Hov>
                   ))}
+                  {tv.showDone &&
+                    q.doneRows.map((t) => (
+                      <div
+                        key={t.id}
+                        style={css('display:flex;align-items:flex-start;gap:10px;padding:9px 11px;border:1px solid var(--line);border-radius:10px;background:var(--bg);animation:fadeUp .2s ease')}
+                      >
+                        <button onClick={t.onToggle} style={css(t.boxStyle)} title="Restore">
+                          <span style={css('font-size:11px;color:var(--bg);font-weight:700')}>✓</span>
+                        </button>
+                        <div style={css('flex:1;min-width:0')}>
+                          <div style={css(t.titleStyle)}>{t.title}</div>
+                          <div style={css('display:inline-flex;align-items:center;gap:6px;margin-top:4px')}>
+                            <span style={css(`width:6px;height:6px;border-radius:2px;background:${t.tint};opacity:.5`)} />
+                            <span style={css(mono + 'font-size:9.5px;letter-spacing:.5px;color:var(--text-faint2)')}>{t.areaLabel}</span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
                 </div>
               )}
             </div>
           ))}
         </div>
 
-        {/* COMPLETED — viewable & restorable */}
-        <div style={css('margin-top:16px;border-top:1px solid var(--line);padding-top:14px')}>
+        {/* SHOW / HIDE COMPLETED (per quadrant) */}
+        <div style={css('margin-top:16px')}>
           <Hov
             as="button"
             onClick={tv.onToggleShowDone}
@@ -165,30 +195,8 @@ export default function TasksView({ vm }: { vm: VM }) {
           >
             {tv.doneLabel}
           </Hov>
-          {tv.showDone && (
-            <div style={css('margin-top:12px;display:flex;flex-direction:column;gap:7px')}>
-              {tv.doneCount === 0 ? (
-                <div style={css('color:var(--text-faint2);font-size:12.5px;padding:6px 2px')}>Nothing completed yet today.</div>
-              ) : (
-                tv.done.map((t) => (
-                  <div
-                    key={t.id}
-                    style={css('display:flex;align-items:flex-start;gap:10px;padding:9px 11px;border:1px solid var(--line);border-radius:10px;background:var(--inset);animation:fadeUp .2s ease')}
-                  >
-                    <button onClick={t.onToggle} style={css(t.boxStyle)} title="Restore">
-                      <span style={css('font-size:11px;color:var(--bg);font-weight:700')}>✓</span>
-                    </button>
-                    <div style={css('flex:1;min-width:0')}>
-                      <div style={css(t.titleStyle)}>{t.title}</div>
-                      <div style={css('display:inline-flex;align-items:center;gap:6px;margin-top:4px')}>
-                        <span style={css(`width:6px;height:6px;border-radius:2px;background:${t.tint};opacity:.5`)} />
-                        <span style={css(mono + 'font-size:9.5px;letter-spacing:.5px;color:var(--text-faint2)')}>{t.areaLabel}</span>
-                      </div>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
+          {tv.showDone && tv.doneCount === 0 && (
+            <span style={css('margin-left:10px;color:var(--text-faint2);font-size:12.5px')}>Nothing completed yet.</span>
           )}
         </div>
       </section>

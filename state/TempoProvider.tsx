@@ -10,7 +10,16 @@ import React, {
   useState,
 } from 'react';
 import type { Currency, Page, TempoState, Theme } from '@/lib/types';
-import { makeInitialState, MOTIVATE, THEMES } from '@/lib/constants';
+import { DEFAULT_MATRIX_TITLES, makeInitialState, MOTIVATE, THEMES } from '@/lib/constants';
+
+// Quadrant index → the priority + urgency a manually-filed task should get,
+// so it lands in the quadrant the user picked.
+const QUAD_FILE: { priority: 'high' | 'med' | 'low'; urgent: boolean }[] = [
+  { priority: 'high', urgent: true }, // I  · Urgent & Important
+  { priority: 'high', urgent: false }, // II · Important, Not Urgent
+  { priority: 'med', urgent: true }, // III · Urgent, Not Important
+  { priority: 'low', urgent: false }, // IV · Not Urgent & Unimportant
+];
 import {
   classifyTask,
   estimateExerciseSmart,
@@ -50,6 +59,10 @@ export interface TempoApi {
   onCaptureInput: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onCaptureKey: (e: React.KeyboardEvent) => void;
   onCaptureSubmit: () => void;
+  setNewTaskArea: (e: React.ChangeEvent<HTMLSelectElement>) => void;
+  setNewTaskQuad: (e: React.ChangeEvent<HTMLSelectElement>) => void;
+  onTaskAdd: () => void;
+  onTaskAddKey: (e: React.KeyboardEvent) => void;
   onVoice: () => void;
   // fuel / training / trade
   onFoodInput: (e: React.ChangeEvent<HTMLInputElement>) => void;
@@ -223,6 +236,8 @@ export function TempoProvider({ children }: { children: React.ReactNode }) {
     state.currency,
     state.reduceMotion,
     state.targets,
+    state.body,
+    state.matrixTitles,
     state.notifs,
     state.userName,
     state.sound,
@@ -275,6 +290,9 @@ export function TempoProvider({ children }: { children: React.ReactNode }) {
       /* ignore */
     }
   }, []);
+
+  // A short, bright two-note chime played when something is checked off.
+  const chime = useCallback(() => beep([784, 1175]), [beep]);
 
   const speak = useCallback((text: string) => {
     if (!ref.current.sound) return;
@@ -452,6 +470,37 @@ export function TempoProvider({ children }: { children: React.ReactNode }) {
     if (e.key === 'Enter') onCaptureSubmit();
   };
 
+  // Tasks page: explicit add with a chosen category + quadrant.
+  const setNewTaskArea = (e: React.ChangeEvent<HTMLSelectElement>) =>
+    set({ newTaskArea: e.target.value });
+  const setNewTaskQuad = (e: React.ChangeEvent<HTMLSelectElement>) =>
+    set({ newTaskQuad: parseInt(e.target.value, 10) || 0 });
+  const onTaskAdd = useCallback(() => {
+    const t = ref.current.capture.trim();
+    if (!t) return;
+    const areaKey =
+      ref.current.newTaskArea || (ref.current.areas[0] || ({} as any)).key;
+    const qi = ref.current.newTaskQuad;
+    const q = QUAD_FILE[qi] || QUAD_FILE[0];
+    idc.current += 1;
+    const task: Task = {
+      id: 'g' + Date.now() + '_' + idc.current,
+      title: cap(t.replace(/\s*!+\s*/g, ' ').replace(/\s+/g, ' ').trim()),
+      area: areaKey,
+      priority: q.priority,
+      due: q.urgent ? 'today' : undefined,
+      date: q.urgent ? undefined : isoLocal(new Date(Date.now() + 5 * 86400000)),
+      done: false,
+      viaVoice: false,
+    };
+    set((s) => ({ capture: '', tasks: [task, ...s.tasks] }));
+    flashToast(`Filed to ${meta(areaKey).label} · ${ref.current.matrixTitles[qi]}`);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [set, flashToast, meta]);
+  const onTaskAddKey = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') onTaskAdd();
+  };
+
   // File one or more tasks from a real spoken transcript.
   const finishVoiceReal = useCallback(
     (text: string) => {
@@ -609,9 +658,12 @@ export function TempoProvider({ children }: { children: React.ReactNode }) {
           x.id === id ? { ...x, done: !x.done } : x,
         ),
       }));
-      if (nd) flashToast(cheer());
+      if (nd) {
+        flashToast(cheer());
+        chime();
+      }
     },
-    [set, flashToast],
+    [set, flashToast, chime],
   );
 
   // ── habits ──────────────────────────────────────────────────────────────────
@@ -632,13 +684,14 @@ export function TempoProvider({ children }: { children: React.ReactNode }) {
       set({ habits });
       if (nd) {
         flashToast(cheer());
+        chime();
         if (allHabitsDone(habits)) {
           flashToast('Perfect day — every habit done.');
           confettiBurst();
         }
       }
     },
-    [set, flashToast, confettiBurst],
+    [set, flashToast, confettiBurst, chime],
   );
   const toggleSub = useCallback(
     (id: string, i: number) => {
@@ -656,13 +709,14 @@ export function TempoProvider({ children }: { children: React.ReactNode }) {
       set({ habits });
       if (jd) {
         flashToast(cheer());
+        chime();
         if (allHabitsDone(habits)) {
           flashToast('Perfect day — every habit done.');
           confettiBurst();
         }
       }
     },
-    [set, flashToast, confettiBurst],
+    [set, flashToast, confettiBurst, chime],
   );
   const toggleExpand = useCallback(
     (id: string) =>
@@ -717,9 +771,12 @@ export function TempoProvider({ children }: { children: React.ReactNode }) {
       g[period].krs[i].done = !g[period].krs[i].done;
       const nd = g[period].krs[i].done;
       set({ goals: g });
-      if (nd) flashToast(cheer());
+      if (nd) {
+        flashToast(cheer());
+        chime();
+      }
     },
-    [set, flashToast],
+    [set, flashToast, chime],
   );
   const addKR = useCallback(
     (period: 'weekly' | 'monthly') => {
@@ -861,6 +918,12 @@ export function TempoProvider({ children }: { children: React.ReactNode }) {
       set({ userName: editVal.trim(), edit: null, editVal: '' });
       return;
     }
+    if (p[0] === 'mt') {
+      const titles = ref.current.matrixTitles.slice();
+      titles[+p[1]] = txt;
+      set({ matrixTitles: titles, edit: null, editVal: '' });
+      return;
+    }
     if (p[0] === 'gt') {
       const g = JSON.parse(JSON.stringify(ref.current.goals));
       g[p[1] === 'w' ? 'weekly' : 'monthly'].title = txt;
@@ -911,12 +974,16 @@ export function TempoProvider({ children }: { children: React.ReactNode }) {
     if (e.key === 'Enter') commitEdit();
     else if (e.key === 'Escape') set({ edit: null, editVal: '' });
   };
-  const focusRef = (el: HTMLInputElement | null) => {
+  // Stable ref callback: React only invokes it on mount/unmount (not on every
+  // re-render), so the field is focused + selected once. If this were recreated
+  // each render, React would re-run it on every keystroke and re-select the
+  // text, leaving only the last character typed.
+  const focusRef = useCallback((el: HTMLInputElement | null) => {
     if (el) {
       el.focus();
       el.select && el.select();
     }
-  };
+  }, []);
 
   // ── profile ─────────────────────────────────────────────────────────────────
   const fileRefCb = (el: HTMLInputElement | null) => {
@@ -1081,6 +1148,7 @@ export function TempoProvider({ children }: { children: React.ReactNode }) {
       reduceMotion: false,
       targets: { kcal: 2800, p: 180, c: 300, f: 80 },
       body: { weight: 68, height: 170, goalWeight: 64 },
+      matrixTitles: [...DEFAULT_MATRIX_TITLES],
       notifs: {
         dailySummary: true,
         habitReminders: true,
@@ -1416,6 +1484,10 @@ export function TempoProvider({ children }: { children: React.ReactNode }) {
       onCaptureInput,
       onCaptureKey,
       onCaptureSubmit,
+      setNewTaskArea,
+      setNewTaskQuad,
+      onTaskAdd,
+      onTaskAddKey,
       onVoice,
       onFoodInput,
       onFoodKey,

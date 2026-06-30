@@ -225,6 +225,11 @@ export interface TempoState {
   catDraft: string;
   /** Show completed tasks on the Tasks page. */
   showDone: boolean;
+  /** Editable Eisenhower quadrant titles (length 4). */
+  matrixTitles: string[];
+  /** Add-task form: selected life-area key and quadrant index (0–3). */
+  newTaskArea: string;
+  newTaskQuad: number;
   // capture inputs
   capture: string;
   foodDraft: string;

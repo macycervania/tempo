@@ -102,6 +102,32 @@ export default function SettingsView({ vm }: { vm: VM }) {
         </div>
       </section>
 
+      {/* BODY */}
+      <section style={css('background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:20px 22px')}>
+        <div style={css(mono + 'font-size:10px;letter-spacing:2px;color:var(--text-faint);margin-bottom:14px')}>BODY</div>
+        <div style={css('display:grid;grid-template-columns:repeat(3,1fr);gap:12px')}>
+          {st.body.fields.map((f, i) => (
+            <div key={i} style={css('display:flex;align-items:center;justify-content:space-between;background:var(--inset);border:1px solid var(--line);border-radius:10px;padding:11px 14px')}>
+              <span style={css('font-size:13px;color:var(--text-dim)')}>{f.label}</span>
+              <span style={css('display:flex;align-items:center;gap:7px')}>
+                <input
+                  type="number"
+                  value={f.val}
+                  onChange={f.onChange}
+                  style={css("width:64px;text-align:right;background:var(--inset);border:1px solid var(--line2);border-radius:6px;padding:4px 8px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:13px")}
+                />
+                <span style={css(mono + 'font-size:11px;color:var(--text-faint);width:24px')}>{f.unit}</span>
+              </span>
+            </div>
+          ))}
+          <div style={css('display:flex;align-items:center;justify-content:space-between;background:var(--inset);border:1px solid var(--line);border-radius:10px;padding:11px 14px')}>
+            <span style={css('font-size:13px;color:var(--text-dim)')}>BMI</span>
+            <span style={css(mono + 'font-size:14px;font-weight:600;color:var(--text)')}>{st.body.bmi}</span>
+          </div>
+        </div>
+        <div style={css('font-size:12px;color:var(--text-faint);margin-top:12px')}>Your goal weight lives on the Health page · powers the weight forecast</div>
+      </section>
+
       {/* NOTIFICATIONS */}
       <section style={css('background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:20px 22px')}>
         <div style={css(mono + 'font-size:10px;letter-spacing:2px;color:var(--text-faint);margin-bottom:6px')}>NOTIFICATIONS</div>

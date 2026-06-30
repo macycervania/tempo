@@ -13,6 +13,7 @@ export type PersistedSettings = Pick<
   | 'reduceMotion'
   | 'targets'
   | 'body'
+  | 'matrixTitles'
   | 'notifs'
   | 'userName'
   | 'sound'
@@ -53,6 +54,7 @@ export function saveSettings(state: TempoState): void {
       reduceMotion: state.reduceMotion,
       targets: state.targets,
       body: state.body,
+      matrixTitles: state.matrixTitles,
       notifs: state.notifs,
       userName: state.userName,
       sound: state.sound,

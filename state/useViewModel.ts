@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { useTempo } from './TempoProvider';
-import { THEMES, CURRENCIES, VERSES } from '@/lib/constants';
+import { THEMES, CURRENCIES, VERSES, HEALTH_QUOTES } from '@/lib/constants';
 import {
   estimateExercise,
   estimateFood,
@@ -147,6 +147,24 @@ export function useViewModel() {
       onChange: (e: React.ChangeEvent<HTMLInputElement>) =>
         api.onTargetChange(t.field, e.target.value),
     })),
+    body: {
+      fields: (
+        [
+          { field: 'weight', label: 'Weight', val: s.body.weight, unit: 'kg' },
+          { field: 'height', label: 'Height', val: s.body.height, unit: 'cm' },
+        ] as const
+      ).map((f) => ({
+        label: f.label,
+        val: f.val,
+        unit: f.unit,
+        onChange: (e: React.ChangeEvent<HTMLInputElement>) =>
+          api.onBodyChange(f.field, e.target.value),
+      })),
+      bmi:
+        s.body.height > 0
+          ? (s.body.weight / Math.pow(s.body.height / 100, 2)).toFixed(1)
+          : '—',
+    },
     currencyNote: `All amounts shown in ${s.currency.code} (${s.currency.symbol})`,
     onReset: api.resetSettings,
   };
@@ -227,7 +245,8 @@ export function useViewModel() {
       };
     });
 
-  // Eisenhower matrix — open tasks split by urgency × importance.
+  // Eisenhower matrix — tasks split by urgency × importance (editable titles,
+  // open + completed rows per quadrant).
   const tomorrowISO = isoLocal(new Date(now.getTime() + 86400000));
   const isUrgent = (t: Task) => taskDate(t) <= tomorrowISO;
   const matrixRow = (t: Task) => {
@@ -237,62 +256,75 @@ export function useViewModel() {
       title: t.title,
       tint: m.tint,
       areaLabel: m.label,
-      badge: t.priority.toUpperCase(),
-      badgeStyle: badgeStyles[t.priority],
       onToggle: () => api.toggleTask(t.id),
       boxStyle:
         'width:19px;height:19px;flex:0 0 19px;margin-top:1px;border-radius:6px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .15s;border:1.5px solid var(--line2);background:transparent',
+      titleStyle: 'font-size:13.5px;font-weight:500;line-height:1.35;color:var(--text-dim)',
+      done: false,
     };
   };
-  const openTasksAll = s.tasks.filter((t) => !t.done);
-  const eisenDefs = [
-    { roman: 'I', title: 'Urgent & Important', sub: 'Do first', color: '#e0566f', f: (t: Task) => t.priority === 'high' && isUrgent(t) },
-    { roman: 'II', title: 'Important, Not Urgent', sub: 'Schedule', color: 'var(--accent)', f: (t: Task) => t.priority === 'high' && !isUrgent(t) },
-    { roman: 'III', title: 'Urgent, Not Important', sub: 'Delegate', color: '#6f90b4', f: (t: Task) => t.priority !== 'high' && isUrgent(t) },
-    { roman: 'IV', title: 'Not Urgent & Unimportant', sub: 'Later', color: '#74ad84', f: (t: Task) => t.priority !== 'high' && !isUrgent(t) },
+  const matrixDoneRow = (t: Task) => {
+    const m = metaOf(t.area);
+    return {
+      id: t.id,
+      title: t.title,
+      tint: m.tint,
+      areaLabel: m.label,
+      onToggle: () => api.toggleTask(t.id),
+      boxStyle:
+        'width:19px;height:19px;flex:0 0 19px;margin-top:1px;border-radius:6px;display:flex;align-items:center;justify-content:center;cursor:pointer;border:1.5px solid var(--accent);background:var(--accent)',
+      titleStyle: 'font-size:13px;font-weight:500;line-height:1.35;color:var(--text-faint2);text-decoration:line-through',
+      done: true,
+    };
+  };
+  const eisenMeta = [
+    { roman: 'I', sub: 'Do first', color: '#e0566f', f: (t: Task) => t.priority === 'high' && isUrgent(t) },
+    { roman: 'II', sub: 'Schedule', color: 'var(--accent)', f: (t: Task) => t.priority === 'high' && !isUrgent(t) },
+    { roman: 'III', sub: 'Delegate', color: '#6f90b4', f: (t: Task) => t.priority !== 'high' && isUrgent(t) },
+    { roman: 'IV', sub: 'Later', color: '#74ad84', f: (t: Task) => t.priority !== 'high' && !isUrgent(t) },
   ] as const;
-  const eisenhower = eisenDefs.map((q) => {
-    const rows = openTasksAll.filter(q.f).map(matrixRow);
+  const eisenhower = eisenMeta.map((q, i) => {
+    const rows = s.tasks.filter((t) => !t.done && q.f(t)).map(matrixRow);
+    const doneRows = s.tasks.filter((t) => t.done && q.f(t)).map(matrixDoneRow);
     return {
       roman: q.roman,
-      title: q.title,
+      title: s.matrixTitles[i] || '',
       sub: q.sub,
       color: q.color,
       count: rows.length,
+      doneCount: doneRows.length,
+      titleEditing: s.edit === 'mt.' + i,
+      titleShow: s.edit !== 'mt.' + i,
+      onEditTitle: () => api.startEdit('mt.' + i, s.matrixTitles[i] || ''),
       badgeStyle: `width:22px;height:22px;flex:0 0 22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:9.5px;font-weight:700;color:var(--bg);background:${q.color}`,
-      titleStyle: `font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:1px;font-weight:600;color:${q.color}`,
+      titleStyle: `font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:1px;font-weight:600;color:${q.color};cursor:text`,
+      editStyle: `flex:1;background:var(--inset);border:1px solid var(--line2);border-radius:6px;padding:3px 7px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600`,
       cardStyle:
         'background:var(--inset);border:1px solid var(--line);border-radius:14px;padding:15px 16px;min-height:200px;display:flex;flex-direction:column',
       rows,
+      doneRows,
       empty: rows.length === 0,
     };
   });
-
-  // Completed tasks — viewable (and restorable) instead of just vanishing.
-  const doneTasks = s.tasks
-    .filter((t) => t.done)
-    .map((t) => {
-      const m = metaOf(t.area);
-      return {
-        id: t.id,
-        title: t.title,
-        tint: m.tint,
-        areaLabel: m.label,
-        onToggle: () => api.toggleTask(t.id),
-        boxStyle:
-          'width:19px;height:19px;flex:0 0 19px;margin-top:1px;border-radius:6px;display:flex;align-items:center;justify-content:center;cursor:pointer;border:1.5px solid var(--accent);background:var(--accent)',
-        titleStyle: 'font-size:13.5px;font-weight:500;line-height:1.35;color:var(--text-faint2);text-decoration:line-through',
-      };
-    });
+  const tasksDoneCount = s.tasks.filter((t) => t.done).length;
   const tasksView = {
     matrix: eisenhower,
-    done: doneTasks,
-    doneCount: doneTasks.length,
     showDone: s.showDone,
     onToggleShowDone: api.toggleShowDone,
+    doneCount: tasksDoneCount,
     doneLabel: s.showDone
-      ? `Hide completed (${doneTasks.length})`
-      : `Show completed (${doneTasks.length})`,
+      ? `Hide completed (${tasksDoneCount})`
+      : `Show completed (${tasksDoneCount})`,
+    add: {
+      areas: s.areas.map((a) => ({ key: a.key, label: a.label })),
+      areaVal: s.newTaskArea || (s.areas[0] ? s.areas[0].key : ''),
+      onAreaChange: api.setNewTaskArea,
+      quads: s.matrixTitles.map((t, i) => ({ i, label: t })),
+      quadVal: s.newTaskQuad,
+      onQuadChange: api.setNewTaskQuad,
+      onAdd: api.onTaskAdd,
+      onKey: api.onTaskAddKey,
+    },
   };
 
   // A daily word — rotates once per day across motivational lines + verses.
@@ -678,39 +710,43 @@ export function useViewModel() {
     empty: s.workouts.length === 0,
     body: (() => {
       const b = s.body;
-      const start = Math.max(b.weight, b.goalWeight, b.weight) || 1;
-      // Progress from the heavier of (weight, goal) baseline toward the goal.
       const losing = b.weight >= b.goalWeight;
-      const span = Math.max(Math.abs(b.weight - b.goalWeight), 0.0001);
       const toGo = Math.abs(b.weight - b.goalWeight);
       const reached = toGo < 0.05;
       const bmi = b.height > 0 ? b.weight / Math.pow(b.height / 100, 2) : 0;
-      const pctToGoal = reached ? 100 : Math.max(6, Math.min(100, Math.round((1 - toGo / (span + toGo || 1)) * 100)));
+      // ── MyFitnessPal-style projection ──────────────────────────────────────
+      // Daily balance vs your calorie goal (food − exercise − goal). A deficit
+      // (negative) projects weight loss. 1 kg of body fat ≈ 7700 kcal.
+      const calorieGoal = TG.kcal;
+      const netEaten = consumed - burned;
+      const balance = netEaten - calorieGoal;
+      const projChangeKg = (balance * 35) / 7700;
+      const projWeight = Math.max(0, b.weight + projChangeKg);
+      const deficit = balance <= 0;
+      // Progress along the line from current weight toward the goal, nudged by
+      // today's projected change.
+      const span = Math.max(toGo, 0.0001);
+      const movedToward = deficit === losing ? Math.min(Math.abs(projChangeKg), span) : 0;
+      const pct = reached ? 100 : Math.max(6, Math.min(100, Math.round((movedToward / span) * 100)));
       return {
         weight: b.weight,
         height: b.height,
         goalWeight: b.goalWeight,
         bmi: bmi ? bmi.toFixed(1) : '—',
+        onGoalChange: (e: React.ChangeEvent<HTMLInputElement>) =>
+          api.onBodyChange('goalWeight', e.target.value),
         toGoLabel: reached
           ? 'Goal reached — nice.'
           : `${toGo.toFixed(1)} kg to ${losing ? 'lose' : 'gain'}`,
         toGoColor: reached ? '#74ad84' : 'var(--text-dim)',
-        pct: pctToGoal + '%',
-        // editable fields
-        fields: (
-          [
-            { field: 'weight', label: 'WEIGHT', val: b.weight, unit: 'kg' },
-            { field: 'goalWeight', label: 'GOAL', val: b.goalWeight, unit: 'kg' },
-            { field: 'height', label: 'HEIGHT', val: b.height, unit: 'cm' },
-          ] as const
-        ).map((f) => ({
-          label: f.label,
-          val: f.val,
-          unit: f.unit,
-          onChange: (e: React.ChangeEvent<HTMLInputElement>) =>
-            api.onBodyChange(f.field, e.target.value),
-        })),
-        start,
+        pct: pct + '%',
+        // MFP-style projection
+        netToday: netEaten,
+        balanceLabel: `${Math.abs(Math.round(balance))} kcal ${deficit ? 'under' : 'over'} goal today`,
+        balanceColor: deficit ? '#74ad84' : '#c77b6b',
+        projWeight: projWeight.toFixed(1),
+        projLine: `If every day were like today, you'd weigh ${projWeight.toFixed(1)} kg in 5 weeks.`,
+        quote: HEALTH_QUOTES[Math.floor(now.getTime() / 86400000) % HEALTH_QUOTES.length],
       };
     })(),
   };

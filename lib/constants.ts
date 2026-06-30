@@ -185,6 +185,26 @@ export const VERSES: { text: string; ref: string }[] = [
   { text: 'Today’s effort is tomorrow’s edge.', ref: '' },
 ];
 
+/** Default Eisenhower quadrant titles (user-editable, persisted). */
+export const DEFAULT_MATRIX_TITLES = [
+  'Urgent & Important',
+  'Important, Not Urgent',
+  'Urgent, Not Important',
+  'Not Urgent & Unimportant',
+];
+
+/** Health-focused motivational lines, shown on the Health page. */
+export const HEALTH_QUOTES = [
+  'Take care of your body — it’s the only place you have to live.',
+  'A little progress each day adds up to big results.',
+  'Discipline is choosing between what you want now and what you want most.',
+  'You don’t have to be extreme, just consistent.',
+  'Sweat now, shine later.',
+  'Your body hears everything your mind says — stay positive.',
+  'Small habits, big change. One meal, one workout at a time.',
+  'Strong is the new goal. Show up for yourself today.',
+];
+
 /** Today as an en-CA ISO date string (YYYY-MM-DD) in local time. */
 export function todayISO(): string {
   return new Date().toLocaleDateString('en-CA');
@@ -243,6 +263,9 @@ export function makeInitialState(): TempoState {
     managing: false,
     catDraft: '',
     showDone: false,
+    matrixTitles: [...DEFAULT_MATRIX_TITLES],
+    newTaskArea: '',
+    newTaskQuad: 0,
     capture: '',
     foodDraft: '',
     exDraft: '',

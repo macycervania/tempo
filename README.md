@@ -7,9 +7,9 @@ It's a single-page, **phone-friendly** dashboard with seven views, a warm-black 
 ## Features
 
 - **Overview** — a calm home screen: greeting, a **daily word** (a motivational line or Bible verse), a tasks-done-today bar, the **voice button** + **Nateman**, compact **Habits & Priorities progress** (tap to open their pages), and your weekly/monthly **Goals**.
-- **Tasks** — your tasks as an **Eisenhower matrix** (urgent × important, four quadrants), with the editable category bar and quick capture; new tasks auto-file into the right quadrant by priority and due date. Completing a task moves it to a **Show completed** list you can reopen and restore from.
-- **Habits** — the full habits board: daily-score ring, fire streaks, sub-tasks, add/edit/remove.
-- **Health** — today's intake / burned / net with macros, a 7-day intake trend, full meal & training logs, and a **Body** card (editable weight, goal weight, height, BMI) with goal-weight progress. Meal logging and **body-aware training calories** run through the **AI seams** (see below).
+- **Tasks** — your tasks as an **Eisenhower matrix** (urgent × important, four quadrants). Add a task with a chosen **category and quadrant**, **rename any quadrant** inline (e.g. "Urgent" → "Remember"), and reveal **completed tasks within each quadrant** via *Show completed* (tap to restore). Ticking a task off plays a chime.
+- **Habits** — the full habits board: daily-score ring, fire streaks, sub-tasks, add/edit/remove (with a completion chime).
+- **Health** — today's intake / burned / net with macros, a 7-day intake trend, full meal & training logs, and a **Body** card: editable **goal weight**, a **MyFitnessPal-style 5-week weight forecast** from today's net calories ("if every day were like today…"), and a health quote. Body weight & height live in **Settings**. Meal logging and **body-aware training calories** run through the **AI seams** (see below).
 - **Budget** — a zero-based monthly budget in pesos: income + eight expense groups with subcategories, inline editing, and a smart expense logger. Drives the Finance page's cash.
 - **Finance** — net liquid (linked live to the budget), assets/portfolio, realized P&L with a last-10-sessions chart, and a trade journal you can log into.
 - **Calendar** — a month grid wired to your tasks; click a day to view, complete, or add tasks to it.
