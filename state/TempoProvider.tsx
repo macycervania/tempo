@@ -95,7 +95,7 @@ export interface TempoApi {
   addKR: (period: 'weekly' | 'monthly') => void;
   removeKR: (period: 'weekly' | 'monthly', i: number) => void;
   // budget
-  onToggleBudgetManage: () => void;
+  onToggleBudgetEdit: (section: string) => void;
   addLine: (gi: number) => void;
   removeLine: (gi: number, si: number) => void;
   addGroup: () => void;
@@ -913,8 +913,14 @@ export function TempoProvider({ children }: { children: React.ReactNode }) {
 
   // ── budget ──────────────────────────────────────────────────────────────────
   const cloneBudget = () => JSON.parse(JSON.stringify(ref.current.budget));
-  const onToggleBudgetManage = useCallback(
-    () => set((s) => ({ budgetManaging: !s.budgetManaging, edit: null })),
+  const onToggleBudgetEdit = useCallback(
+    (section: string) =>
+      set((s) => ({
+        budgetEdit: s.budgetEdit.includes(section)
+          ? s.budgetEdit.filter((x) => x !== section)
+          : [...s.budgetEdit, section],
+        edit: null,
+      })),
     [set],
   );
   const addLine = useCallback(
@@ -1760,7 +1766,7 @@ export function TempoProvider({ children }: { children: React.ReactNode }) {
       toggleKR,
       addKR,
       removeKR,
-      onToggleBudgetManage,
+      onToggleBudgetEdit,
       addLine,
       removeLine,
       addGroup,

@@ -87,16 +87,16 @@ export default function SettingsView({ vm }: { vm: VM }) {
         <div style={css(mono + 'font-size:10px;letter-spacing:2px;color:var(--text-faint);margin-bottom:14px')}>DAILY TARGETS</div>
         <div className="setGrid2" style={css('display:grid;gap:12px')}>
           {st.targets.map((t, i) => (
-            <div key={i} style={css('display:flex;align-items:center;justify-content:space-between;background:var(--inset);border:1px solid var(--line);border-radius:10px;padding:11px 14px')}>
-              <span style={css('font-size:13px;color:var(--text-dim)')}>{t.label}</span>
-              <span style={css('display:flex;align-items:center;gap:7px')}>
+            <div key={i} style={css('display:flex;flex-direction:column;gap:8px;background:var(--inset);border:1px solid var(--line);border-radius:10px;padding:12px 14px')}>
+              <span style={css('font-size:12.5px;color:var(--text-dim)')}>{t.label}</span>
+              <span style={css('display:flex;align-items:center;gap:8px')}>
                 <input
                   type="number"
                   value={t.val}
                   onChange={t.onChange}
-                  style={css("width:74px;text-align:right;background:var(--inset);border:1px solid var(--line2);border-radius:6px;padding:4px 8px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:13px")}
+                  style={css("flex:1;min-width:0;text-align:right;background:var(--panel);border:1px solid var(--line2);border-radius:7px;padding:7px 10px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:14px")}
                 />
-                <span style={css(mono + 'font-size:11px;color:var(--text-faint);width:28px')}>{t.unit}</span>
+                <span style={css(mono + 'font-size:11px;color:var(--text-faint);flex:0 0 auto')}>{t.unit}</span>
               </span>
             </div>
           ))}
@@ -108,22 +108,22 @@ export default function SettingsView({ vm }: { vm: VM }) {
         <div style={css(mono + 'font-size:10px;letter-spacing:2px;color:var(--text-faint);margin-bottom:14px')}>BODY</div>
         <div className="setGrid3" style={css('display:grid;gap:12px')}>
           {st.body.fields.map((f, i) => (
-            <div key={i} style={css('display:flex;align-items:center;justify-content:space-between;background:var(--inset);border:1px solid var(--line);border-radius:10px;padding:11px 14px')}>
-              <span style={css('font-size:13px;color:var(--text-dim)')}>{f.label}</span>
-              <span style={css('display:flex;align-items:center;gap:7px')}>
+            <div key={i} style={css('display:flex;flex-direction:column;gap:8px;background:var(--inset);border:1px solid var(--line);border-radius:10px;padding:12px 14px')}>
+              <span style={css('font-size:12.5px;color:var(--text-dim)')}>{f.label}</span>
+              <span style={css('display:flex;align-items:center;gap:8px')}>
                 <input
                   type="number"
                   value={f.val}
                   onChange={f.onChange}
-                  style={css("width:64px;text-align:right;background:var(--inset);border:1px solid var(--line2);border-radius:6px;padding:4px 8px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:13px")}
+                  style={css("flex:1;min-width:0;text-align:right;background:var(--panel);border:1px solid var(--line2);border-radius:7px;padding:7px 10px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:14px")}
                 />
-                <span style={css(mono + 'font-size:11px;color:var(--text-faint);width:24px')}>{f.unit}</span>
+                <span style={css(mono + 'font-size:11px;color:var(--text-faint);flex:0 0 auto')}>{f.unit}</span>
               </span>
             </div>
           ))}
-          <div style={css('display:flex;align-items:center;justify-content:space-between;background:var(--inset);border:1px solid var(--line);border-radius:10px;padding:11px 14px')}>
-            <span style={css('font-size:13px;color:var(--text-dim)')}>BMI</span>
-            <span style={css(mono + 'font-size:14px;font-weight:600;color:var(--text)')}>{st.body.bmi}</span>
+          <div style={css('display:flex;flex-direction:column;gap:8px;background:var(--inset);border:1px solid var(--line);border-radius:10px;padding:12px 14px')}>
+            <span style={css('font-size:12.5px;color:var(--text-dim)')}>BMI</span>
+            <span style={css(mono + 'font-size:16px;font-weight:600;color:var(--text);padding:5px 0')}>{st.body.bmi}</span>
           </div>
         </div>
         <div style={css('font-size:12px;color:var(--text-faint);margin-top:12px')}>Your goal weight lives on the Health page · powers the weight forecast</div>

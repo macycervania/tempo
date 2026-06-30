@@ -281,7 +281,7 @@ export function makeInitialState(): TempoState {
     edit: null,
     editVal: '',
     expenseDraft: '',
-    budgetManaging: false,
+    budgetEdit: [],
     finEdit: [],
     wallets: [],
     walletAddrDraft: '',

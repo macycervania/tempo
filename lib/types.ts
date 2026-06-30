@@ -267,7 +267,8 @@ export interface TempoState {
   edit: string | null;
   editVal: string;
   expenseDraft: string;
-  budgetManaging: boolean;
+  /** Budget sections in edit mode ('income', or 'g{index}' per category). */
+  budgetEdit: string[];
   /** Finance sections currently in edit mode (e.g. 'liquid', 'assets', 'pnl', 'journal'). */
   finEdit: string[];
   /** Read-only Solana wallets tracked in net worth. */

@@ -121,7 +121,7 @@ export function useViewModel() {
     onTestVoice: api.testVoice,
     notifs: (
       [
-        { key: 'dailySummary', label: 'Daily summary', desc: 'A morning brief of your day' },
+        { key: 'dailySummary', label: 'Daily summary', desc: 'Show a morning brief card on your Overview (tasks, habits, calories, P&L)' },
         { key: 'habitReminders', label: 'Habit reminders', desc: 'Nudge me to keep streaks alive' },
         { key: 'deadlineAlerts', label: 'Deadline alerts', desc: 'Warn me before tasks are due' },
         { key: 'weeklyReview', label: 'Weekly review', desc: 'Show a recap card on your Overview (goals, calories, spending, P&L)' },
@@ -646,6 +646,22 @@ export function useViewModel() {
 
   // budget
   const editKey = s.edit;
+  // Per-section edit toggles (like Finance): Income and each expense category
+  // flip independently.
+  const budgetBtn = (section: string) => {
+    const on = s.budgetEdit.includes(section);
+    return {
+      managing: on,
+      onToggle: () => api.onToggleBudgetEdit(section),
+      label: on ? 'DONE' : '+ EDIT',
+      btnStyle: `font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1px;background:${
+        on ? 'var(--inset)' : 'transparent'
+      };border:1px solid var(--line2);border-radius:7px;padding:4px 9px;cursor:pointer;transition:all .12s;color:${
+        on ? 'var(--text)' : 'var(--text-faint)'
+      }`,
+    };
+  };
+  const incomeEdit = budgetBtn('income');
   const numCell = (
     val: number,
     key: string,
@@ -711,8 +727,11 @@ export function useViewModel() {
     budgetTotal += gb;
     spentTotal += gs;
     const gpct = gb > 0 ? Math.min(100, Math.round((gs / gb) * 100)) : 0;
+    const gEdit = budgetBtn('g' + gi);
     return {
       name: g.name,
+      managing: gEdit.managing,
+      editBtn: gEdit,
       nameEditing: editKey === 'gn.' + gi,
       nameShow: editKey !== 'gn.' + gi,
       onEditName: () => api.startEdit('gn.' + gi, g.name),
@@ -733,6 +752,8 @@ export function useViewModel() {
       .toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
       .toUpperCase(),
     incomeLines,
+    incomeManaging: incomeEdit.managing,
+    incomeEdit,
     incomeTotal: fmtPeso(incomeTotal),
     groups: bGroups,
     budgetTotal: fmtPeso(budgetTotal),
@@ -1236,9 +1257,51 @@ export function useViewModel() {
     };
   })();
 
+  // Daily summary — a morning brief card (shown on Overview when the "Daily
+  // summary" notification toggle is on).
+  const dailyBrief = {
+    show: !!s.notifs.dailySummary,
+    lines: [
+      {
+        label: 'FIRST UP',
+        val: todayOpen[0] ? todayOpen[0].title : 'All clear — plan your day',
+        color: 'var(--text)',
+      },
+      {
+        label: 'TASKS',
+        val: `${prioDone}/${prioTotal} done`,
+        color: 'var(--text-dim)',
+      },
+      {
+        label: 'HABITS',
+        val: `${habitsDone}/${s.habits.length} today`,
+        color:
+          habitsDone === s.habits.length && s.habits.length
+            ? '#74ad84'
+            : 'var(--text-dim)',
+      },
+      {
+        label: 'CALORIES',
+        val: `${Math.max(0, s.targets.kcal - net)} kcal left of ${s.targets.kcal}`,
+        color: '#74ad84',
+      },
+      {
+        label: 'WEEKLY GOAL',
+        val: goals.weekly.progressLabel,
+        color: 'var(--accent)',
+      },
+      {
+        label: "TODAY'S P&L",
+        val: fmtSig(fd.pnlToday),
+        color: pnlColor(fd.pnlToday),
+      },
+    ],
+  };
+
   return {
     pageTabs,
     weeklyReview,
+    dailyBrief,
     isOverview: s.page === 'overview',
     isFinance: s.page === 'finance',
     isHealth: s.page === 'health',
@@ -1351,14 +1414,6 @@ export function useViewModel() {
     onEditKey: api.onEditKey,
     commitEdit: api.commitEdit,
     focusRef: api.focusRef,
-    budgetManaging: s.budgetManaging,
-    onToggleBudgetManage: api.onToggleBudgetManage,
-    budgetManageLabel: s.budgetManaging ? 'DONE' : '+ EDIT LINES',
-    budgetManageBtnStyle: `font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1px;background:${
-      s.budgetManaging ? 'var(--inset)' : 'transparent'
-    };border:1px solid var(--line2);border-radius:7px;padding:5px 11px;cursor:pointer;transition:all .12s;color:${
-      s.budgetManaging ? 'var(--text)' : 'var(--text-faint)'
-    }`,
     onAddGroup: api.addGroup,
     onAddIncome: api.addIncome,
     expenseDraft: s.expenseDraft,
