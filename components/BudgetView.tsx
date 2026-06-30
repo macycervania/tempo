@@ -46,12 +46,10 @@ export default function BudgetView({ vm }: { vm: VM }) {
         {/* INCOME */}
         <section style={css('background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:20px 22px')}>
           <div style={css('display:flex;align-items:center;gap:10px;margin-bottom:16px')}>
-            <span style={css(mono + 'font-size:11px;font-weight:600;letter-spacing:1px;color:#74ad84;border:1px solid var(--line2);border-radius:5px;padding:2px 7px')}>+</span>
+            <Hov as="button" onClick={budget.incomeBadge.onToggle} styleStr={budget.incomeBadge.style} hover="opacity:.85" title="Tap to edit income">{budget.incomeBadge.glyph}</Hov>
             <span style={css(mono + 'font-size:11px;letter-spacing:2.5px;color:var(--text-faint)')}>{'// INCOME'}</span>
             <div style={{ flex: 1 }} />
-            <Hov as="button" onClick={budget.incomeEdit.onToggle} styleStr={budget.incomeEdit.btnStyle} hover="border-color:var(--line2);color:var(--text)">
-              {budget.incomeEdit.label}
-            </Hov>
+            <span style={css(mono + 'font-size:9.5px;letter-spacing:1px;color:var(--text-faint2)')}>{budget.incomeManaging ? 'EDITING · tap + to finish' : 'tap + to edit'}</span>
           </div>
           <div style={css('display:flex;flex-direction:column;gap:3px')}>
             {budget.incomeLines.map((inc, i) => (
@@ -88,14 +86,18 @@ export default function BudgetView({ vm }: { vm: VM }) {
         {/* EXPENSES */}
         <section style={css('background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:20px 22px;max-height:62vh;overflow-y:auto')}>
           <div style={css('display:flex;align-items:center;gap:10px;margin-bottom:14px')}>
-            <span style={css(mono + 'font-size:11px;font-weight:600;letter-spacing:1px;color:var(--text-dim);border:1px solid var(--line2);border-radius:5px;padding:2px 7px')}>−</span>
+            <Hov as="button" onClick={budget.expensesBadge.onToggle} styleStr={budget.expensesBadge.style} hover="opacity:.85" title="Tap to edit expenses">{budget.expensesBadge.glyph}</Hov>
             <span style={css(mono + 'font-size:11px;letter-spacing:2.5px;color:var(--text-faint)')}>{'// EXPENSES'}</span>
             <div style={{ flex: 1 }} />
-            <div className="bHeadRow" style={css(mono + 'display:grid;grid-template-columns:92px 92px 88px;gap:0;font-size:9.5px;letter-spacing:1px;color:var(--text-faint2);text-align:right')}>
-              <span>BUDGET</span>
-              <span>SPENT</span>
-              <span>LEFT</span>
-            </div>
+            {budget.expensesManaging ? (
+              <span style={css(mono + 'font-size:9.5px;letter-spacing:1px;color:var(--accent)')}>EDITING · tap − to finish</span>
+            ) : (
+              <div className="bHeadRow" style={css(mono + 'display:grid;grid-template-columns:92px 92px 88px;gap:0;font-size:9.5px;letter-spacing:1px;color:var(--text-faint2);text-align:right')}>
+                <span>BUDGET</span>
+                <span>SPENT</span>
+                <span>LEFT</span>
+              </div>
+            )}
           </div>
 
           {budget.groups.map((g, gi) => (
@@ -112,9 +114,6 @@ export default function BudgetView({ vm }: { vm: VM }) {
                   {g.nameEditing && (
                     <EditInput vm={vm} style="background:var(--inset);border:1px solid var(--line2);border-radius:5px;padding:3px 6px;color:var(--text);font-size:13px;font-weight:600" />
                   )}
-                  <Hov as="button" onClick={g.editBtn.onToggle} styleStr={g.editBtn.btnStyle + ';margin-left:auto;flex:0 0 auto'} hover="border-color:var(--line2);color:var(--text)">
-                    {g.editBtn.label}
-                  </Hov>
                 </div>
                 <span style={css(mono + 'text-align:right;font-size:11.5px;color:var(--text-muted)')}>{g.subB}</span>
                 <span style={css(mono + 'text-align:right;font-size:11.5px;color:var(--text-dim)')}>{g.subS}</span>
@@ -167,9 +166,11 @@ export default function BudgetView({ vm }: { vm: VM }) {
             </div>
           ))}
 
-          <Hov as="button" onClick={vm.onAddGroup} styleStr={mono + 'margin-top:6px;font-size:11px;color:var(--text-faint);background:none;border:1px dashed var(--line2);border-radius:7px;padding:8px 0;width:100%;cursor:pointer'} hover="color:var(--text);border-color:var(--line2)">
-            + add category
-          </Hov>
+          {budget.expensesManaging && (
+            <Hov as="button" onClick={vm.onAddGroup} styleStr={mono + 'margin-top:6px;font-size:11px;color:var(--text-faint);background:none;border:1px dashed var(--line2);border-radius:7px;padding:8px 0;width:100%;cursor:pointer'} hover="color:var(--text);border-color:var(--line2)">
+              + add category
+            </Hov>
+          )}
 
           <div className="bTotalRow" style={css('display:grid;grid-template-columns:1fr 92px 92px 88px 104px;align-items:center;gap:8px;margin-top:8px;padding-top:14px;border-top:1px solid var(--line2)')}>
             <span style={css(mono + 'font-size:10px;letter-spacing:1.5px;color:var(--text-dim);font-weight:600')}>TOTAL EXPENSES</span>

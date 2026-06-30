@@ -662,6 +662,16 @@ export function useViewModel() {
     };
   };
   const incomeEdit = budgetBtn('income');
+  const expensesEdit = budgetBtn('expenses');
+  // Badge that doubles as the section's edit toggle (the + / − glyph).
+  const editBadge = (on: boolean, color: string, glyph: string, onToggle: () => void) => ({
+    glyph,
+    onToggle,
+    managing: on,
+    style: `font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;letter-spacing:1px;border-radius:5px;padding:2px 8px;cursor:pointer;transition:all .12s;border:1px solid ${
+      on ? color : 'var(--line2)'
+    };background:${on ? color : 'transparent'};color:${on ? 'var(--bg)' : color}`,
+  });
   const numCell = (
     val: number,
     key: string,
@@ -727,11 +737,9 @@ export function useViewModel() {
     budgetTotal += gb;
     spentTotal += gs;
     const gpct = gb > 0 ? Math.min(100, Math.round((gs / gb) * 100)) : 0;
-    const gEdit = budgetBtn('g' + gi);
     return {
       name: g.name,
-      managing: gEdit.managing,
-      editBtn: gEdit,
+      managing: expensesEdit.managing,
       nameEditing: editKey === 'gn.' + gi,
       nameShow: editKey !== 'gn.' + gi,
       onEditName: () => api.startEdit('gn.' + gi, g.name),
@@ -753,7 +761,9 @@ export function useViewModel() {
       .toUpperCase(),
     incomeLines,
     incomeManaging: incomeEdit.managing,
-    incomeEdit,
+    incomeBadge: editBadge(incomeEdit.managing, '#74ad84', '+', incomeEdit.onToggle),
+    expensesManaging: expensesEdit.managing,
+    expensesBadge: editBadge(expensesEdit.managing, 'var(--accent)', '−', expensesEdit.onToggle),
     incomeTotal: fmtPeso(incomeTotal),
     groups: bGroups,
     budgetTotal: fmtPeso(budgetTotal),
