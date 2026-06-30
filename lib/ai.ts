@@ -382,7 +382,11 @@ export type AssistantIntent =
   | { type: 'none' }
   | { type: 'setTheme'; themeKey: string }
   | { type: 'addTask'; text: string }
-  | { type: 'navigate'; page: NavPage };
+  | { type: 'navigate'; page: NavPage }
+  | { type: 'logMeal'; name: string; kcal: number; p: number; c: number; f: number }
+  | { type: 'logWorkout'; name: string; minutes: number; kcal: number }
+  | { type: 'completeHabit'; name: string }
+  | { type: 'logTrade'; sym: string; pnl: number };
 
 /** One searchable fact from the user's history — the "brain" index. */
 export interface MemoryItem {
@@ -406,6 +410,8 @@ export interface AssistantSnapshot {
   consumedKcal: number;
   burnedKcal: number;
   remainingKcal: number;
+  /** The user's habit names, so Nateman can tick the right one off by name. */
+  habitNames: string[];
   /** Everything the user has logged — searched for recall ("ask my OS"). */
   memory: MemoryItem[];
 }
@@ -449,7 +455,8 @@ export function searchMemory(query: string, memory: MemoryItem[]): MemoryItem[] 
 export interface AssistantReply {
   answer: string;
   actionLabel: string;
-  intent: AssistantIntent;
+  /** Nateman may do several things at once ("ate eggs and ran 5k" → 2 logs). */
+  intents: AssistantIntent[];
 }
 
 export function respondAssistant(
@@ -478,7 +485,7 @@ export function respondAssistant(
       return {
         answer: `From your ${KIND_LABEL[top.kind]} on ${top.when}: "${top.text}".${more}`,
         actionLabel: `Recalled · ${top.when}`,
-        intent: { type: 'none' },
+        intents: [{ type: 'none' }],
       };
     }
     // fall through to the generic handlers if nothing matched
@@ -488,7 +495,7 @@ export function respondAssistant(
     return {
       answer: `Done — switched your theme to ${th.name}.`,
       actionLabel: 'Theme → ' + th.name,
-      intent: { type: 'setTheme', themeKey: th.key },
+      intents: [{ type: 'setTheme', themeKey: th.key }],
     };
   }
 
@@ -500,7 +507,7 @@ export function respondAssistant(
     return {
       answer: `Added “${cap(txt)}” to your tasks.`,
       actionLabel: 'Task added',
-      intent: { type: 'addTask', text: txt },
+      intents: [{ type: 'addTask', text: txt }],
     };
   }
 
@@ -511,14 +518,14 @@ export function respondAssistant(
         : `You have ${snap.openToday} task${snap.openToday > 1 ? 's' : ''} today${
             snap.highToday ? `, ${snap.highToday} high-priority` : ''
           }. Start with “${snap.firstOpenTitle}”.`;
-    return { answer: ans, actionLabel: '', intent: { type: 'none' } };
+    return { answer: ans, actionLabel: '', intents: [{ type: 'none' }] };
   }
 
   if (/liquid|balance|net worth|money|cash|finance|spent|budget/.test(lo)) {
     return {
       answer: `Your net liquid is ${snap.netLiquidLabel}, and today’s P&L is ${snap.pnlTodayLabel}.`,
       actionLabel: 'Opened Finance',
-      intent: { type: 'navigate', page: 'finance' },
+      intents: [{ type: 'navigate', page: 'finance' }],
     };
   }
 
@@ -528,7 +535,7 @@ export function respondAssistant(
         snap.consumedKcal - snap.burnedKcal
       } — about ${Math.max(0, snap.remainingKcal)} left to your target.`,
       actionLabel: 'Opened Health',
-      intent: { type: 'navigate', page: 'health' },
+      intents: [{ type: 'navigate', page: 'health' }],
     };
   }
 
@@ -536,20 +543,76 @@ export function respondAssistant(
     return {
       answer: `${snap.doneToday}/${snap.totalToday} tasks done today and your habits are on track. Keep it up.`,
       actionLabel: '',
-      intent: { type: 'none' },
+      intents: [{ type: 'none' }],
     };
   }
 
   if (/thank|thanks|nice|cool|good job|love/.test(lo)) {
-    return { answer: 'Anytime — happy to help.', actionLabel: '', intent: { type: 'none' } };
+    return { answer: 'Anytime — happy to help.', actionLabel: '', intents: [{ type: 'none' }] };
   }
 
   return {
     answer:
       'On it. I can plan your day, add tasks, check your money, log fuel, or switch themes — just ask.',
     actionLabel: '',
-    intent: { type: 'none' },
+    intents: [{ type: 'none' }],
   };
+}
+
+/** Validate one raw action object from the server into a typed intent (or null). */
+function parseAction(a: {
+  type?: string;
+  themeKey?: string;
+  text?: string;
+  page?: string;
+  name?: string;
+  kcal?: number;
+  p?: number;
+  c?: number;
+  f?: number;
+  minutes?: number;
+  sym?: string;
+  pnl?: number;
+}): AssistantIntent | null {
+  const num = (v: unknown, d = 0) => (typeof v === 'number' && isFinite(v) ? v : d);
+  switch (a.type) {
+    case 'setTheme':
+      return a.themeKey && THEMES.some((t) => t.key === a.themeKey)
+        ? { type: 'setTheme', themeKey: a.themeKey }
+        : null;
+    case 'addTask':
+      return a.text ? { type: 'addTask', text: a.text } : null;
+    case 'navigate':
+      return a.page && NAV_PAGES.includes(a.page as NavPage)
+        ? { type: 'navigate', page: a.page as NavPage }
+        : null;
+    case 'logMeal':
+      return a.name
+        ? {
+            type: 'logMeal',
+            name: a.name,
+            kcal: Math.max(0, Math.round(num(a.kcal))),
+            p: Math.max(0, Math.round(num(a.p))),
+            c: Math.max(0, Math.round(num(a.c))),
+            f: Math.max(0, Math.round(num(a.f))),
+          }
+        : null;
+    case 'logWorkout':
+      return a.name
+        ? {
+            type: 'logWorkout',
+            name: a.name,
+            minutes: Math.max(0, Math.round(num(a.minutes))),
+            kcal: Math.max(0, Math.round(num(a.kcal))),
+          }
+        : null;
+    case 'completeHabit':
+      return a.name ? { type: 'completeHabit', name: a.name } : null;
+    case 'logTrade':
+      return a.sym ? { type: 'logTrade', sym: a.sym.toUpperCase(), pnl: Math.round(num(a.pnl)) } : null;
+    default:
+      return null;
+  }
 }
 
 /**
@@ -577,21 +640,22 @@ export async function respondAssistantSmart(
     const data = (await res.json()) as {
       answer?: string;
       actionLabel?: string;
-      action?: { type?: string; themeKey?: string; text?: string; page?: string };
+      // New multi-action shape; `action` kept for backward compatibility.
+      actions?: Array<Record<string, unknown>>;
+      action?: Record<string, unknown>;
     };
-    const a = data.action || { type: 'none' };
-    let intent: AssistantIntent = { type: 'none' };
-    if (a.type === 'setTheme' && a.themeKey && THEMES.some((t) => t.key === a.themeKey)) {
-      intent = { type: 'setTheme', themeKey: a.themeKey };
-    } else if (a.type === 'addTask' && a.text) {
-      intent = { type: 'addTask', text: a.text };
-    } else if (a.type === 'navigate' && a.page && NAV_PAGES.includes(a.page as NavPage)) {
-      intent = { type: 'navigate', page: a.page as NavPage };
-    }
+    const raw = Array.isArray(data.actions)
+      ? data.actions
+      : data.action
+        ? [data.action]
+        : [];
+    const intents = raw
+      .map((a) => parseAction(a as Parameters<typeof parseAction>[0]))
+      .filter((x): x is AssistantIntent => x !== null);
     return {
       answer: data.answer || 'On it.',
       actionLabel: data.actionLabel || '',
-      intent,
+      intents: intents.length ? intents : [{ type: 'none' }],
     };
   } catch {
     return respondAssistant(query, snap);
