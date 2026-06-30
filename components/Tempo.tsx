@@ -12,7 +12,6 @@ import HabitsView from './HabitsView';
 import HealthView from './HealthView';
 import BudgetView from './BudgetView';
 import FinanceView from './FinanceView';
-import MemecoinsView from './MemecoinsView';
 import LeaderboardView from './LeaderboardView';
 import CalendarView from './CalendarView';
 import JournalView from './JournalView';
@@ -31,7 +30,6 @@ function Shell() {
           {vm.isTasks && <TasksView vm={vm} />}
           {vm.isHabits && <HabitsView vm={vm} />}
           {vm.isFinance && <FinanceView vm={vm} />}
-          {vm.isMemecoins && <MemecoinsView vm={vm} />}
           {vm.isLeaderboard && <LeaderboardView vm={vm} />}
           {vm.isHealth && <HealthView vm={vm} />}
           {vm.isBudget && <BudgetView vm={vm} />}

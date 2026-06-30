@@ -27,21 +27,6 @@ export default function BudgetView({ vm }: { vm: VM }) {
         ))}
       </div>
 
-      {/* expense quick logger */}
-      <div style={css('display:flex;align-items:center;gap:9px;background:var(--inset);border:1px solid var(--line2);border-radius:10px;padding:0 12px;height:44px;margin-bottom:16px')}>
-        <span style={css(mono + 'font-size:13px;color:var(--accent)')}>↵</span>
-        <input
-          value={vm.expenseDraft}
-          onChange={vm.onExpenseInput}
-          onKeyDown={vm.onExpenseKey}
-          placeholder="Log an expense — it finds the line (“Grab 180”, “Groceries 1500”)"
-          style={css('flex:1;background:none;border:none;color:var(--text);font-size:13.5px')}
-        />
-        <Hov as="button" onClick={vm.onExpenseSubmit} styleStr="background:var(--inset);border:1px solid var(--line2);border-radius:7px;padding:6px 13px;font-size:12px;font-weight:600;color:var(--text-dim);cursor:pointer" hover="border-color:var(--line2)">
-          Log
-        </Hov>
-      </div>
-
       <div className="budgetgrid">
         {/* INCOME */}
         <section style={css('background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:20px 22px')}>

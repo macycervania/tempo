@@ -177,7 +177,6 @@ export function useViewModel() {
       { key: 'health', label: 'Health', glyph: '♥' },
       { key: 'budget', label: 'Budget', glyph: '▤' },
       { key: 'finance', label: 'Finance', glyph: '◈' },
-      { key: 'memecoins', label: 'Memecoins', glyph: '◉' },
       { key: 'leaderboard', label: 'Leaders', glyph: '♛' },
       { key: 'calendar', label: 'Calendar', glyph: '▣' },
       { key: 'journal', label: 'Journal', glyph: '✎' },
