@@ -16,9 +16,6 @@ export default function FinanceView({ vm }: { vm: VM }) {
           <span style={css(mono + 'font-size:11px;font-weight:600;letter-spacing:1px;color:var(--bg);background:var(--accent);border-radius:5px;padding:2px 7px')}>01</span>
           <span style={css(mono + 'font-size:11px;letter-spacing:2.5px;color:var(--text-faint)')}>{'// NET LIQUID'}</span>
           <div style={{ flex: 1 }} />
-          <Hov as="button" onClick={fin.liquidEdit.onToggle} styleStr={fin.liquidEdit.btnStyle} hover="border-color:var(--line2);color:var(--text)">
-            {fin.liquidEdit.label}
-          </Hov>
         </div>
         <div style={css('font-size:46px;font-weight:700;letter-spacing:-1.5px;line-height:1')}>{fin.liquid}</div>
         <div style={css(mono + 'font-size:11px;color:#74ad84;margin-top:6px')}>{fin.cashNote}</div>

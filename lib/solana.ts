@@ -5,9 +5,46 @@
 // Both calls run client-side (in the user's browser), so they work from the
 // served app and from the standalone HTML using the device's own network.
 
-const RPC_URL = 'https://api.mainnet-beta.solana.com';
+// Several public, CORS-friendly mainnet RPCs — tried in order until one
+// answers. The official api.mainnet-beta endpoint rate-limits browser
+// requests hard, so it's the last resort, not the first.
+const RPC_URLS = [
+  'https://solana-rpc.publicnode.com',
+  'https://solana.api.onfinality.io/public',
+  'https://api.mainnet-beta.solana.com',
+];
 const PRICE_URL = 'https://api.coingecko.com/api/v3/simple/price';
 const LAMPORTS_PER_SOL = 1_000_000_000;
+
+/** Query getBalance across the fallback RPCs; returns lamports or throws. */
+async function rpcBalance(addr: string): Promise<number> {
+  let lastErr: unknown = null;
+  for (const url of RPC_URLS) {
+    try {
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          jsonrpc: '2.0',
+          id: 1,
+          method: 'getBalance',
+          params: [addr],
+        }),
+      });
+      if (!res.ok) {
+        lastErr = new Error('RPC ' + res.status);
+        continue;
+      }
+      const json = await res.json();
+      const lamports = json?.result?.value;
+      if (typeof lamports === 'number') return lamports;
+      lastErr = new Error(json?.error?.message || 'No balance in response');
+    } catch (e) {
+      lastErr = e;
+    }
+  }
+  throw lastErr instanceof Error ? lastErr : new Error('All RPC endpoints failed');
+}
 
 /** CoinGecko understands every currency we ship in the picker (lowercased). */
 const SUPPORTED_VS = new Set(['php', 'usd', 'eur', 'gbp', 'jpy', 'inr']);
@@ -30,20 +67,7 @@ export async function fetchSolWallet(
   const addr = address.trim();
   if (!isSolAddress(addr)) throw new Error('Invalid Solana address');
 
-  const balRes = await fetch(RPC_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      jsonrpc: '2.0',
-      id: 1,
-      method: 'getBalance',
-      params: [addr],
-    }),
-  });
-  if (!balRes.ok) throw new Error('RPC ' + balRes.status);
-  const balJson = await balRes.json();
-  const lamports = balJson?.result?.value;
-  if (typeof lamports !== 'number') throw new Error('No balance');
+  const lamports = await rpcBalance(addr);
   const sol = lamports / LAMPORTS_PER_SOL;
 
   const vs = SUPPORTED_VS.has(currencyCode.toLowerCase())
