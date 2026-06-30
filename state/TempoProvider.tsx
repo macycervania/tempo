@@ -42,7 +42,7 @@ import {
 } from '@/lib/format';
 import { clearSettings, loadSettings, savePfp, saveSettings } from '@/lib/storage';
 import { fetchSolWallet, isSolAddress } from '@/lib/solana';
-import { searchFoods } from '@/lib/foods';
+import { searchFoods, localFoods } from '@/lib/foods';
 import type { FoodHit } from '@/lib/foods';
 import type { Task } from '@/lib/types';
 
@@ -642,7 +642,8 @@ export function TempoProvider({ children }: { children: React.ReactNode }) {
       set({ foodResults: [], foodSearching: false });
       return;
     }
-    set({ foodSearching: true });
+    // Show instant offline matches right away; AI + Open Food Facts augment.
+    set({ foodResults: localFoods(q), foodSearching: true });
     foodSearchTimer.current = setTimeout(() => runFoodSearch(q), 280);
   };
   const onPickFood = useCallback(

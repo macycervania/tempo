@@ -15,7 +15,7 @@ export interface FoodHit {
   p: number;
   c: number;
   f: number;
-  source: 'common' | 'off';
+  source: 'common' | 'off' | 'ai';
 }
 
 type Generic = {
@@ -84,6 +84,39 @@ const COMMON: Generic[] = [
   { kw: ['pad thai'], name: 'Pad Thai', serving: '1 plate', kcal: 450, p: 20, c: 55, f: 16 },
   { kw: ['sushi', 'maki', 'roll'], name: 'Sushi Roll', serving: '6 pcs', kcal: 250, p: 9, c: 40, f: 5 },
   { kw: ['dumpling', 'siomai', 'gyoza', 'dimsum'], name: 'Dumplings (6 pcs)', serving: '6 pcs', kcal: 300, p: 12, c: 35, f: 12 },
+  // Filipino dishes
+  { kw: ['kare-kare', 'kare kare', 'karekare'], name: 'Kare-Kare', serving: '1 serving', kcal: 450, p: 28, c: 18, f: 30 },
+  { kw: ['kaldereta', 'caldereta'], name: 'Beef Kaldereta', serving: '1 serving', kcal: 400, p: 26, c: 15, f: 26 },
+  { kw: ['mechado'], name: 'Mechado', serving: '1 serving', kcal: 380, p: 25, c: 14, f: 24 },
+  { kw: ['menudo'], name: 'Menudo', serving: '1 serving', kcal: 350, p: 22, c: 18, f: 20 },
+  { kw: ['afritada'], name: 'Afritada', serving: '1 serving', kcal: 330, p: 24, c: 16, f: 18 },
+  { kw: ['bicol express'], name: 'Bicol Express', serving: '1 serving', kcal: 350, p: 18, c: 10, f: 28 },
+  { kw: ['pinakbet', 'pakbet'], name: 'Pinakbet', serving: '1 serving', kcal: 180, p: 8, c: 18, f: 9 },
+  { kw: ['laing'], name: 'Laing', serving: '1 serving', kcal: 250, p: 6, c: 12, f: 20 },
+  { kw: ['dinuguan'], name: 'Dinuguan', serving: '1 bowl', kcal: 320, p: 22, c: 8, f: 22 },
+  { kw: ['bulalo'], name: 'Bulalo', serving: '1 bowl', kcal: 350, p: 28, c: 10, f: 22 },
+  { kw: ['nilaga'], name: 'Nilagang Baka', serving: '1 bowl', kcal: 250, p: 24, c: 12, f: 12 },
+  { kw: ['lechon'], name: 'Lechon (Roast Pork)', serving: '1 serving', kcal: 400, p: 24, c: 0, f: 33 },
+  { kw: ['crispy pata'], name: 'Crispy Pata', serving: '1 serving', kcal: 500, p: 30, c: 5, f: 40 },
+  { kw: ['lechon kawali'], name: 'Lechon Kawali', serving: '1 serving', kcal: 450, p: 25, c: 2, f: 38 },
+  { kw: ['inasal', 'chicken inasal'], name: 'Chicken Inasal', serving: '1 serving', kcal: 350, p: 30, c: 5, f: 23 },
+  { kw: ['pancit canton'], name: 'Pancit Canton', serving: '1 plate', kcal: 350, p: 12, c: 50, f: 11 },
+  { kw: ['pancit bihon'], name: 'Pancit Bihon', serving: '1 plate', kcal: 300, p: 10, c: 48, f: 8 },
+  { kw: ['pancit malabon'], name: 'Pancit Malabon', serving: '1 plate', kcal: 400, p: 16, c: 52, f: 14 },
+  { kw: ['lumpiang shanghai', 'shanghai'], name: 'Lumpiang Shanghai', serving: '4 pcs', kcal: 250, p: 10, c: 18, f: 15 },
+  { kw: ['lugaw', 'goto'], name: 'Lugaw', serving: '1 bowl', kcal: 200, p: 6, c: 38, f: 3 },
+  { kw: ['arroz caldo'], name: 'Arroz Caldo', serving: '1 bowl', kcal: 280, p: 14, c: 40, f: 7 },
+  { kw: ['champorado'], name: 'Champorado', serving: '1 bowl', kcal: 300, p: 6, c: 55, f: 7 },
+  { kw: ['tapa', 'beef tapa'], name: 'Beef Tapa', serving: '1 serving', kcal: 280, p: 30, c: 5, f: 14 },
+  { kw: ['tocino'], name: 'Tocino', serving: '1 serving', kcal: 300, p: 20, c: 18, f: 16 },
+  { kw: ['bangus', 'milkfish'], name: 'Bangus (Milkfish)', serving: '1 serving', kcal: 200, p: 22, c: 0, f: 12 },
+  { kw: ['tilapia'], name: 'Tilapia', serving: '1 serving', kcal: 130, p: 26, c: 0, f: 3 },
+  { kw: ['munggo', 'mongo'], name: 'Ginisang Munggo', serving: '1 bowl', kcal: 180, p: 12, c: 22, f: 5 },
+  { kw: ['halo-halo', 'halo halo'], name: 'Halo-Halo', serving: '1 serving', kcal: 350, p: 6, c: 65, f: 9 },
+  { kw: ['turon'], name: 'Turon', serving: '1 pc', kcal: 220, p: 2, c: 40, f: 7 },
+  { kw: ['bibingka'], name: 'Bibingka', serving: '1 slice', kcal: 250, p: 5, c: 40, f: 8 },
+  { kw: ['puto'], name: 'Puto', serving: '2 pcs', kcal: 110, p: 2, c: 22, f: 2 },
+  { kw: ['taho'], name: 'Taho', serving: '1 cup', kcal: 180, p: 7, c: 30, f: 3 },
   // fast food
   { kw: ['burger', 'hamburger'], name: 'Burger', serving: '1 burger', kcal: 350, p: 20, c: 30, f: 18 },
   { kw: ['cheeseburger'], name: 'Cheeseburger', serving: '1 burger', kcal: 400, p: 22, c: 32, f: 20 },
@@ -193,25 +226,62 @@ export async function offSearch(
   return hits;
 }
 
-/** Merged search: instant common matches first, then live OFF results. */
+/**
+ * AI-powered search — returns macros for ANY food (Filipino dishes, world
+ * foods, brands) via the server route. Empty when no API key is configured
+ * (standalone HTML / demo mode) or when offline.
+ */
+export async function aiSearch(
+  query: string,
+  signal?: AbortSignal,
+): Promise<FoodHit[]> {
+  try {
+    const res = await fetch('/api/nutrition/search', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query }),
+      signal,
+    });
+    if (!res.ok) return []; // 501 (no key) or upstream error
+    const data = await res.json();
+    const results: Record<string, unknown>[] = data?.results || [];
+    return results.map((r, i) => ({
+      id: 'ai-' + i + '-' + String(r.name),
+      name: String(r.name),
+      brand: 'AI estimate',
+      serving: typeof r.serving === 'string' ? r.serving : '1 serving',
+      kcal: num(r.kcal),
+      p: num(r.p),
+      c: num(r.c),
+      f: num(r.f),
+      source: 'ai' as const,
+    }));
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Merged search: instant common matches first, then AI results (any food,
+ * incl. Filipino dishes) and live Open Food Facts products. AI + OFF run in
+ * parallel; either failing just means fewer results, never an error.
+ */
 export async function searchFoods(
   query: string,
   signal?: AbortSignal,
 ): Promise<FoodHit[]> {
   const local = localFoods(query);
-  let off: FoodHit[] = [];
-  try {
-    off = await offSearch(query, signal);
-  } catch {
-    /* offline or blocked — common matches still show */
-  }
-  const seen = new Set(local.map((h) => h.name.toLowerCase()));
-  const merged = [...local];
-  for (const h of off) {
+  const [ai, off] = await Promise.all([
+    aiSearch(query, signal),
+    offSearch(query, signal).catch(() => [] as FoodHit[]),
+  ]);
+  const seen = new Set<string>();
+  const merged: FoodHit[] = [];
+  for (const h of [...local, ...ai, ...off]) {
     const key = h.name.toLowerCase();
     if (seen.has(key)) continue;
     seen.add(key);
     merged.push(h);
   }
-  return merged.slice(0, 14);
+  return merged.slice(0, 16);
 }
