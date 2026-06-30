@@ -103,7 +103,7 @@ export interface TempoApi {
   onExpenseKey: (e: React.KeyboardEvent) => void;
   onExpenseSubmit: () => void;
   // finance
-  onToggleFinManage: () => void;
+  onToggleFinEdit: (section: string) => void;
   addAsset: () => void;
   removeAsset: (i: number) => void;
   removeTrade: (id: string) => void;
@@ -254,6 +254,8 @@ export function TempoProvider({ children }: { children: React.ReactNode }) {
     state.sound,
     state.voiceURI,
     state.wallets,
+    state.budget,
+    state.fin,
   ]);
 
   // ── small helpers ───────────────────────────────────────────────────────────
@@ -927,8 +929,14 @@ export function TempoProvider({ children }: { children: React.ReactNode }) {
 
   // ── finance ─────────────────────────────────────────────────────────────────
   const cloneFin = () => JSON.parse(JSON.stringify(ref.current.fin));
-  const onToggleFinManage = useCallback(
-    () => set((s) => ({ finManaging: !s.finManaging, edit: null })),
+  const onToggleFinEdit = useCallback(
+    (section: string) =>
+      set((s) => ({
+        finEdit: s.finEdit.includes(section)
+          ? s.finEdit.filter((x) => x !== section)
+          : [...s.finEdit, section],
+        edit: null,
+      })),
     [set],
   );
   const addAsset = useCallback(() => {
@@ -1677,7 +1685,7 @@ export function TempoProvider({ children }: { children: React.ReactNode }) {
       onExpenseInput,
       onExpenseKey,
       onExpenseSubmit,
-      onToggleFinManage,
+      onToggleFinEdit,
       addAsset,
       removeAsset,
       removeTrade,

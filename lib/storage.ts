@@ -19,6 +19,8 @@ export type PersistedSettings = Pick<
   | 'sound'
   | 'voiceURI'
   | 'wallets'
+  | 'budget'
+  | 'fin'
 >;
 
 export function loadSettings(): {
@@ -67,6 +69,9 @@ export function saveSettings(state: TempoState): void {
         valLocal: 0,
         status: 'idle' as const,
       })),
+      // Your money is your data — keep budget + finance edits across reloads.
+      budget: state.budget,
+      fin: state.fin,
     };
     localStorage.setItem(SETTINGS_KEY, JSON.stringify(payload));
   } catch {

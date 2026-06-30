@@ -16,8 +16,8 @@ export default function FinanceView({ vm }: { vm: VM }) {
           <span style={css(mono + 'font-size:11px;font-weight:600;letter-spacing:1px;color:var(--bg);background:var(--accent);border-radius:5px;padding:2px 7px')}>01</span>
           <span style={css(mono + 'font-size:11px;letter-spacing:2.5px;color:var(--text-faint)')}>{'// NET LIQUID'}</span>
           <div style={{ flex: 1 }} />
-          <Hov as="button" onClick={fin.onToggleManage} styleStr={fin.manageBtnStyle} hover="border-color:var(--line2);color:var(--text)">
-            {fin.manageLabel}
+          <Hov as="button" onClick={fin.liquidEdit.onToggle} styleStr={fin.liquidEdit.btnStyle} hover="border-color:var(--line2);color:var(--text)">
+            {fin.liquidEdit.label}
           </Hov>
         </div>
         <div style={css('font-size:46px;font-weight:700;letter-spacing:-1.5px;line-height:1')}>{fin.liquid}</div>
@@ -55,7 +55,9 @@ export default function FinanceView({ vm }: { vm: VM }) {
           <span style={css(mono + 'font-size:11px;font-weight:600;letter-spacing:1px;color:var(--text-dim);border:1px solid var(--line2);border-radius:5px;padding:2px 7px')}>02</span>
           <span style={css(mono + 'font-size:11px;letter-spacing:2.5px;color:var(--text-faint)')}>{'// ASSETS'}</span>
           <div style={{ flex: 1 }} />
-          <span style={css(mono + 'font-size:10.5px;color:var(--text-faint2)')}>PORTFOLIO</span>
+          <Hov as="button" onClick={fin.assetsEdit.onToggle} styleStr={fin.assetsEdit.btnStyle} hover="border-color:var(--line2);color:var(--text)">
+            {fin.assetsEdit.label}
+          </Hov>
         </div>
         <div style={css('font-size:34px;font-weight:700;letter-spacing:-1px;line-height:1')}>{fin.assetsTotal}</div>
         <div style={css(mono + 'font-size:11px;color:var(--text-faint2);margin-top:6px')}>TOTAL INVESTED · GROWS WITH REALIZED P&L</div>
@@ -89,7 +91,7 @@ export default function FinanceView({ vm }: { vm: VM }) {
             </div>
           ))}
         </div>
-        {fin.managing && (
+        {fin.assetsEdit.managing && (
           <Hov as="button" onClick={fin.onAddAsset} styleStr={mono + 'margin-top:14px;font-size:11px;color:var(--text-faint);background:none;border:1px dashed var(--line2);border-radius:7px;padding:7px 0;width:100%;cursor:pointer'} hover="color:var(--text);border-color:var(--line2)">
             + add holding
           </Hov>
@@ -155,6 +157,9 @@ export default function FinanceView({ vm }: { vm: VM }) {
           <span style={css(mono + 'font-size:11px;letter-spacing:2.5px;color:var(--text-faint)')}>{'// PROFIT & LOSS'}</span>
           <div style={{ flex: 1 }} />
           <span style={css(mono + 'font-size:10.5px;color:var(--text-faint2)')}>REALIZED</span>
+          <Hov as="button" onClick={fin.pnlEdit.onToggle} styleStr={fin.pnlEdit.btnStyle} hover="border-color:var(--line2);color:var(--text)">
+            {fin.pnlEdit.label}
+          </Hov>
         </div>
         <div style={css('display:flex;gap:10px;margin-bottom:20px')}>
           {fin.pnlStats.map((p, i) => (
@@ -204,6 +209,9 @@ export default function FinanceView({ vm }: { vm: VM }) {
           <span style={css(mono + 'font-size:11px;letter-spacing:2.5px;color:var(--text-faint)')}>{'// TRADE JOURNAL'}</span>
           <div style={{ flex: 1 }} />
           <span style={css(mono + 'font-size:10.5px;color:var(--text-faint2)')}>{fin.tradeCount} TRADES</span>
+          <Hov as="button" onClick={fin.journalEdit.onToggle} styleStr={fin.journalEdit.btnStyle} hover="border-color:var(--line2);color:var(--text)">
+            {fin.journalEdit.label}
+          </Hov>
         </div>
         <div style={css('display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:8px')}>
           {fin.trades.map((t, i) => (

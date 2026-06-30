@@ -478,7 +478,28 @@ export function useViewModel() {
     0,
   );
   const cashVal = fd.cashOpening + incomeTotalF - spentTotalF;
-  const managingFin = s.finManaging;
+  // Per-section edit toggles — each Finance card flips on its own.
+  const finBtn = (section: string) => {
+    const on = s.finEdit.includes(section);
+    return {
+      managing: on,
+      onToggle: () => api.onToggleFinEdit(section),
+      label: on ? 'DONE' : '+ EDIT',
+      btnStyle: `font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1px;background:${
+        on ? 'var(--inset)' : 'transparent'
+      };border:1px solid var(--line2);border-radius:7px;padding:4px 10px;cursor:pointer;transition:all .12s;color:${
+        on ? 'var(--text)' : 'var(--text-faint)'
+      }`,
+    };
+  };
+  const liquidEdit = finBtn('liquid');
+  const assetsEdit = finBtn('assets');
+  const pnlEdit = finBtn('pnl');
+  const journalEdit = finBtn('journal');
+  const managingLiquid = liquidEdit.managing;
+  const managingAssets = assetsEdit.managing;
+  const managingPnl = pnlEdit.managing;
+  const managingJournal = journalEdit.managing;
   // Live read-only crypto from tracked Solana wallets, folded into net worth.
   const walletsTotal = s.wallets.reduce(
     (a, w) => a + (w.status === 'ok' ? w.valLocal : 0),
@@ -502,14 +523,10 @@ export function useViewModel() {
   const fin = {
     liquid: fmtPeso(liquidTotal),
     netWorth: fmtPeso(netWorth),
-    managing: managingFin,
-    onToggleManage: api.onToggleFinManage,
-    manageLabel: managingFin ? 'DONE' : '+ EDIT',
-    manageBtnStyle: `font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1px;background:${
-      managingFin ? 'var(--inset)' : 'transparent'
-    };border:1px solid var(--line2);border-radius:7px;padding:5px 11px;cursor:pointer;transition:all .12s;color:${
-      managingFin ? 'var(--text)' : 'var(--text-faint)'
-    }`,
+    liquidEdit,
+    assetsEdit,
+    pnlEdit,
+    journalEdit,
     netDelta:
       '+' +
       Math.round((fd.pnlMonth / Math.max(liquidTotal, 1)) * 1000) / 10 +
@@ -519,7 +536,7 @@ export function useViewModel() {
       color: b.color,
       val: fmtPeso(b.val),
       pct: Math.round((b.val / Math.max(liquidTotal, 1)) * 100) + '%',
-      editable: !!b.editKey && managingFin,
+      editable: !!b.editKey && managingLiquid,
       editing: !!b.editKey && s.edit === b.editKey,
       show: !(!!b.editKey && s.edit === b.editKey),
       onEdit: b.editKey ? () => api.startEdit(b.editKey as string, b.val) : undefined,
@@ -529,7 +546,7 @@ export function useViewModel() {
       color: a.color,
       val: fmtPeso(a.val),
       pct: Math.round((a.val / Math.max(assetsTotal, 1)) * 100) + '%',
-      managing: managingFin,
+      managing: managingAssets,
       labelEditing: s.edit === 'fal.' + i,
       labelShow: s.edit !== 'fal.' + i,
       onEditLabel: () => api.startEdit('fal.' + i, a.label),
@@ -584,7 +601,7 @@ export function useViewModel() {
       label: p.label,
       val: p.val,
       color: p.color,
-      managing: managingFin,
+      managing: managingPnl,
       editing: s.edit === p.key,
       show: s.edit !== p.key,
       onEdit: () => api.startEdit(p.key, p.raw),
@@ -611,7 +628,7 @@ export function useViewModel() {
       pnlStyle: `font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600;flex:0 0 auto;color:${pnlColor(
         t.pnl,
       )}`,
-      managing: managingFin,
+      managing: managingJournal,
       symEditing: s.edit === 'tsym.' + i,
       symShow: s.edit !== 'tsym.' + i,
       onEditSym: () => api.startEdit('tsym.' + i, t.sym),
