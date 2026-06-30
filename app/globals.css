@@ -63,6 +63,51 @@ body {
   }
 }
 
+/* On phones the page tabs move to a fixed bottom bar for one-handed reach,
+   so hide the in-header nav and reserve room above the bar. */
+.bottomNav {
+  display: none;
+}
+@media (max-width: 720px) {
+  .tb-nav {
+    display: none !important;
+  }
+  .bottomNav {
+    display: block;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 40;
+    background: var(--panel);
+    border-top: 1px solid var(--line);
+    padding-bottom: env(safe-area-inset-bottom);
+    backdrop-filter: blur(8px);
+  }
+  .bottomNavRow {
+    display: flex;
+    align-items: stretch;
+    gap: 2px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    padding: 4px 8px;
+    padding-left: max(8px, env(safe-area-inset-left));
+    padding-right: max(8px, env(safe-area-inset-right));
+  }
+  .bottomNavRow::-webkit-scrollbar {
+    display: none;
+  }
+  /* Keep content clear of the fixed bar. */
+  .appContent {
+    padding-bottom: calc(76px + env(safe-area-inset-bottom));
+  }
+  /* Lift the Nateman orb above the bottom bar. */
+  .natemanOrb {
+    bottom: calc(84px + env(safe-area-inset-bottom)) !important;
+  }
+}
+
 /* Comfortable tap targets on touch devices. */
 @media (hover: none) and (pointer: coarse) {
   button {
@@ -177,15 +222,43 @@ input:focus {
   }
 }
 
-/* Eisenhower matrix — 2×2 on desktop, single column on phones. */
+/* Eisenhower matrix — 2×2 at every width so all four quadrants stay in view;
+   phones just get tighter cards. */
 .eisengrid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 12px;
 }
 @media (max-width: 720px) {
   .eisengrid {
-    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  .eisengrid > div {
+    min-height: 150px !important;
+    padding: 12px 12px !important;
+  }
+}
+
+/* Two-up page grids (Health, Finance) collapse to one column on phones so
+   cards get full width instead of cramping and overlapping. */
+.grid2 {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+.budgetgrid {
+  display: grid;
+  grid-template-columns: 340px minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+@media (max-width: 720px) {
+  .grid2 {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+  }
+  .budgetgrid {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 

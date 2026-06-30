@@ -171,17 +171,20 @@ export function useViewModel() {
 
   const pageTabs = (
     [
-      { key: 'overview', label: 'Overview' },
-      { key: 'tasks', label: 'Tasks' },
-      { key: 'habits', label: 'Habits' },
-      { key: 'health', label: 'Health' },
-      { key: 'budget', label: 'Budget' },
-      { key: 'finance', label: 'Finance' },
-      { key: 'calendar', label: 'Calendar' },
-      { key: 'journal', label: 'Journal' },
+      { key: 'overview', label: 'Overview', glyph: '◎' },
+      { key: 'tasks', label: 'Tasks', glyph: '▦' },
+      { key: 'habits', label: 'Habits', glyph: '◴' },
+      { key: 'health', label: 'Health', glyph: '♥' },
+      { key: 'budget', label: 'Budget', glyph: '▤' },
+      { key: 'finance', label: 'Finance', glyph: '◈' },
+      { key: 'calendar', label: 'Calendar', glyph: '▣' },
+      { key: 'journal', label: 'Journal', glyph: '✎' },
     ] as const
   ).map((t) => ({
+    key: t.key as string,
     label: t.label,
+    glyph: t.glyph,
+    active: s.page === t.key,
     onClick: () => api.setPage(t.key),
     style: `background:${
       s.page === t.key ? 'var(--inset)' : 'transparent'

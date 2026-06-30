@@ -5,6 +5,7 @@ import { TempoProvider } from '@/state/TempoProvider';
 import { useViewModel } from '@/state/useViewModel';
 import { css } from './css';
 import TopBar from './TopBar';
+import BottomNav from './BottomNav';
 import Overview from './Overview';
 import TasksView from './TasksView';
 import HabitsView from './HabitsView';
@@ -35,6 +36,7 @@ function Shell() {
           {vm.isSettings && <SettingsView vm={vm} />}
         </div>
       </div>
+      <BottomNav vm={vm} />
       <Nateman vm={vm} />
       <Toast vm={vm} />
     </div>

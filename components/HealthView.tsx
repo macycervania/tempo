@@ -8,7 +8,7 @@ export default function HealthView({ vm }: { vm: VM }) {
   const mono = "font-family:'JetBrains Mono',monospace;";
   const health = vm.health;
   return (
-    <div style={css('display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px')}>
+    <div className="grid2">
       {/* 01 TODAY */}
       <section style={css('grid-column:1 / -1;background:linear-gradient(150deg,var(--panel),var(--panel));border:1px solid var(--line2);border-radius:16px;padding:22px 24px')}>
         <div style={css('display:flex;align-items:center;gap:10px;margin-bottom:20px')}>

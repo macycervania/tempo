@@ -14,6 +14,7 @@ export default function Nateman({ vm }: { vm: VM }) {
         <button
           onClick={na.onSummon}
           title="Summon Nateman — or type 'nateman'"
+          className="natemanOrb"
           style={css(
             'position:fixed;right:max(20px,env(safe-area-inset-right));bottom:max(20px,env(safe-area-inset-bottom));z-index:45;background:none;border:none;cursor:pointer;padding:0;animation:naFloat 4s ease-in-out infinite',
           )}

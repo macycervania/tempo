@@ -45,7 +45,7 @@ export default function BudgetView({ vm }: { vm: VM }) {
         </Hov>
       </div>
 
-      <div style={css('display:grid;grid-template-columns:340px minmax(0,1fr);gap:16px;align-items:start')}>
+      <div className="budgetgrid">
         {/* INCOME */}
         <section style={css('background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:20px 22px')}>
           <div style={css('display:flex;align-items:center;gap:10px;margin-bottom:16px')}>
