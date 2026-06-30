@@ -124,7 +124,7 @@ export function useViewModel() {
         { key: 'dailySummary', label: 'Daily summary', desc: 'A morning brief of your day' },
         { key: 'habitReminders', label: 'Habit reminders', desc: 'Nudge me to keep streaks alive' },
         { key: 'deadlineAlerts', label: 'Deadline alerts', desc: 'Warn me before tasks are due' },
-        { key: 'weeklyReview', label: 'Weekly review', desc: 'Sunday recap of goals & spending' },
+        { key: 'weeklyReview', label: 'Weekly review', desc: 'Show a recap card on your Overview (goals, calories, spending, P&L)' },
       ] as const
     ).map((n) => ({
       label: n.label,
@@ -1161,8 +1161,84 @@ export function useViewModel() {
     },
   ];
 
+  // Weekly review — a Sunday-style recap card (shown on Overview when the
+  // "Weekly review" notification toggle is on). Built live from your data.
+  const weeklyReview = (() => {
+    const wk = s.goals.weekly.krs;
+    const mo = s.goals.monthly.krs;
+    const krDone = wk.filter((k) => k.done).length;
+    const moDone = mo.filter((k) => k.done).length;
+    const habitTicks = s.habits.reduce(
+      (a, h) => a + h.week.filter(Boolean).length,
+      0,
+    );
+    const habitMax = s.habits.length * 7;
+    const habitPct = habitMax ? Math.round((habitTicks / habitMax) * 100) : 0;
+    const hist = s.calHistory || [];
+    const avgIntake = hist.length
+      ? Math.round(hist.reduce((a, b) => a + b, 0) / hist.length)
+      : 0;
+    const calDelta = s.targets.kcal - avgIntake; // + = under target
+    const income = s.budget.income.reduce((a, i) => a + i.amt, 0);
+    const spent = s.budget.groups.reduce(
+      (a, g) => a + g.subs.reduce((x, su) => x + su.spent, 0),
+      0,
+    );
+    const net = income - spent;
+    let worst: { name: string; over: number } | null = null;
+    s.budget.groups.forEach((g) => {
+      const gb = g.subs.reduce((a, su) => a + su.budget, 0);
+      const gs = g.subs.reduce((a, su) => a + su.spent, 0);
+      const over = gs - gb;
+      if (over > 0 && (!worst || over > worst.over)) worst = { name: g.name, over };
+    });
+    return {
+      show: !!s.notifs.weeklyReview,
+      lines: [
+        {
+          label: 'GOALS',
+          val: `${krDone}/${wk.length} weekly · ${moDone}/${mo.length} monthly`,
+          color: 'var(--accent)',
+        },
+        {
+          label: 'HABITS',
+          val: `${habitPct}% of the week hit`,
+          color: '#9b7fb4',
+        },
+        {
+          label: 'CALORIES',
+          val: avgIntake
+            ? `${avgIntake} kcal/day · ${
+                calDelta >= 0
+                  ? `${calDelta} under`
+                  : `${Math.abs(calDelta)} over`
+              } target`
+            : 'No intake logged',
+          color: calDelta >= 0 ? '#74ad84' : '#c77b6b',
+        },
+        {
+          label: 'BUDGET',
+          val:
+            net >= 0
+              ? `${fmtPeso(net)} surplus this month`
+              : `${fmtPeso(-net)} drawn down`,
+          color: net >= 0 ? '#74ad84' : '#c77b6b',
+        },
+        {
+          label: 'TRADING',
+          val: `${fmtSig(fd.pnlMonth)} realized`,
+          color: pnlColor(fd.pnlMonth),
+        },
+      ],
+      note: worst
+        ? `Watch ${(worst as { name: string }).name} — ${fmtPeso((worst as { over: number }).over)} over budget.`
+        : 'Every category is within budget — nicely done.',
+    };
+  })();
+
   return {
     pageTabs,
+    weeklyReview,
     isOverview: s.page === 'overview',
     isFinance: s.page === 'finance',
     isHealth: s.page === 'health',

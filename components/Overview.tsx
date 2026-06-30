@@ -235,6 +235,29 @@ export default function Overview({ vm }: { vm: VM }) {
 
       {/* RIGHT — goals (kept on the overview) */}
       <div className="ovcol">
+        {/* WEEKLY REVIEW — Sunday recap (toggle in Settings → Notifications) */}
+        {vm.weeklyReview.show && (
+          <section style={css('background:var(--panel);border:1px solid var(--line2);border-radius:16px;padding:20px 22px')}>
+            <div style={css('display:flex;align-items:center;gap:10px;margin-bottom:14px')}>
+              <span style={css(mono + 'font-size:11px;font-weight:600;letter-spacing:1px;color:var(--bg);background:var(--accent);border-radius:5px;padding:2px 7px')}>✦</span>
+              <span style={css(mono + 'font-size:11px;letter-spacing:2.5px;color:var(--text-faint)')}>{'// THIS WEEK'}</span>
+              <div style={{ flex: 1 }} />
+              <span style={css(mono + 'font-size:10px;letter-spacing:1px;color:var(--text-faint2)')}>RECAP</span>
+            </div>
+            <div style={css('display:flex;flex-direction:column;gap:11px')}>
+              {vm.weeklyReview.lines.map((l, i) => (
+                <div key={i} style={css('display:flex;align-items:baseline;justify-content:space-between;gap:12px')}>
+                  <span style={css(mono + 'font-size:10px;letter-spacing:1.5px;color:var(--text-faint);flex:0 0 auto')}>{l.label}</span>
+                  <span style={css(`font-size:13px;font-weight:600;text-align:right;color:${l.color}`)}>{l.val}</span>
+                </div>
+              ))}
+            </div>
+            <div style={css('margin-top:14px;padding-top:13px;border-top:1px solid var(--line);font-size:12.5px;color:var(--text-muted);line-height:1.45')}>
+              {vm.weeklyReview.note}
+            </div>
+          </section>
+        )}
+
         <section
           style={css('background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:20px 22px')}
         >
