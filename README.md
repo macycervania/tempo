@@ -27,6 +27,10 @@ Preferences and your profile persist to `localStorage`.
 
 The app ships a web manifest and Apple touch metadata, renders edge-to-edge under the iOS notch (safe-area insets), and reflows to a single column with a scrollable nav on small screens — so "Add to Home Screen" gives you a standalone, app-like experience.
 
+## Deploy
+
+It's a standard Next.js app — deploy to **Vercel** in a few clicks. Deploying is what unlocks **voice** (the Web Speech API needs HTTPS + mic permission) and the **real Claude-powered AI** (set `ANTHROPIC_API_KEY`). See **[DEPLOY.md](DEPLOY.md)** for dashboard and CLI steps. The single-file `public/tempo.html` is great for a quick offline look, but voice and the real AI need a served HTTPS deployment.
+
 ## Tech
 
 - **Next.js 14** (App Router) + **React 18** + **TypeScript**
