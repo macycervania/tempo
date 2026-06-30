@@ -17,23 +17,22 @@ export default function FinanceView({ vm }: { vm: VM }) {
   }, [mc.walletCount]);
 
   return (
-    <div className="grid2">
-      {/* 01 NET LIQUID */}
-      <section style={css('background:linear-gradient(150deg,var(--panel),var(--panel));border:1px solid var(--line2);border-radius:16px;padding:22px 24px;display:flex;flex-direction:column')}>
+    <div style={css('display:flex;flex-direction:column;gap:16px')}>
+      {/* 01 NET WORTH */}
+      <section style={css('background:linear-gradient(150deg,var(--panel),var(--panel));border:1px solid var(--line2);border-radius:16px;padding:22px 24px')}>
         <div style={css('display:flex;align-items:center;gap:10px;margin-bottom:18px')}>
           <span style={css(mono + 'font-size:11px;font-weight:600;letter-spacing:1px;color:var(--bg);background:var(--accent);border-radius:5px;padding:2px 7px')}>01</span>
-          <span style={css(mono + 'font-size:11px;letter-spacing:2.5px;color:var(--text-faint)')}>{'// NET LIQUID'}</span>
-          <div style={{ flex: 1 }} />
+          <span style={css(mono + 'font-size:11px;letter-spacing:2.5px;color:var(--text-faint)')}>{'// NET WORTH'}</span>
         </div>
-        <div style={css('font-size:46px;font-weight:700;letter-spacing:-1.5px;line-height:1')}>{fin.liquid}</div>
+        <div style={css('font-size:46px;font-weight:700;letter-spacing:-1.5px;line-height:1')}>{fin.netWorth}</div>
         <div style={css(mono + 'font-size:11px;color:#74ad84;margin-top:6px')}>{fin.cashNote}</div>
         <div style={css(mono + 'font-size:10.5px;color:var(--text-faint2);margin-top:3px')}>{fin.incomeNote}</div>
         <div style={css('display:flex;align-items:baseline;gap:8px;margin-top:14px;padding-top:14px;border-top:1px solid var(--line)')}>
-          <span style={css(mono + 'font-size:10px;letter-spacing:1.5px;color:var(--text-faint)')}>NET WORTH</span>
-          <span style={css('font-size:16px;font-weight:700;color:var(--text)')}>{fin.netWorth}</span>
-          <span style={css(mono + 'font-size:10px;color:var(--text-faint2)')}>liquid + assets</span>
+          <span style={css(mono + 'font-size:10px;letter-spacing:1.5px;color:var(--text-faint)')}>LIQUID</span>
+          <span style={css('font-size:16px;font-weight:700;color:var(--text)')}>{fin.liquid}</span>
+          <span style={css(mono + 'font-size:10px;color:var(--text-faint2)')}>cash, savings, crypto</span>
         </div>
-        <div style={css('display:flex;flex-direction:column;gap:11px;margin-top:22px')}>
+        <div style={css('display:flex;flex-direction:column;gap:11px;margin-top:20px')}>
           {fin.breakdown.map((b, i) => (
             <div key={i}>
               <div style={css('display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px')}>
@@ -54,10 +53,53 @@ export default function FinanceView({ vm }: { vm: VM }) {
         </div>
       </section>
 
-      {/* 02 ASSETS */}
-      <section style={css('background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:22px 24px;display:flex;flex-direction:column')}>
+      {/* 02 MEMECOINS — live wallet positions + 24h P&L */}
+      <section style={css('background:linear-gradient(150deg,color-mix(in srgb, #9b7fb4 8%, var(--panel)),var(--panel));border:1px solid var(--line2);border-radius:16px;padding:22px 24px')}>
+        <div style={css('display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap')}>
+          <span style={css(mono + 'font-size:11px;font-weight:600;letter-spacing:1px;color:var(--bg);background:#9b7fb4;border-radius:5px;padding:2px 7px')}>02</span>
+          <span style={css(mono + 'font-size:11px;letter-spacing:2.5px;color:var(--text-faint)')}>{'// MEMECOINS'}</span>
+          <div style={{ flex: 1 }} />
+          <span style={css(mono + 'font-size:10px;letter-spacing:1px;color:var(--text-faint2)')}>{mc.totalValue} · {mc.count} TOKENS</span>
+          <Hov as="button" onClick={mc.onRefresh} styleStr={mono + 'font-size:10px;letter-spacing:1px;background:transparent;border:1px solid var(--line2);border-radius:7px;padding:5px 10px;color:var(--text-faint);cursor:pointer'} hover="border-color:var(--line2);color:var(--text)">
+            {mc.loading ? 'LOADING…' : '↻ REFRESH'}
+          </Hov>
+        </div>
+        <div style={css(mono + 'font-size:10px;letter-spacing:1.5px;color:var(--text-faint);margin-bottom:5px')}>TODAY&apos;S P&amp;L (24H)</div>
+        <div style={css(`font-size:42px;font-weight:700;letter-spacing:-1.5px;line-height:1;color:${mc.dayPnlColor}`)}>{mc.dayPnl}</div>
+
+        {!mc.hasWallets ? (
+          <div style={css('margin-top:16px;padding:16px;background:var(--inset);border:1px solid var(--line);border-radius:12px;font-size:12.5px;color:var(--text-faint);line-height:1.5')}>
+            Add your Solana wallet in <b>Settings → Crypto Wallets</b> to track memecoin positions and live P&amp;L (via Dexscreener, on the deployed app).
+          </div>
+        ) : mc.empty ? (
+          <div style={css('margin-top:16px;text-align:center;padding:22px;font-size:12.5px;color:var(--text-faint2)')}>
+            {mc.loading ? 'Loading positions…' : 'No traded tokens found (or offline — live data needs the served app).'}
+          </div>
+        ) : (
+          <div style={css('display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:8px;margin-top:16px')}>
+            {mc.rows.map((r, i) => (
+              <div key={i} style={css('display:flex;align-items:center;gap:11px;padding:11px 13px;background:var(--inset);border:1px solid var(--line);border-radius:11px')}>
+                {r.icon ? (
+                  <img src={r.icon} alt="" width={30} height={30} style={{ width: 30, height: 30, borderRadius: '50%', flex: '0 0 30px', objectFit: 'cover' }} />
+                ) : (
+                  <span style={css('width:30px;height:30px;flex:0 0 30px;border-radius:50%;background:var(--line2);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--text-dim)')}>{r.symbol.slice(0, 1)}</span>
+                )}
+                <div style={css('min-width:0;flex:1')}>
+                  <div style={css('font-size:13.5px;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap')}>{r.symbol}</div>
+                  <div style={css(mono + 'font-size:10px;color:var(--text-faint2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap')}>{r.value} · {r.change}</div>
+                </div>
+                <span style={css(`font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:600;flex:0 0 auto;color:${r.pnlColor}`)}>{r.pnl}</span>
+              </div>
+            ))}
+          </div>
+        )}
+        <div style={css('font-size:11px;color:var(--text-faint2);margin-top:12px;line-height:1.5')}>Read-only · holdings from the Solana chain, prices &amp; 24h change from Dexscreener.</div>
+      </section>
+
+      {/* 03 ASSETS — manual holdings */}
+      <section style={css('background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:22px 24px')}>
         <div style={css('display:flex;align-items:center;gap:10px;margin-bottom:18px')}>
-          <span style={css(mono + 'font-size:11px;font-weight:600;letter-spacing:1px;color:var(--text-dim);border:1px solid var(--line2);border-radius:5px;padding:2px 7px')}>02</span>
+          <span style={css(mono + 'font-size:11px;font-weight:600;letter-spacing:1px;color:var(--text-dim);border:1px solid var(--line2);border-radius:5px;padding:2px 7px')}>03</span>
           <span style={css(mono + 'font-size:11px;letter-spacing:2.5px;color:var(--text-faint)')}>{'// ASSETS'}</span>
           <div style={{ flex: 1 }} />
           <Hov as="button" onClick={fin.assetsEdit.onToggle} styleStr={fin.assetsEdit.btnStyle} hover="border-color:var(--line2);color:var(--text)">
@@ -65,7 +107,7 @@ export default function FinanceView({ vm }: { vm: VM }) {
           </Hov>
         </div>
         <div style={css('font-size:34px;font-weight:700;letter-spacing:-1px;line-height:1')}>{fin.assetsTotal}</div>
-        <div style={css(mono + 'font-size:11px;color:var(--text-faint2);margin-top:6px')}>TOTAL INVESTED · GROWS WITH REALIZED P&L</div>
+        <div style={css(mono + 'font-size:11px;color:var(--text-faint2);margin-top:6px')}>STOCKS, FUNDS &amp; LONG-TERM HOLDINGS · TAP + EDIT TO ADJUST</div>
         <div style={css('display:flex;flex-direction:column;gap:13px;margin-top:22px')}>
           {fin.assets.map((a, i) => (
             <div key={i}>
@@ -101,137 +143,6 @@ export default function FinanceView({ vm }: { vm: VM }) {
             + add holding
           </Hov>
         )}
-      </section>
-
-      {/* MEMECOINS — live wallet positions + 24h P&L */}
-      <section style={css('grid-column:1 / -1;background:linear-gradient(150deg,var(--panel),var(--panel));border:1px solid var(--line2);border-radius:16px;padding:22px 24px')}>
-        <div style={css('display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap')}>
-          <span style={css(mono + 'font-size:11px;font-weight:600;letter-spacing:1px;color:var(--bg);background:#9b7fb4;border-radius:5px;padding:2px 7px')}>◉</span>
-          <span style={css(mono + 'font-size:11px;letter-spacing:2.5px;color:var(--text-faint)')}>{'// MEMECOINS'}</span>
-          <div style={{ flex: 1 }} />
-          <span style={css(mono + 'font-size:10px;letter-spacing:1px;color:var(--text-faint2)')}>{mc.totalValue} · {mc.count} TOKENS</span>
-          <Hov as="button" onClick={mc.onRefresh} styleStr={mono + 'font-size:10px;letter-spacing:1px;background:transparent;border:1px solid var(--line2);border-radius:7px;padding:5px 10px;color:var(--text-faint);cursor:pointer'} hover="border-color:var(--line2);color:var(--text)">
-            {mc.loading ? 'LOADING…' : '↻ REFRESH'}
-          </Hov>
-        </div>
-        <div style={css(mono + 'font-size:10px;letter-spacing:1.5px;color:var(--text-faint);margin-bottom:5px')}>TODAY&apos;S P&amp;L (24H)</div>
-        <div style={css(`font-size:38px;font-weight:700;letter-spacing:-1.5px;line-height:1;color:${mc.dayPnlColor}`)}>{mc.dayPnl}</div>
-
-        {!mc.hasWallets ? (
-          <div style={css('margin-top:16px;padding:16px;background:var(--inset);border:1px solid var(--line);border-radius:12px;font-size:12.5px;color:var(--text-faint);line-height:1.5')}>
-            Add your Solana wallet in <b>Settings → Crypto Wallets</b> to track memecoin positions and live P&amp;L (via Dexscreener, on the deployed app).
-          </div>
-        ) : mc.empty ? (
-          <div style={css('margin-top:16px;text-align:center;padding:22px;font-size:12.5px;color:var(--text-faint2)')}>
-            {mc.loading ? 'Loading positions…' : 'No traded tokens found (or offline — live data needs the served app).'}
-          </div>
-        ) : (
-          <div style={css('display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:8px;margin-top:16px')}>
-            {mc.rows.map((r, i) => (
-              <div key={i} style={css('display:flex;align-items:center;gap:11px;padding:11px 13px;background:var(--inset);border:1px solid var(--line);border-radius:11px')}>
-                {r.icon ? (
-                  <img src={r.icon} alt="" width={30} height={30} style={{ width: 30, height: 30, borderRadius: '50%', flex: '0 0 30px', objectFit: 'cover' }} />
-                ) : (
-                  <span style={css('width:30px;height:30px;flex:0 0 30px;border-radius:50%;background:var(--line2);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--text-dim)')}>{r.symbol.slice(0, 1)}</span>
-                )}
-                <div style={css('min-width:0;flex:1')}>
-                  <div style={css('font-size:13.5px;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap')}>{r.symbol}</div>
-                  <div style={css(mono + 'font-size:10px;color:var(--text-faint2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap')}>{r.value} · {r.change}</div>
-                </div>
-                <span style={css(`font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:600;flex:0 0 auto;color:${r.pnlColor}`)}>{r.pnl}</span>
-              </div>
-            ))}
-          </div>
-        )}
-      </section>
-
-      {/* 03 P&L */}
-      <section style={css('grid-column:1 / -1;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:22px 24px;display:flex;flex-direction:column')}>
-        <div style={css('display:flex;align-items:center;gap:10px;margin-bottom:18px')}>
-          <span style={css(mono + 'font-size:11px;font-weight:600;letter-spacing:1px;color:var(--text-dim);border:1px solid var(--line2);border-radius:5px;padding:2px 7px')}>03</span>
-          <span style={css(mono + 'font-size:11px;letter-spacing:2.5px;color:var(--text-faint)')}>{'// PROFIT & LOSS'}</span>
-          <div style={{ flex: 1 }} />
-          <span style={css(mono + 'font-size:10.5px;color:var(--text-faint2)')}>REALIZED</span>
-          <Hov as="button" onClick={fin.pnlEdit.onToggle} styleStr={fin.pnlEdit.btnStyle} hover="border-color:var(--line2);color:var(--text)">
-            {fin.pnlEdit.label}
-          </Hov>
-        </div>
-        <div style={css('display:flex;gap:10px;margin-bottom:20px')}>
-          {fin.pnlStats.map((p, i) => (
-            <div key={i} style={css('flex:1;background:var(--inset);border:1px solid var(--line);border-radius:11px;padding:13px 14px')}>
-              <div style={css(mono + 'font-size:9.5px;letter-spacing:1px;color:var(--text-faint);margin-bottom:7px')}>{p.label}</div>
-              {p.editing ? (
-                <EditInput vm={vm} style={"width:110px;background:var(--panel);border:1px solid var(--line2);border-radius:6px;padding:2px 6px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:18px;font-weight:700"} />
-              ) : p.managing ? (
-                <Hov as="span" onClick={p.onEdit} styleStr={`font-size:21px;font-weight:700;letter-spacing:-.5px;color:${p.color};cursor:pointer`} hover="text-decoration:underline">{p.val}</Hov>
-              ) : (
-                <div style={css(`font-size:21px;font-weight:700;letter-spacing:-.5px;color:${p.color}`)}>{p.val}</div>
-              )}
-            </div>
-          ))}
-        </div>
-        <div style={css(mono + 'font-size:9.5px;letter-spacing:1.5px;color:var(--text-faint2);margin-bottom:9px')}>LAST 10 SESSIONS</div>
-        <div style={css('position:relative;height:88px;display:flex;align-items:stretch;gap:5px;margin-bottom:18px')}>
-          <div style={css('position:absolute;top:50%;left:0;right:0;height:1px;background:var(--line2);z-index:1')} />
-          {fin.history.map((bar, i) => (
-            <div key={i} style={css('position:relative;flex:1;height:100%')}>
-              <div style={css(bar.style)} />
-            </div>
-          ))}
-        </div>
-        <div style={css('margin-top:auto;display:flex;align-items:center;gap:9px;background:var(--inset);border:1px solid var(--line2);border-radius:10px;padding:0 12px;height:42px')}>
-          <span style={css(mono + 'font-size:13px;color:var(--accent)')}>↵</span>
-          <input
-            value={vm.tradeDraft}
-            onChange={vm.onTradeInput}
-            onKeyDown={vm.onTradeKey}
-            placeholder="Log a trade (“SPY +210”, “WIF -85”)"
-            style={css('flex:1;background:none;border:none;color:var(--text);font-size:13px')}
-          />
-          <Hov as="button" onClick={vm.onTradeSubmit} styleStr="background:var(--inset);border:1px solid var(--line2);border-radius:7px;padding:5px 11px;font-size:12px;font-weight:600;color:var(--text-dim);cursor:pointer" hover="border-color:var(--line2)">
-            Log
-          </Hov>
-        </div>
-        {vm.tradeHint && (
-          <div style={css('margin-top:8px;font-size:11.5px;color:var(--text-faint);animation:fadeUp .18s ease')}>{vm.tradeHint}</div>
-        )}
-      </section>
-
-      {/* 04 TRADE JOURNAL */}
-      <section style={css('grid-column:1 / -1;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:20px 22px')}>
-        <div style={css('display:flex;align-items:center;gap:10px;margin-bottom:16px')}>
-          <span style={css(mono + 'font-size:11px;font-weight:600;letter-spacing:1px;color:var(--text-dim);border:1px solid var(--line2);border-radius:5px;padding:2px 7px')}>04</span>
-          <span style={css(mono + 'font-size:11px;letter-spacing:2.5px;color:var(--text-faint)')}>{'// TRADE JOURNAL'}</span>
-          <div style={{ flex: 1 }} />
-          <span style={css(mono + 'font-size:10.5px;color:var(--text-faint2)')}>{fin.tradeCount} TRADES</span>
-          <Hov as="button" onClick={fin.journalEdit.onToggle} styleStr={fin.journalEdit.btnStyle} hover="border-color:var(--line2);color:var(--text)">
-            {fin.journalEdit.label}
-          </Hov>
-        </div>
-        <div style={css('display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:8px')}>
-          {fin.trades.map((t, i) => (
-            <div key={i} style={css('display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--inset);border:1px solid var(--line);border-radius:11px;animation:fadeUp .2s ease')}>
-              {t.managing && (
-                <Hov as="button" onClick={t.onRemove} styleStr="background:none;border:none;color:var(--text-faint2);cursor:pointer;font-size:13px;line-height:1;flex:0 0 auto" hover="color:#c77b6b">×</Hov>
-              )}
-              {t.symEditing ? (
-                <EditInput vm={vm} style={"width:62px;background:var(--panel);border:1px solid var(--line2);border-radius:5px;padding:2px 6px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600"} />
-              ) : t.managing ? (
-                <Hov as="span" onClick={t.onEditSym} styleStr={mono + 'font-size:13px;font-weight:600;color:var(--text);width:54px;flex:0 0 auto;cursor:text'} hover="text-decoration:underline">{t.sym}</Hov>
-              ) : (
-                <span style={css(mono + 'font-size:13px;font-weight:600;color:var(--text);width:54px;flex:0 0 auto')}>{t.sym}</span>
-              )}
-              <span style={css(mono + 'font-size:10px;color:var(--text-faint2);flex:1')}>{t.date}</span>
-              {t.pnlEditing ? (
-                <EditInput vm={vm} style={"width:80px;text-align:right;background:var(--panel);border:1px solid var(--line2);border-radius:5px;padding:2px 6px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600"} />
-              ) : t.managing ? (
-                <Hov as="span" onClick={t.onEditPnl} styleStr={t.pnlStyle + ';cursor:pointer'} hover="text-decoration:underline">{t.pnl}</Hov>
-              ) : (
-                <span style={css(t.pnlStyle)}>{t.pnl}</span>
-              )}
-            </div>
-          ))}
-        </div>
       </section>
     </div>
   );
